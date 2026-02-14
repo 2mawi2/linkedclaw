@@ -1,129 +1,156 @@
 #!/usr/bin/env bash
-# End-to-end test: two agents register, match, negotiate, and approve
+# End-to-end test: two agents connect, match, negotiate, and approve a deal
 set -euo pipefail
 
 BASE="http://localhost:3000/api"
+PASS=0
+FAIL=0
 
-echo "=== 1. Register freelancer ==="
-F_REG=$(curl -s -X POST "$BASE/register" -H "Content-Type: application/json" -d '{
-  "role": "freelancer",
-  "agent_id": "freelancer-alice",
-  "skills": ["react", "typescript", "node"],
-  "rate_min": 50,
-  "rate_max": 70,
-  "currency": "EUR",
-  "availability_start": "2025-03-01",
-  "hours_min": 20,
-  "hours_max": 40,
-  "duration_min_weeks": 4,
-  "duration_max_weeks": 24,
-  "remote_preference": "remote",
+ok()   { PASS=$((PASS + 1)); echo "  ✓ $1"; }
+fail() { FAIL=$((FAIL + 1)); echo "  ✗ $1"; }
+json() { python3 -c "import sys,json; d=json.load(sys.stdin); $1"; }
+
+echo "=== LinkedClaw E2E Test ==="
+echo ""
+
+# --- 1. Register an offering profile (freelancer) ---
+echo "1. Connect: offering profile"
+F_RES=$(curl -sf -X POST "$BASE/connect" -H "Content-Type: application/json" -d '{
+  "agent_id": "agent-alice",
+  "side": "offering",
+  "category": "frontend-dev",
+  "params": {
+    "skills": ["react", "typescript", "node"],
+    "rate_min": 50,
+    "rate_max": 70,
+    "currency": "EUR",
+    "remote": "remote"
+  },
   "description": "Senior React dev, 5 years experience"
 }')
-echo "$F_REG"
-F_ID=$(echo "$F_REG" | python3 -c "import sys,json; print(json.load(sys.stdin)['registration_id'])")
+F_ID=$(echo "$F_RES" | json "print(d['profile_id'])")
+[ -n "$F_ID" ] && ok "offering profile created: $F_ID" || fail "offering profile not created"
 
-echo ""
-echo "=== 2. Register client ==="
-C_REG=$(curl -s -X POST "$BASE/register" -H "Content-Type: application/json" -d '{
-  "role": "client",
-  "agent_id": "client-bob",
-  "skills": ["react", "typescript"],
-  "rate_min": 40,
-  "rate_max": 60,
-  "currency": "EUR",
-  "availability_start": "2025-03-15",
-  "hours_min": 20,
-  "hours_max": 30,
-  "duration_min_weeks": 8,
-  "duration_max_weeks": 16,
-  "remote_preference": "remote",
-  "description": "E-commerce rebuild, need React frontend dev",
-  "skills_must_have": ["react"],
-  "skills_nice_to_have": ["typescript"]
+# --- 2. Register a seeking profile (client) ---
+echo "2. Connect: seeking profile"
+C_RES=$(curl -sf -X POST "$BASE/connect" -H "Content-Type: application/json" -d '{
+  "agent_id": "agent-bob",
+  "side": "seeking",
+  "category": "frontend-dev",
+  "params": {
+    "skills": ["react", "typescript"],
+    "rate_min": 40,
+    "rate_max": 60,
+    "currency": "EUR",
+    "remote": "remote"
+  },
+  "description": "E-commerce rebuild, need React frontend dev"
 }')
-echo "$C_REG"
-C_ID=$(echo "$C_REG" | python3 -c "import sys,json; print(json.load(sys.stdin)['registration_id'])")
+C_ID=$(echo "$C_RES" | json "print(d['profile_id'])")
+[ -n "$C_ID" ] && ok "seeking profile created: $C_ID" || fail "seeking profile not created"
 
-echo ""
-echo "=== 3. Check matches for freelancer ==="
-MATCHES=$(curl -s "$BASE/matches/$F_ID")
-echo "$MATCHES" | python3 -m json.tool
-MATCH_ID=$(echo "$MATCHES" | python3 -c "import sys,json; print(json.load(sys.stdin)['matches'][0]['match_id'])")
+# --- 3. Find matches for the offering profile ---
+echo "3. Find matches"
+MATCHES=$(curl -sf "$BASE/matches/$F_ID")
+MATCH_COUNT=$(echo "$MATCHES" | json "print(len(d['matches']))")
+MATCH_ID=$(echo "$MATCHES" | json "print(d['matches'][0]['match_id'])")
+[ "$MATCH_COUNT" -ge 1 ] && ok "found $MATCH_COUNT match(es), first: $MATCH_ID" || fail "no matches found"
 
-echo ""
-echo "=== 4. Negotiation round 1: freelancer proposes ==="
-curl -s -X POST "$BASE/negotiate/$MATCH_ID" -H "Content-Type: application/json" -d '{
-  "proposer_role": "freelancer",
-  "proposed_rate": 70,
-  "proposed_start_date": "2025-03-01",
-  "proposed_hours": 30,
-  "proposed_duration_weeks": 12
-}' | python3 -m json.tool
+# --- 4. Verify match score and overlap ---
+echo "4. Check overlap details"
+SCORE=$(echo "$MATCHES" | json "print(d['matches'][0]['overlap']['score'])")
+SKILLS=$(echo "$MATCHES" | json "print(','.join(d['matches'][0]['overlap']['matching_skills']))")
+echo "   score=$SCORE, matching_skills=$SKILLS"
+[ "$SCORE" -gt 0 ] && ok "match has positive score" || fail "score is zero"
 
-echo ""
-echo "=== 5. Negotiation round 1: client proposes ==="
-curl -s -X POST "$BASE/negotiate/$MATCH_ID" -H "Content-Type: application/json" -d '{
-  "proposer_role": "client",
-  "proposed_rate": 45,
-  "proposed_start_date": "2025-03-15",
-  "proposed_hours": 25,
-  "proposed_duration_weeks": 12
-}' | python3 -m json.tool
+# --- 5. Get deal detail ---
+echo "5. Get deal detail"
+DEAL=$(curl -sf "$BASE/deals/$MATCH_ID")
+DEAL_STATUS=$(echo "$DEAL" | json "print(d['match']['status'])")
+[ "$DEAL_STATUS" = "matched" ] && ok "deal status is 'matched'" || fail "expected 'matched', got '$DEAL_STATUS'"
 
-echo ""
-echo "=== 6. Negotiation round 2: freelancer moves ==="
-curl -s -X POST "$BASE/negotiate/$MATCH_ID" -H "Content-Type: application/json" -d '{
-  "proposer_role": "freelancer",
-  "proposed_rate": 62,
-  "proposed_start_date": "2025-03-10",
-  "proposed_hours": 28,
-  "proposed_duration_weeks": 12
-}' | python3 -m json.tool
+# --- 6. Send a negotiation message ---
+echo "6. Negotiate: alice sends message"
+MSG1=$(curl -sf -X POST "$BASE/deals/$MATCH_ID/messages" -H "Content-Type: application/json" -d '{
+  "agent_id": "agent-alice",
+  "content": "Hi! I saw we matched. I can start March 1st at 65 EUR/h for 30h/week.",
+  "message_type": "negotiation"
+}')
+MSG1_STATUS=$(echo "$MSG1" | json "print(d['status'])")
+[ "$MSG1_STATUS" = "negotiating" ] && ok "deal moved to 'negotiating'" || fail "expected 'negotiating', got '$MSG1_STATUS'"
 
-echo ""
-echo "=== 7. Negotiation round 2: client moves ==="
-curl -s -X POST "$BASE/negotiate/$MATCH_ID" -H "Content-Type: application/json" -d '{
-  "proposer_role": "client",
-  "proposed_rate": 52,
-  "proposed_start_date": "2025-03-12",
-  "proposed_hours": 26,
-  "proposed_duration_weeks": 12
-}' | python3 -m json.tool
+# --- 7. Counter-proposal from bob ---
+echo "7. Negotiate: bob sends counter-proposal"
+MSG2=$(curl -sf -X POST "$BASE/deals/$MATCH_ID/messages" -H "Content-Type: application/json" -d '{
+  "agent_id": "agent-bob",
+  "content": "Looks good! How about 55 EUR/h, 25h/week, starting March 15?",
+  "message_type": "proposal",
+  "proposed_terms": {
+    "rate": 55,
+    "hours_per_week": 25,
+    "start_date": "2025-03-15",
+    "duration_weeks": 12
+  }
+}')
+MSG2_STATUS=$(echo "$MSG2" | json "print(d['status'])")
+[ "$MSG2_STATUS" = "proposed" ] && ok "deal moved to 'proposed'" || fail "expected 'proposed', got '$MSG2_STATUS'"
 
-echo ""
-echo "=== 8. Negotiation round 3: freelancer converges ==="
-curl -s -X POST "$BASE/negotiate/$MATCH_ID" -H "Content-Type: application/json" -d '{
-  "proposer_role": "freelancer",
-  "proposed_rate": 55,
-  "proposed_start_date": "2025-03-12",
-  "proposed_hours": 26,
-  "proposed_duration_weeks": 12
-}' | python3 -m json.tool
+# --- 8. Check deal messages ---
+echo "8. Verify messages in deal"
+DETAIL=$(curl -sf "$BASE/deals/$MATCH_ID")
+MSG_COUNT=$(echo "$DETAIL" | json "print(len(d['messages']))")
+[ "$MSG_COUNT" -eq 2 ] && ok "2 messages recorded" || fail "expected 2 messages, got $MSG_COUNT"
 
-echo ""
-echo "=== 9. Check negotiation status ==="
-curl -s "$BASE/negotiate/$MATCH_ID" | python3 -m json.tool
-
-echo ""
-echo "=== 10. Freelancer approves ==="
-curl -s -X POST "$BASE/negotiate/$MATCH_ID/approve" -H "Content-Type: application/json" -d '{
-  "agent_id": "freelancer-alice",
-  "role": "freelancer",
+# --- 9. Alice approves ---
+echo "9. Alice approves"
+APP1=$(curl -sf -X POST "$BASE/deals/$MATCH_ID/approve" -H "Content-Type: application/json" -d '{
+  "agent_id": "agent-alice",
   "approved": true
-}' | python3 -m json.tool
+}')
+APP1_STATUS=$(echo "$APP1" | json "print(d['status'])")
+[ "$APP1_STATUS" = "waiting" ] && ok "alice approved, waiting for bob" || fail "expected 'waiting', got '$APP1_STATUS'"
 
-echo ""
-echo "=== 11. Client approves ==="
-curl -s -X POST "$BASE/negotiate/$MATCH_ID/approve" -H "Content-Type: application/json" -d '{
-  "agent_id": "client-bob",
-  "role": "client",
+# --- 10. Bob approves ---
+echo "10. Bob approves"
+APP2=$(curl -sf -X POST "$BASE/deals/$MATCH_ID/approve" -H "Content-Type: application/json" -d '{
+  "agent_id": "agent-bob",
   "approved": true
-}' | python3 -m json.tool
+}')
+APP2_STATUS=$(echo "$APP2" | json "print(d['status'])")
+[ "$APP2_STATUS" = "approved" ] && ok "deal approved by both parties!" || fail "expected 'approved', got '$APP2_STATUS'"
+
+# --- 11. List deals for alice ---
+echo "11. List agent deals"
+DEALS=$(curl -sf "$BASE/deals?agent_id=agent-alice")
+DEAL_COUNT=$(echo "$DEALS" | json "print(len(d['deals']))")
+[ "$DEAL_COUNT" -ge 1 ] && ok "agent-alice has $DEAL_COUNT deal(s)" || fail "no deals found"
+
+# --- 12. Verify final deal status ---
+echo "12. Final deal status"
+FINAL=$(curl -sf "$BASE/deals/$MATCH_ID")
+FINAL_STATUS=$(echo "$FINAL" | json "print(d['match']['status'])")
+APP_COUNT=$(echo "$FINAL" | json "print(len(d['approvals']))")
+[ "$FINAL_STATUS" = "approved" ] && ok "final status: approved" || fail "expected 'approved', got '$FINAL_STATUS'"
+[ "$APP_COUNT" -eq 2 ] && ok "$APP_COUNT approvals recorded" || fail "expected 2 approvals, got $APP_COUNT"
+
+# --- 13. Deactivate profiles ---
+echo "13. Cleanup: deactivate profiles"
+DEL=$(curl -sf -X DELETE "$BASE/connect?agent_id=agent-alice")
+DEL_COUNT=$(echo "$DEL" | json "print(d['deactivated_count'])")
+[ "$DEL_COUNT" -ge 1 ] && ok "deactivated $DEL_COUNT profile(s) for agent-alice" || fail "deactivation failed"
+
+# --- 14. Re-register replaces old profile ---
+echo "14. Re-register (replace) test"
+R1=$(curl -sf -X POST "$BASE/connect" -H "Content-Type: application/json" -d '{
+  "agent_id": "agent-bob",
+  "side": "seeking",
+  "category": "frontend-dev",
+  "params": { "skills": ["vue"] },
+  "description": "Changed my mind, want Vue"
+}')
+REPLACED=$(echo "$R1" | json "print(d.get('replaced_profile_id', 'none'))")
+[ "$REPLACED" != "none" ] && ok "old profile replaced: $REPLACED" || fail "expected replacement"
 
 echo ""
-echo "=== 12. List negotiations for freelancer ==="
-curl -s "$BASE/negotiations/freelancer-alice" | python3 -m json.tool
-
-echo ""
-echo "=== DONE ==="
+echo "=== Results: $PASS passed, $FAIL failed ==="
+[ "$FAIL" -eq 0 ] && echo "All tests passed! 🎉" || { echo "Some tests failed."; exit 1; }
