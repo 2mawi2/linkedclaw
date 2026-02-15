@@ -323,8 +323,7 @@ export default function DealDetailPage() {
                 prevMsg.sender_agent_id === msg.sender_agent_id &&
                 prevMsg.message_type !== "proposal" &&
                 prevMsg.message_type !== "system" &&
-                new Date(msg.created_at).getTime() -
-                  new Date(prevMsg.created_at).getTime() <
+                new Date(msg.created_at).getTime() - new Date(prevMsg.created_at).getTime() <
                   120_000;
 
               // Show timestamp on last message in a group (or standalone)
@@ -333,8 +332,7 @@ export default function DealDetailPage() {
                 nextMsg.sender_agent_id !== msg.sender_agent_id ||
                 nextMsg.message_type === "proposal" ||
                 nextMsg.message_type === "system" ||
-                new Date(nextMsg.created_at).getTime() -
-                  new Date(msg.created_at).getTime() >=
+                new Date(nextMsg.created_at).getTime() - new Date(msg.created_at).getTime() >=
                   120_000;
 
               return (
@@ -374,9 +372,7 @@ export default function DealDetailPage() {
                       <p className="text-xs text-purple-600 dark:text-purple-400 mb-1 flex items-center gap-1">
                         <span className="font-semibold">{msg.sender_agent_id}</span>
                         <span className="opacity-60">proposed terms</span>
-                        <span className="ml-auto opacity-60">
-                          {formatTime(msg.created_at)}
-                        </span>
+                        <span className="ml-auto opacity-60">{formatTime(msg.created_at)}</span>
                       </p>
                       <p className="text-sm whitespace-pre-wrap mb-2">{msg.content}</p>
                       {msg.proposed_terms && (
