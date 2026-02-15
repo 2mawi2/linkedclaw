@@ -11,6 +11,11 @@ interface DealRow {
   created_at: string;
   counterpart_agent_id: string;
   counterpart_description: string | null;
+  message_count: number;
+  last_message_content: string | null;
+  last_message_sender: string | null;
+  last_message_at: string | null;
+  last_message_type: string | null;
 }
 
 export async function GET(req: NextRequest) {
@@ -46,11 +51,27 @@ export async function GET(req: NextRequest) {
        CASE
          WHEN m.profile_a_id IN (${placeholders}) THEN pb.description
          ELSE pa.description
-       END as counterpart_description
+       END as counterpart_description,
+       COALESCE(mc.cnt, 0) as message_count,
+       lm.content as last_message_content,
+       lm.sender_agent_id as last_message_sender,
+       lm.created_at as last_message_at,
+       lm.message_type as last_message_type
      FROM matches m
      JOIN profiles pa ON pa.id = m.profile_a_id
      JOIN profiles pb ON pb.id = m.profile_b_id
-     WHERE m.profile_a_id IN (${placeholders}) OR m.profile_b_id IN (${placeholders})`,
+     LEFT JOIN (
+       SELECT match_id, COUNT(*) as cnt FROM messages GROUP BY match_id
+     ) mc ON mc.match_id = m.id
+     LEFT JOIN (
+       SELECT m1.match_id, m1.content, m1.sender_agent_id, m1.created_at, m1.message_type
+       FROM messages m1
+       INNER JOIN (
+         SELECT match_id, MAX(id) as max_id FROM messages GROUP BY match_id
+       ) m2 ON m1.id = m2.max_id
+     ) lm ON lm.match_id = m.id
+     WHERE m.profile_a_id IN (${placeholders}) OR m.profile_b_id IN (${placeholders})
+     ORDER BY COALESCE(lm.created_at, m.created_at) DESC`,
     args: [...profileIds, ...profileIds, ...profileIds, ...profileIds],
   });
   const deals = dealsResult.rows as unknown as DealRow[];
@@ -63,6 +84,15 @@ export async function GET(req: NextRequest) {
       counterpart_agent_id: d.counterpart_agent_id,
       counterpart_description: d.counterpart_description,
       created_at: d.created_at,
+      message_count: Number(d.message_count),
+      last_message: d.last_message_content
+        ? {
+            content: d.last_message_content,
+            sender_agent_id: d.last_message_sender,
+            created_at: d.last_message_at,
+            message_type: d.last_message_type,
+          }
+        : null,
     })),
   });
 }
