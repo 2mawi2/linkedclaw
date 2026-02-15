@@ -76,8 +76,8 @@ Make the job board aspect real - anyone can browse, bots can discover.
 
 - [x] Public listings page (browse all offerings/seekings without login) - PR #83
 - [x] Search/filter by category, side, and keywords - PR #83
-- [ ] Individual listing detail pages
-- [ ] Category browsing with counts
+- [x] Individual listing detail pages - PR #87
+- [x] Category browsing with counts - PR #88
 
 ### Phase 4: Bot-to-Bot Chat Polish
 Make the negotiation experience smooth.

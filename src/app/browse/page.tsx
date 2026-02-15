@@ -14,6 +14,46 @@ interface Profile {
   created_at: string;
 }
 
+interface CategoryCount {
+  category: string;
+  count: number;
+  offering: number;
+  seeking: number;
+}
+
+const CATEGORY_ICONS: Record<string, string> = {
+  "freelance-dev": "💻",
+  "ai-ml": "🤖",
+  devops: "⚙️",
+  design: "🎨",
+  consulting: "📊",
+  "content-writing": "✍️",
+  "data-processing": "📈",
+};
+
+async function getCategories(): Promise<CategoryCount[]> {
+  const db = await ensureDb();
+  const result = await db.execute({
+    sql: `SELECT
+      category,
+      COUNT(*) as count,
+      SUM(CASE WHEN side = 'offering' THEN 1 ELSE 0 END) as offering,
+      SUM(CASE WHEN side = 'seeking' THEN 1 ELSE 0 END) as seeking
+    FROM profiles
+    WHERE active = 1
+    GROUP BY category
+    ORDER BY count DESC`,
+    args: [],
+  });
+
+  return result.rows.map((r: Record<string, unknown>) => ({
+    category: String(r.category),
+    count: Number(r.count),
+    offering: Number(r.offering),
+    seeking: Number(r.seeking),
+  }));
+}
+
 async function getListings(params: {
   category?: string;
   side?: string;
@@ -107,7 +147,12 @@ export default async function BrowsePage({
   searchParams: Promise<{ category?: string; side?: string; q?: string }>;
 }) {
   const params = await searchParams;
-  const data = await getListings(params);
+  const [data, categories] = await Promise.all([
+    getListings(params),
+    getCategories(),
+  ]);
+
+  const showCategoryCards = !params.category && !params.q && !params.side;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -140,6 +185,45 @@ export default async function BrowsePage({
           </p>
         </div>
 
+        {/* Category cards - shown on unfiltered view */}
+        {showCategoryCards && categories.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              Browse by category
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {categories.map((cat) => (
+                <Link
+                  key={cat.category}
+                  href={`/browse?category=${encodeURIComponent(cat.category)}`}
+                  className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
+                >
+                  <div className="text-2xl mb-2">
+                    {CATEGORY_ICONS[cat.category] || "📁"}
+                  </div>
+                  <div className="font-medium text-sm mb-1">{cat.category}</div>
+                  <div className="text-xs text-gray-500">
+                    {cat.count} listing{cat.count !== 1 ? "s" : ""}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5">
+                    {cat.offering > 0 && (
+                      <span className="text-green-600 dark:text-green-400">
+                        {cat.offering} offering
+                      </span>
+                    )}
+                    {cat.offering > 0 && cat.seeking > 0 && " · "}
+                    {cat.seeking > 0 && (
+                      <span className="text-blue-600 dark:text-blue-400">
+                        {cat.seeking} seeking
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Filters */}
         <form className="mb-8 flex flex-col sm:flex-row gap-3" action="/browse">
           <input
@@ -164,13 +248,11 @@ export default async function BrowsePage({
             className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent"
           >
             <option value="">All categories</option>
-            <option value="freelance-dev">Freelance Dev</option>
-            <option value="ai-ml">AI / ML</option>
-            <option value="devops">DevOps</option>
-            <option value="design">Design</option>
-            <option value="consulting">Consulting</option>
-            <option value="content-writing">Content Writing</option>
-            <option value="data-processing">Data Processing</option>
+            {categories.map((cat) => (
+              <option key={cat.category} value={cat.category}>
+                {cat.category} ({cat.count})
+              </option>
+            ))}
           </select>
           <button
             type="submit"
@@ -196,7 +278,7 @@ export default async function BrowsePage({
             )}
             {params.category && (
               <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded">
-                {params.category}
+                {CATEGORY_ICONS[params.category] || "📁"} {params.category}
               </span>
             )}
             <Link href="/browse" className="text-gray-400 hover:underline ml-2">
