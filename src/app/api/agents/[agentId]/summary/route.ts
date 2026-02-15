@@ -51,9 +51,9 @@ export async function GET(
   const allProfileIds = (allProfilesResult.rows as unknown as Array<{ id: string }>).map(p => p.id);
 
   let matchStats = { total_matches: 0, active_deals: 0, completed_deals: 0, success_rate: 0 };
+  const placeholders = allProfileIds.map(() => "?").join(",");
 
   if (allProfileIds.length > 0) {
-    const placeholders = allProfileIds.map(() => "?").join(",");
     const matchStatsResult = await db.execute({
       sql: `SELECT
               COUNT(*) as total_matches,
@@ -111,10 +111,54 @@ export async function GET(
   });
   const repRow = repResult.rows[0] as unknown as { total_reviews: number; avg_rating: number };
   const repTotal = Number(repRow.total_reviews);
+  const avgRating = repTotal > 0 ? Math.round(Number(repRow.avg_rating) * 100) / 100 : 0;
   const reputation = {
-    avg_rating: repTotal > 0 ? Math.round(Number(repRow.avg_rating) * 100) / 100 : 0,
+    avg_rating: avgRating,
     total_reviews: repTotal,
   };
+
+  // Verified categories: categories where agent has completed deals
+  let verifiedCategories: Array<{ category: string; completed_deals: number; level: string }> = [];
+  const badges: Array<{ id: string; name: string }> = [];
+
+  if (allProfileIds.length > 0) {
+    const placeholders2 = allProfileIds.map(() => "?").join(",");
+    const completedResult = await db.execute({
+      sql: `SELECT p.category, COUNT(DISTINCT m.id) as deal_count
+            FROM matches m
+            JOIN profiles p ON (p.id = m.profile_a_id OR p.id = m.profile_b_id)
+            WHERE (m.profile_a_id IN (${placeholders2}) OR m.profile_b_id IN (${placeholders2}))
+              AND m.status = 'completed'
+              AND p.agent_id = ?
+            GROUP BY p.category`,
+      args: [...allProfileIds, ...allProfileIds, agentId],
+    });
+
+    verifiedCategories = (completedResult.rows as unknown as Array<{ category: string; deal_count: number }>)
+      .map(r => ({
+        category: r.category,
+        completed_deals: Number(r.deal_count),
+        level: Number(r.deal_count) >= 10 ? "gold" : Number(r.deal_count) >= 3 ? "silver" : "bronze",
+      }))
+      .sort((a, b) => b.completed_deals - a.completed_deals);
+
+    // Count total completed deals
+    const totalCompletedResult = await db.execute({
+      sql: `SELECT COUNT(*) as cnt FROM matches
+            WHERE (profile_a_id IN (${placeholders2}) OR profile_b_id IN (${placeholders2}))
+              AND status = 'completed'`,
+      args: [...allProfileIds, ...allProfileIds],
+    });
+    const totalCompleted = Number((totalCompletedResult.rows[0] as unknown as { cnt: number }).cnt);
+
+    // Build badges
+    if (totalCompleted >= 1) badges.push({ id: "first_deal", name: "First Deal" });
+    if (totalCompleted >= 5) badges.push({ id: "prolific", name: "Prolific" });
+    if (totalCompleted >= 10) badges.push({ id: "veteran", name: "Veteran" });
+    if (verifiedCategories.length >= 3) badges.push({ id: "multi_category", name: "Multi-Category" });
+    if (repTotal >= 3 && avgRating >= 4.0) badges.push({ id: "highly_rated", name: "Highly Rated" });
+    if (repTotal >= 3 && avgRating >= 4.8) badges.push({ id: "exceptional", name: "Exceptional" });
+  }
 
   return NextResponse.json({
     agent_id: agentId,
@@ -127,6 +171,8 @@ export async function GET(
     })),
     match_stats: matchStats,
     reputation,
+    verified_categories: verifiedCategories,
+    badges,
     recent_activity: recentActivity,
     member_since: memberSince,
     category_breakdown: categoryBreakdown,
