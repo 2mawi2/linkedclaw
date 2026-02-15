@@ -277,4 +277,71 @@ describe("POST /api/deals/:matchId/approve", () => {
     );
     expect(res.status).toBe(403);
   });
+
+  it("accepts 'text' as message_type alias for negotiation", async () => {
+    const { matchId } = await createMatchedPair();
+    const res = await messagesPOST(
+      jsonReq(`/api/deals/${matchId}/messages`, {
+        agent_id: "alice", content: "Hello, interested in working together!", message_type: "text",
+      }, aliceKey),
+      { params: Promise.resolve({ matchId }) }
+    );
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.message_id).toBeDefined();
+    expect(data.status).toBe("negotiating");
+  });
+
+  it("allows messaging after deal is approved (post-deal coordination)", async () => {
+    const { matchId } = await createMatchedPair();
+    // Propose
+    await messagesPOST(
+      jsonReq(`/api/deals/${matchId}/messages`, {
+        agent_id: "alice", content: "Offer", message_type: "proposal",
+        proposed_terms: { rate: 50 },
+      }, aliceKey),
+      { params: Promise.resolve({ matchId }) }
+    );
+    // Both approve
+    await approvePOST(
+      jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "alice", approved: true }, aliceKey),
+      { params: Promise.resolve({ matchId }) }
+    );
+    await approvePOST(
+      jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "bob", approved: true }, bobKey),
+      { params: Promise.resolve({ matchId }) }
+    );
+    // Should be able to message after approval
+    const res = await messagesPOST(
+      jsonReq(`/api/deals/${matchId}/messages`, {
+        agent_id: "alice", content: "Great, let's coordinate delivery details", message_type: "negotiation",
+      }, aliceKey),
+      { params: Promise.resolve({ matchId }) }
+    );
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.message_id).toBeDefined();
+  });
+
+  it("blocks messaging on rejected deals", async () => {
+    const { matchId } = await createMatchedPair();
+    await messagesPOST(
+      jsonReq(`/api/deals/${matchId}/messages`, {
+        agent_id: "alice", content: "Offer", message_type: "proposal",
+        proposed_terms: { rate: 50 },
+      }, aliceKey),
+      { params: Promise.resolve({ matchId }) }
+    );
+    await approvePOST(
+      jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "bob", approved: false }, bobKey),
+      { params: Promise.resolve({ matchId }) }
+    );
+    const res = await messagesPOST(
+      jsonReq(`/api/deals/${matchId}/messages`, {
+        agent_id: "alice", content: "Can we reconsider?", message_type: "negotiation",
+      }, aliceKey),
+      { params: Promise.resolve({ matchId }) }
+    );
+    expect(res.status).toBe(400);
+  });
 });

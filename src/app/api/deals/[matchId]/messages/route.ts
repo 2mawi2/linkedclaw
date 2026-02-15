@@ -42,9 +42,11 @@ export async function POST(
     return NextResponse.json({ error: "content is required and must be a non-empty string" }, { status: 400 });
   }
 
-  const messageType = (b.message_type as string) ?? "negotiation";
+  let messageType = (b.message_type as string) ?? "negotiation";
+  // Accept "text" as alias for "negotiation" (agents naturally use this)
+  if (messageType === "text") messageType = "negotiation";
   if (!["negotiation", "proposal", "system"].includes(messageType)) {
-    return NextResponse.json({ error: "message_type must be 'negotiation', 'proposal', or 'system'" }, { status: 400 });
+    return NextResponse.json({ error: "message_type must be 'negotiation', 'proposal', 'system', or 'text'" }, { status: 400 });
   }
 
   if (messageType === "proposal" && (!b.proposed_terms || typeof b.proposed_terms !== "object")) {
@@ -69,8 +71,9 @@ export async function POST(
     return NextResponse.json({ error: "Deal not found" }, { status: 404 });
   }
 
-  if (match.status === "approved" || match.status === "rejected" || match.status === "expired") {
-    return NextResponse.json({ error: `Deal is already ${match.status}` }, { status: 400 });
+  // Block messaging on terminal/cancelled states, but allow on approved (post-deal coordination)
+  if (match.status === "rejected" || match.status === "expired" || match.status === "cancelled") {
+    return NextResponse.json({ error: `Deal is ${match.status}, no further messages allowed` }, { status: 400 });
   }
 
   // Verify the agent is part of this deal
