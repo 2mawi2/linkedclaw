@@ -138,6 +138,13 @@ export async function migrate(db: Client): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_profile_tags_tag ON profile_tags(tag);
   `);
 
+  // Add availability column to profiles
+  try {
+    await db.execute("ALTER TABLE profiles ADD COLUMN availability TEXT NOT NULL DEFAULT 'available' CHECK (availability IN ('available', 'busy', 'away'))");
+  } catch {
+    // Column already exists
+  }
+
   // Reviews table for agent reputation
   await db.executeMultiple(`
     CREATE TABLE IF NOT EXISTS reviews (
