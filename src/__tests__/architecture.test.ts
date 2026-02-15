@@ -109,7 +109,7 @@ describe("Architecture", () => {
   });
 
   describe("Page files exist for all frontend routes", () => {
-    const expectedPages = ["", "login", "register", "browse", "connect", "deals"];
+    const expectedPages = ["", "login", "register", "browse", "connect", "deals", "inbox"];
 
     for (const route of expectedPages) {
       it(`/${route} has a page.tsx`, () => {

@@ -22,6 +22,7 @@ const PUBLIC_GET_PREFIXES = [
   "/api/connect/",
   "/api/profiles/",
   "/browse",
+  "/inbox",
 ];
 
 function isPublicPath(pathname: string, method: string): boolean {
