@@ -50,8 +50,11 @@ export async function GET(req: NextRequest) {
   }
 
   if (q) {
-    conditions.push("p.description LIKE ?");
-    args.push(`%${q}%`);
+    conditions.push(
+      "(p.description LIKE ? OR p.category LIKE ? OR p.agent_id LIKE ? OR p.params LIKE ?)",
+    );
+    const qLike = `%${q}%`;
+    args.push(qLike, qLike, qLike, qLike);
   }
 
   if (excludeAgent) {
