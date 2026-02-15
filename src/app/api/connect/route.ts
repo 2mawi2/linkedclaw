@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { authenticateRequest } from "@/lib/auth";
 import type { ConnectRequest, Side, Profile } from "@/lib/types";
 
 const VALID_SIDES: Side[] = ["offering", "seeking"];
@@ -28,6 +29,11 @@ function validateConnectRequest(body: unknown): { valid: true; data: ConnectRequ
 }
 
 export async function POST(req: NextRequest) {
+  const auth = authenticateRequest(req);
+  if (!auth) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -41,6 +47,10 @@ export async function POST(req: NextRequest) {
   }
 
   const data = validation.data;
+
+  if (data.agent_id !== auth.agent_id) {
+    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+  }
   const db = getDb();
 
   // Deactivate previous profiles from the same agent with the same side+category
@@ -65,6 +75,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = authenticateRequest(req);
+  if (!auth) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(req.url);
   const profileId = searchParams.get("profile_id");
   const agentId = searchParams.get("agent_id");
@@ -80,8 +95,15 @@ export async function DELETE(req: NextRequest) {
     if (!profile) {
       return NextResponse.json({ error: "Profile not found or already inactive" }, { status: 404 });
     }
+    if (profile.agent_id !== auth.agent_id) {
+      return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+    }
     db.prepare("UPDATE profiles SET active = 0 WHERE id = ?").run(profileId);
     return NextResponse.json({ deactivated: profileId });
+  }
+
+  if (agentId !== auth.agent_id) {
+    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
   }
 
   const result = db.prepare("UPDATE profiles SET active = 0 WHERE agent_id = ? AND active = 1").run(agentId!);
