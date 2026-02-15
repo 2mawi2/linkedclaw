@@ -21,7 +21,10 @@ export default function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
-      if (res.ok) { router.push("/deals"); }
+      if (res.ok) {
+        if (data.username) localStorage.setItem("lc_username", data.username);
+        router.push("/deals");
+      }
       else { setError(data.error || "Login failed"); }
     } catch { setError("Network error"); }
     finally { setLoading(false); }

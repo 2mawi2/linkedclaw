@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useSyncExternalStore } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 
 interface ProfileInfo {
@@ -60,13 +60,22 @@ export default function DealDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const matchId = params.matchId as string;
-  const agentId = searchParams.get("agent_id") || "";
+  const queryAgentId = searchParams.get("agent_id") || "";
+  const [agentId, setAgentId] = useState(queryAgentId);
 
   const [data, setData] = useState<DealData | null>(null);
   const [error, setError] = useState("");
   const [approving, setApproving] = useState(false);
   const [approvalResult, setApprovalResult] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-detect logged-in user from localStorage if not in URL
+  useEffect(() => {
+    if (!agentId) {
+      const stored = typeof window !== "undefined" ? localStorage.getItem("lc_username") : null;
+      if (stored) setAgentId(stored);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchDeal = useCallback(async () => {
     try {
@@ -165,7 +174,7 @@ export default function DealDetailPage() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <Link
-            href={agentId ? `/deals?prefill=${encodeURIComponent(agentId)}` : "/deals"}
+            href="/deals"
             className="text-gray-500 hover:text-foreground"
           >
             &larr; Back
@@ -316,7 +325,18 @@ export default function DealDetailPage() {
   );
 }
 
+function getStoredUsername(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("lc_username");
+}
+
 function Nav() {
+  const username = useSyncExternalStore(
+    (cb) => { window.addEventListener("storage", cb); return () => window.removeEventListener("storage", cb); },
+    getStoredUsername,
+    () => null,
+  );
+
   return (
     <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-6">
       <Link href="/" className="font-bold text-lg">
@@ -331,6 +351,23 @@ function Nav() {
       <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Deals
       </Link>
+      <div className="ml-auto flex items-center gap-4">
+        {username ? (
+          <>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{username}</span>
+            <button
+              onClick={() => { localStorage.removeItem("lc_username"); window.location.href = "/"; }}
+              className="text-sm text-gray-500 hover:text-foreground"
+            >
+              Sign out
+            </button>
+          </>
+        ) : (
+          <Link href="/login" className="text-sm text-gray-500 hover:text-foreground">
+            Sign in
+          </Link>
+        )}
+      </div>
     </nav>
   );
 }
