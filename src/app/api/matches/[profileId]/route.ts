@@ -31,6 +31,7 @@ export async function GET(
       return {
         match_id: m.matchId,
         overlap: m.overlap,
+        counterpart_agent_id: m.counterpart.agent_id,
         counterpart_description: m.counterpart.description,
         counterpart_category: m.counterpart.category,
         counterpart_skills: p.skills ?? [],
