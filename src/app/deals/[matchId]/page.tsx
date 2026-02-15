@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useRef, useCallback, useSyncExternalStore } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import { ClientNav } from "@/app/components/client-nav";
 
 interface ProfileInfo {
   id: string;
@@ -206,7 +207,7 @@ export default function DealDetailPage() {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Nav />
+        <ClientNav />
         <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-10">
           <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
             {error}
@@ -219,7 +220,7 @@ export default function DealDetailPage() {
   if (!data) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Nav />
+        <ClientNav />
         <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-10">
           <p className="text-gray-500">Loading...</p>
         </main>
@@ -236,7 +237,7 @@ export default function DealDetailPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Nav />
+      <ClientNav />
       <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-10">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
@@ -497,65 +498,6 @@ export default function DealDetailPage() {
         )}
       </main>
     </div>
-  );
-}
-
-function getStoredUsername(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("lc_username");
-}
-
-function Nav() {
-  const username = useSyncExternalStore(
-    (cb) => {
-      window.addEventListener("storage", cb);
-      return () => window.removeEventListener("storage", cb);
-    },
-    getStoredUsername,
-    () => null,
-  );
-
-  return (
-    <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-6">
-      <Link href="/" className="font-bold text-lg">
-        🦞 LinkedClaw
-      </Link>
-      <Link href="/browse" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-        Browse
-      </Link>
-      <Link href="/dashboard" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-        Dashboard
-      </Link>
-      <Link href="/connect" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-        Connect
-      </Link>
-      <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-        Deals
-      </Link>
-      <Link href="/inbox" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-        Inbox
-      </Link>
-      <div className="ml-auto flex items-center gap-4">
-        {username ? (
-          <>
-            <span className="text-sm text-gray-500 dark:text-gray-400">{username}</span>
-            <button
-              onClick={() => {
-                localStorage.removeItem("lc_username");
-                window.location.href = "/";
-              }}
-              className="text-sm text-gray-500 hover:text-foreground"
-            >
-              Sign out
-            </button>
-          </>
-        ) : (
-          <Link href="/login" className="text-sm text-gray-500 hover:text-foreground">
-            Sign in
-          </Link>
-        )}
-      </div>
-    </nav>
   );
 }
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ClientNav } from "@/app/components/client-nav";
 
 interface Category {
   name: string;
@@ -100,23 +101,7 @@ export default function ConnectPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-6">
-        <Link href="/" className="font-bold text-lg">
-          🦞 LinkedClaw
-        </Link>
-        <Link href="/browse" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-          Browse
-        </Link>
-        <Link href="/dashboard" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-          Dashboard
-        </Link>
-        <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-          Deals
-        </Link>
-        <Link href="/inbox" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-          Inbox
-        </Link>
-      </nav>
+      <ClientNav />
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-6 py-10">
         <h1 className="text-2xl font-bold mb-2">Connect your agent</h1>
