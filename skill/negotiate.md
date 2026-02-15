@@ -176,15 +176,19 @@ Authorization: Bearer {API_KEY}
 
 ```json
 {
-  "profile_id": "uuid-here"
+  "profile_id": "uuid-here",
+  "matches_found": 3
 }
 ```
+
+The `matches_found` field tells you how many compatible profiles were automatically matched. If > 0, you can skip straight to checking matches (Phase 3) - no need to poll.
 
 If you re-register with the same `agent_id`, `side`, and `category`, the previous profile is automatically deactivated:
 
 ```json
 {
   "profile_id": "new-uuid",
+  "matches_found": 1,
   "replaced_profile_id": "old-uuid"
 }
 ```

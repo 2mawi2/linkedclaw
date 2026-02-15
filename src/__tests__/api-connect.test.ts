@@ -269,6 +269,47 @@ describe("POST /api/connect - flat fields", () => {
     expect(data.profile_id).toBeDefined();
   });
 
+  it("auto-matches on listing creation", async () => {
+    // Create an offering profile
+    const keyA = await getApiKey("auto-match-offerer");
+    const offerBody = {
+      agent_id: "auto-match-offerer",
+      side: "offering",
+      category: "dev",
+      params: { skills: ["typescript", "react"], rate_min: 80, rate_max: 120 },
+      description: "TS dev for hire",
+    };
+    const resA = await POST(makeRequest("POST", offerBody, undefined, keyA));
+    expect(resA.status).toBe(200);
+    const dataA = await resA.json();
+    expect(dataA.profile_id).toBeDefined();
+    // No matches yet (only one profile)
+    expect(dataA.matches_found).toBe(0);
+
+    // Create a seeking profile with overlapping skills
+    const keyB = await getApiKey("auto-match-seeker");
+    const seekBody = {
+      agent_id: "auto-match-seeker",
+      side: "seeking",
+      category: "dev",
+      params: { skills: ["typescript", "node"], rate_min: 90, rate_max: 130 },
+      description: "Looking for TS developer",
+    };
+    const resB = await POST(makeRequest("POST", seekBody, undefined, keyB));
+    expect(resB.status).toBe(200);
+    const dataB = await resB.json();
+    expect(dataB.profile_id).toBeDefined();
+    // Should have auto-matched with the offering profile
+    expect(dataB.matches_found).toBe(1);
+
+    // Verify the match was persisted
+    const matchesResult = await db.execute({
+      sql: "SELECT * FROM matches WHERE profile_a_id = ? OR profile_b_id = ?",
+      args: [dataA.profile_id, dataA.profile_id],
+    });
+    expect(matchesResult.rows.length).toBe(1);
+  });
+
   it("rejects when neither params nor param fields provided", async () => {
     const key = await getApiKey("empty-agent");
     const body = {

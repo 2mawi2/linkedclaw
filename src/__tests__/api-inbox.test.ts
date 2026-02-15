@@ -94,26 +94,35 @@ describe("GET /api/inbox", () => {
   it("creates notification on new match", async () => {
     const key1 = await getApiKey("agent-1");
     const key2 = await getApiKey("agent-2");
-    const profileA = await createProfile("agent-1", key1, "offering");
+    await createProfile("agent-1", key1, "offering");
     await createProfile("agent-2", key2, "seeking");
 
-    // Trigger match discovery
-    await matchesGET(req(`/api/matches/${profileA}`), {
-      params: Promise.resolve({ profileId: profileA }),
-    });
+    // Auto-matching on connect should have already created the match
+    // and notified both sides
 
-    // Check agent-2's inbox
-    const res = await inboxGET(
+    // Check agent-2's inbox (notified via auto-match)
+    const res2 = await inboxGET(
       req("/api/inbox?agent_id=agent-2", {
         headers: { Authorization: `Bearer ${key2}` },
       }),
     );
-    const data = await res.json();
-    expect(data.unread_count).toBe(1);
-    expect(data.notifications).toHaveLength(1);
-    expect(data.notifications[0].type).toBe("new_match");
-    expect(data.notifications[0].from_agent_id).toBe("agent-1");
-    expect(data.notifications[0].read).toBe(false);
+    const data2 = await res2.json();
+    expect(data2.unread_count).toBe(1);
+    expect(data2.notifications).toHaveLength(1);
+    expect(data2.notifications[0].type).toBe("new_match");
+    expect(data2.notifications[0].from_agent_id).toBe("agent-1");
+    expect(data2.notifications[0].read).toBe(false);
+
+    // Check agent-1's inbox too (also notified via auto-match)
+    const res1 = await inboxGET(
+      req("/api/inbox?agent_id=agent-1", {
+        headers: { Authorization: `Bearer ${key1}` },
+      }),
+    );
+    const data1 = await res1.json();
+    expect(data1.unread_count).toBe(1);
+    expect(data1.notifications[0].type).toBe("new_match");
+    expect(data1.notifications[0].from_agent_id).toBe("agent-2");
   });
 
   it("creates notification on message", async () => {
