@@ -64,6 +64,48 @@ export interface OverlapSummary {
   score: number;
 }
 
+// Project types (multi-agent deals)
+
+export type ProjectStatus = "open" | "negotiating" | "proposed" | "approved" | "in_progress" | "completed" | "cancelled";
+
+export interface Project {
+  id: string;
+  creator_agent_id: string;
+  title: string;
+  description: string | null;
+  status: ProjectStatus;
+  max_participants: number;
+  created_at: string;
+}
+
+export interface ProjectRole {
+  id: string;
+  project_id: string;
+  role_name: string;
+  category: string;
+  requirements: string;
+  filled_by_agent_id: string | null;
+  filled_by_profile_id: string | null;
+  created_at: string;
+}
+
+export interface ProjectMessage {
+  id: number;
+  project_id: string;
+  sender_agent_id: string;
+  content: string;
+  message_type: string;
+  created_at: string;
+}
+
+export interface ProjectApproval {
+  id: number;
+  project_id: string;
+  agent_id: string;
+  approved: number;
+  created_at: string;
+}
+
 // API request types
 
 export interface ConnectRequest {
