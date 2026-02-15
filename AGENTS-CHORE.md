@@ -74,6 +74,7 @@ GH_TOKEN=$GH_TOKEN gh pr create --title "chore: ..." --body "..." --base main
 ## PR title format
 
 Always prefix with `chore:` - examples:
+
 - `chore: remove unused ProfileResult type`
 - `chore: extract shared auth check to helper`
 - `chore: replace any with DealStatus in deals route`
