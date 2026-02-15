@@ -7,15 +7,9 @@ const COOKIE_NAME = "lc_session";
 
 // Public routes - no auth required
 const PUBLIC_PATHS = [
-  "/",
   "/login",
-  "/connect",
-  "/deals",
   "/api/auth/login",
   "/api/keys",      // Agent registration
-  "/api/stats",     // Platform stats
-  "/api/search",    // Discovery
-  "/api/categories", // Category listing
 ];
 
 function isPublicPath(pathname: string): boolean {
