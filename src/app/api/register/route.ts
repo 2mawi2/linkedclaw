@@ -39,7 +39,8 @@ export async function POST(req: NextRequest) {
   // Block test-like usernames in production to prevent junk data
   if (process.env.VERCEL) {
     const lower = username.toLowerCase();
-    const blocked = /^(test|e2etest|skilltest|prod-test|persistcheck|persistence-test|lobsterbot|clientbot|testbot|testtesttest)/;
+    const blocked =
+      /^(test|e2etest|skilltest|prod-test|persistcheck|persistence-test|lobsterbot|clientbot|testbot|testtesttest)/;
     if (blocked.test(lower)) {
       return NextResponse.json(
         { error: "Username not allowed. Please choose a more descriptive name for your agent." },

@@ -57,23 +57,47 @@ export async function POST(req: NextRequest) {
   const purged: string[] = [];
   for (const username of usernames) {
     // Get user and their profiles
-    const user = await db.execute({ sql: "SELECT id FROM users WHERE username = ?", args: [username] });
+    const user = await db.execute({
+      sql: "SELECT id FROM users WHERE username = ?",
+      args: [username],
+    });
     if (user.rows.length === 0) continue;
 
     const userId = String(user.rows[0].id);
 
     // Get all profiles for this agent_id
-    const profiles = await db.execute({ sql: "SELECT id FROM profiles WHERE agent_id = ?", args: [username] });
+    const profiles = await db.execute({
+      sql: "SELECT id FROM profiles WHERE agent_id = ?",
+      args: [username],
+    });
     const profileIds = profiles.rows.map((r) => String(r.id));
 
     // Delete associated data
     for (const pid of profileIds) {
-      await db.execute({ sql: "DELETE FROM messages WHERE match_id IN (SELECT id FROM matches WHERE profile_a_id = ? OR profile_b_id = ?)", args: [pid, pid] });
-      await db.execute({ sql: "DELETE FROM approvals WHERE match_id IN (SELECT id FROM matches WHERE profile_a_id = ? OR profile_b_id = ?)", args: [pid, pid] });
-      await db.execute({ sql: "DELETE FROM deal_milestones WHERE match_id IN (SELECT id FROM matches WHERE profile_a_id = ? OR profile_b_id = ?)", args: [pid, pid] });
-      await db.execute({ sql: "DELETE FROM deal_completions WHERE match_id IN (SELECT id FROM matches WHERE profile_a_id = ? OR profile_b_id = ?)", args: [pid, pid] });
-      await db.execute({ sql: "DELETE FROM reviews WHERE match_id IN (SELECT id FROM matches WHERE profile_a_id = ? OR profile_b_id = ?)", args: [pid, pid] });
-      await db.execute({ sql: "DELETE FROM matches WHERE profile_a_id = ? OR profile_b_id = ?", args: [pid, pid] });
+      await db.execute({
+        sql: "DELETE FROM messages WHERE match_id IN (SELECT id FROM matches WHERE profile_a_id = ? OR profile_b_id = ?)",
+        args: [pid, pid],
+      });
+      await db.execute({
+        sql: "DELETE FROM approvals WHERE match_id IN (SELECT id FROM matches WHERE profile_a_id = ? OR profile_b_id = ?)",
+        args: [pid, pid],
+      });
+      await db.execute({
+        sql: "DELETE FROM deal_milestones WHERE match_id IN (SELECT id FROM matches WHERE profile_a_id = ? OR profile_b_id = ?)",
+        args: [pid, pid],
+      });
+      await db.execute({
+        sql: "DELETE FROM deal_completions WHERE match_id IN (SELECT id FROM matches WHERE profile_a_id = ? OR profile_b_id = ?)",
+        args: [pid, pid],
+      });
+      await db.execute({
+        sql: "DELETE FROM reviews WHERE match_id IN (SELECT id FROM matches WHERE profile_a_id = ? OR profile_b_id = ?)",
+        args: [pid, pid],
+      });
+      await db.execute({
+        sql: "DELETE FROM matches WHERE profile_a_id = ? OR profile_b_id = ?",
+        args: [pid, pid],
+      });
       await db.execute({ sql: "DELETE FROM profile_tags WHERE profile_id = ?", args: [pid] });
     }
     await db.execute({ sql: "DELETE FROM profiles WHERE agent_id = ?", args: [username] });
