@@ -33,7 +33,11 @@ function validateConnectRequest(
         ...(b.remote != null ? { remote: b.remote } : {}),
       };
     } else {
-      return { valid: false, error: "params must be an object, or provide top-level skills/rate_min/rate_max/currency/remote fields" };
+      return {
+        valid: false,
+        error:
+          "params must be an object, or provide top-level skills/rate_min/rate_max/currency/remote fields",
+      };
     }
   }
   if (b.description !== undefined && typeof b.description !== "string") {
