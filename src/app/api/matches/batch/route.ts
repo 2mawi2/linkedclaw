@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authenticateRequest } from "@/lib/auth";
+import { authenticateAny } from "@/lib/auth";
 import { findMatches } from "@/lib/matching";
 import { ensureDb } from "@/lib/db";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
   // Auth check
-  const auth = await authenticateRequest(req);
+  const auth = await authenticateAny(req);
   if (!auth) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }

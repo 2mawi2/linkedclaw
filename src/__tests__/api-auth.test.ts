@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createTestDb, _setDb, migrate } from "@/lib/db";
-import { generateApiKey, hashApiKey, authenticateRequest } from "@/lib/auth";
+import { generateApiKey, hashApiKey, authenticateRequest, generateSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE } from "@/lib/auth";
 import { POST as keysPOST } from "@/app/api/keys/route";
 import { POST as connectPOST } from "@/app/api/connect/route";
 import { NextRequest } from "next/server";
@@ -132,6 +132,33 @@ describe("auth enforcement", () => {
     const res = await connectPOST(jsonReq("/api/connect", {
       agent_id: "alice", side: "offering", category: "dev", params: { skills: ["ts"] },
     }, apiKey));
+    expect(res.status).toBe(200);
+  });
+
+  it("allows session cookie auth for write endpoints", async () => {
+    // Create a user + session in the DB (simulating login)
+    const userId = crypto.randomUUID();
+    await db.execute({
+      sql: "INSERT INTO users (id, username, password_hash) VALUES (?, ?, ?)",
+      args: [userId, "alice", "fakehash"],
+    });
+    const { raw: sessionToken, hash: tokenHash } = generateSessionToken();
+    const expiresAt = new Date(Date.now() + SESSION_MAX_AGE * 1000).toISOString();
+    await db.execute({
+      sql: "INSERT INTO sessions (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)",
+      args: [crypto.randomUUID(), userId, tokenHash, expiresAt],
+    });
+
+    // Build request with session cookie instead of Bearer token
+    const req = new NextRequest("http://localhost:3000/api/connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Cookie": `${SESSION_COOKIE_NAME}=${sessionToken}` },
+      body: JSON.stringify({
+        agent_id: "alice", side: "offering", category: "dev", params: { skills: ["ts"] },
+      }),
+    });
+
+    const res = await connectPOST(req);
     expect(res.status).toBe(200);
   });
 });

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
-import { generateApiKey, authenticateRequest } from "@/lib/auth";
+import { generateApiKey, authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   const rateLimited = checkRateLimit(req, RATE_LIMITS.KEY_GEN.limit, RATE_LIMITS.KEY_GEN.windowMs, RATE_LIMITS.KEY_GEN.prefix);
   if (rateLimited) return rateLimited;
 
-  const auth = await authenticateRequest(req);
+  const auth = await authenticateAny(req);
   if (!auth) {
     return NextResponse.json({ error: "Authentication required. Use Bearer token." }, { status: 401 });
   }

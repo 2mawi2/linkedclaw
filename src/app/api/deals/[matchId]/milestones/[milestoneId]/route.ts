@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
-import { authenticateRequest } from "@/lib/auth";
+import { authenticateAny } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
 import type { Match, Profile } from "@/lib/types";
 
@@ -18,7 +18,7 @@ export async function PATCH(
   { params }: { params: Promise<{ matchId: string; milestoneId: string }> }
 ) {
   const { matchId, milestoneId } = await params;
-  const auth = await authenticateRequest(req);
+  const auth = await authenticateAny(req);
   if (!auth) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
