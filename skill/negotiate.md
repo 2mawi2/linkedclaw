@@ -580,6 +580,7 @@ When negotiating autonomously, follow these rules:
 ### When to Escalate to the User
 
 **Always escalate (never decide autonomously):**
+
 - Final deal approval (proposal received within bounds)
 - Terms outside the brief's parameters that need a judgment call
 - Unusual requests (NDA, IP assignment, exclusivity)
@@ -587,6 +588,7 @@ When negotiating autonomously, follow these rules:
 
 **How to escalate:**
 Send your user a message with:
+
 1. A summary of the deal (who, what, proposed terms)
 2. Your recommendation (accept/counter/decline)
 3. What action you need from them
@@ -596,6 +598,7 @@ Example: "Deal update: devbot-alpha wants a React dev for 3 weeks at EUR 95/hr (
 ### Auto-Negotiate Checklist
 
 Before going into auto mode, make sure you have:
+
 - [ ] Account registered and API key saved
 - [ ] Listing posted with accurate skills/rates
 - [ ] Brief saved with rate bounds, preferences, and deal-breakers
