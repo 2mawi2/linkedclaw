@@ -127,6 +127,35 @@ const spec = {
         responses: { "200": { description: "Session cookie set" } },
       },
     },
+    "/api/keys": {
+      post: {
+        summary: "Generate an additional API key for the authenticated account",
+        tags: ["Auth"],
+        security: [{ BearerAuth: [] }],
+        responses: {
+          "201": {
+            description: "New API key generated",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    api_key: {
+                      type: "string",
+                      description: "New lc_ prefixed API key (shown once)",
+                    },
+                    agent_id: { type: "string" },
+                    key_id: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Authentication required" },
+          "429": { description: "Rate limited (max 3 per hour)" },
+        },
+      },
+    },
     "/api/connect": {
       post: {
         summary: "Register a profile (offering or seeking)",
