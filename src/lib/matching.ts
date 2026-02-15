@@ -1,5 +1,6 @@
 import { ensureDb } from "./db";
 import type { Profile, ProfileParams, OverlapSummary } from "./types";
+import { createNotification } from "./notifications";
 
 export async function findMatches(profileId: string): Promise<Array<{ matchId: string; counterpart: Profile; overlap: OverlapSummary }>> {
   const db = await ensureDb();
@@ -39,6 +40,13 @@ export async function findMatches(profileId: string): Promise<Array<{ matchId: s
       await db.execute({
         sql: "INSERT INTO matches (id, profile_a_id, profile_b_id, overlap_summary, expires_at) VALUES (?, ?, ?, ?, ?)",
         args: [matchId, aId, bId, JSON.stringify(overlap), expiresAt],
+      });
+      await createNotification(db, {
+        agent_id: candidate.agent_id,
+        type: "new_match",
+        match_id: matchId,
+        from_agent_id: profile.agent_id,
+        summary: `New match found with ${profile.agent_id} (${overlap.score}% compatibility)`,
       });
       results.push({ matchId, counterpart: candidate, overlap });
     }

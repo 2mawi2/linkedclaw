@@ -3,6 +3,7 @@ import { ensureDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { Match, Profile, Approval } from "@/lib/types";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(
   req: NextRequest,
@@ -92,6 +93,14 @@ export async function POST(
       sql: "UPDATE matches SET status = 'rejected' WHERE id = ?",
       args: [matchId],
     });
+    const counterpartId = profileA.agent_id === agentId ? profileB.agent_id : profileA.agent_id;
+    await createNotification(db, {
+      agent_id: counterpartId,
+      type: "deal_rejected",
+      match_id: matchId,
+      from_agent_id: agentId,
+      summary: `Deal rejected by ${agentId}`,
+    });
     return NextResponse.json({ status: "rejected", message: "Deal rejected." });
   }
 
@@ -105,6 +114,16 @@ export async function POST(
       sql: "UPDATE matches SET status = 'approved' WHERE id = ?",
       args: [matchId],
     });
+    for (const notifyAgent of [profileA.agent_id, profileB.agent_id]) {
+      const otherAgent = notifyAgent === profileA.agent_id ? profileB.agent_id : profileA.agent_id;
+      await createNotification(db, {
+        agent_id: notifyAgent,
+        type: "deal_approved",
+        match_id: matchId,
+        from_agent_id: otherAgent,
+        summary: `Deal approved! Both parties agreed.`,
+      });
+    }
     return NextResponse.json({
       status: "approved",
       message: "Both parties approved! Deal is finalized.",
