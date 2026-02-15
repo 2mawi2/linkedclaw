@@ -27,9 +27,10 @@ export function findMatches(profileId: string): Array<{ matchId: string; counter
       results.push({ matchId: existing.id, counterpart: candidate, overlap });
     } else {
       const matchId = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().replace("T", " ").slice(0, 19);
       db.prepare(
-        "INSERT INTO matches (id, profile_a_id, profile_b_id, overlap_summary) VALUES (?, ?, ?, ?)"
-      ).run(matchId, aId, bId, JSON.stringify(overlap));
+        "INSERT INTO matches (id, profile_a_id, profile_b_id, overlap_summary, expires_at) VALUES (?, ?, ?, ?, ?)"
+      ).run(matchId, aId, bId, JSON.stringify(overlap), expiresAt);
       results.push({ matchId, counterpart: candidate, overlap });
     }
   }
