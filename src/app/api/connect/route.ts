@@ -6,6 +6,20 @@ import type { ConnectRequest, Side } from "@/lib/types";
 
 const VALID_SIDES: Side[] = ["offering", "seeking"];
 
+/** Fields that are promoted into params when sent at the top level */
+const PARAM_FIELDS = [
+  "skills",
+  "rate_min",
+  "rate_max",
+  "currency",
+  "availability",
+  "hours_min",
+  "hours_max",
+  "duration_min_weeks",
+  "duration_max_weeks",
+  "remote",
+];
+
 function validateConnectRequest(
   body: unknown,
 ): { valid: true; data: ConnectRequest } | { valid: false; error: string } {
@@ -21,9 +35,30 @@ function validateConnectRequest(
   if (!b.category || typeof b.category !== "string" || b.category.trim().length === 0) {
     return { valid: false, error: "category is required and must be a non-empty string" };
   }
+
+  // Accept top-level param fields: auto-wrap into params object
   if (!b.params || typeof b.params !== "object" || Array.isArray(b.params)) {
-    return { valid: false, error: "params must be an object" };
+    const extracted: Record<string, unknown> = {};
+    let hasParamFields = false;
+    for (const field of PARAM_FIELDS) {
+      if (field in b) {
+        extracted[field] = b[field];
+        hasParamFields = true;
+      }
+    }
+    if (hasParamFields) {
+      b.params = extracted;
+    } else if (!b.params) {
+      return {
+        valid: false,
+        error:
+          "params must be an object (or provide top-level fields like skills, rate_min, rate_max)",
+      };
+    } else {
+      return { valid: false, error: "params must be an object" };
+    }
   }
+
   if (b.description !== undefined && typeof b.description !== "string") {
     return { valid: false, error: "description must be a string" };
   }

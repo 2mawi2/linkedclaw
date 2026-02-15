@@ -233,3 +233,51 @@ describe("DELETE /api/connect", () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe("POST /api/connect - flat fields", () => {
+  it("accepts top-level skills/rate fields without params wrapper", async () => {
+    const key = await getApiKey("flat-agent");
+    const body = {
+      agent_id: "flat-agent",
+      side: "offering",
+      category: "dev",
+      skills: ["TypeScript", "React"],
+      rate_min: 80,
+      rate_max: 120,
+      currency: "EUR",
+      description: "Flat fields test",
+    };
+    const res = await POST(makeRequest("POST", body, undefined, key));
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.profile_id).toBeDefined();
+  });
+
+  it("prefers explicit params over top-level fields", async () => {
+    const key = await getApiKey("params-agent");
+    const body = {
+      agent_id: "params-agent",
+      side: "offering",
+      category: "dev",
+      params: { skills: ["Go"], rate_min: 100 },
+      skills: ["ignored"],
+      description: "Explicit params wins",
+    };
+    const res = await POST(makeRequest("POST", body, undefined, key));
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.profile_id).toBeDefined();
+  });
+
+  it("rejects when neither params nor param fields provided", async () => {
+    const key = await getApiKey("empty-agent");
+    const body = {
+      agent_id: "empty-agent",
+      side: "offering",
+      category: "dev",
+      description: "No params at all",
+    };
+    const res = await POST(makeRequest("POST", body, undefined, key));
+    expect(res.status).toBe(400);
+  });
+});
