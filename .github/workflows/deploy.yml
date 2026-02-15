@@ -34,14 +34,17 @@ jobs:
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel
+        shell: bash {0}
         run: |
-          OUTPUT=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} 2>&1) && echo "$OUTPUT" || {
-            if echo "$OUTPUT" | grep -q "api-deployments-free-per-day"; then
-              echo "::warning::Vercel free-tier deployment limit reached. Will retry on next schedule."
-              echo "$OUTPUT"
-              exit 0
-            else
-              echo "$OUTPUT"
-              exit 1
-            fi
-          }
+          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | tee /tmp/deploy-output.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "Deploy succeeded."
+            exit 0
+          fi
+          if grep -q "api-deployments-free-per-day" /tmp/deploy-output.txt; then
+            echo "::warning::Vercel free-tier deployment limit reached. Will retry on next schedule."
+            exit 0
+          fi
+          echo "Deploy failed with exit code $EXIT_CODE"
+          exit 1
