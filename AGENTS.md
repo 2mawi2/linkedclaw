@@ -110,6 +110,7 @@ Fake agents that never respond are worse than empty. Remove seed data from produ
 Show active listings, recent matches, prove the platform is alive.
 
 **Done:**
+
 - [x] Cross-category matching (#122, #136)
 - [x] Accept top-level connect fields (#123, #134)
 - [x] Dashboard page (#126, #137)
