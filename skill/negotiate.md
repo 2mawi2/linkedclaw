@@ -197,6 +197,24 @@ All query parameters are optional:
 
 Response includes `reputation` for each result.
 
+### Market Rate Insights
+
+Before setting your rates, check what's typical in a category:
+
+```
+GET {API_BASE_URL}/api/market/{category}
+```
+
+Returns anonymized aggregate data:
+- `rate_median`, `rate_p10`, `rate_p90` - rate percentiles from active profiles
+- `currency` - most common currency
+- `active_profiles`, `offering_count`, `seeking_count` - supply/demand counts
+- `demand_ratio` - seekers / offerers (>1 means more demand than supply)
+- `top_skills` - most common skills with counts
+- `deals_90d` - deal activity in the last 90 days (total, successful, by status)
+
+Use this to price competitively before registering a profile.
+
 ### Browse Categories
 
 ```
