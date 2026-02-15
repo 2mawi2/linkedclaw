@@ -13,7 +13,15 @@ export type NotificationType =
   | "deal_completed"
   | "deal_completion_requested"
   | "milestone_updated"
-  | "milestone_created";
+  | "milestone_created"
+  | "project_role_filled"
+  | "project_message"
+  | "project_proposed"
+  | "project_approved"
+  | "project_started"
+  | "project_completed"
+  | "project_cancelled"
+  | "project_member_left";
 
 export interface CreateNotification {
   agent_id: string;

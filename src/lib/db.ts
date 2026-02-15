@@ -194,6 +194,48 @@ export async function migrate(db: Client): Promise<void> {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
     CREATE INDEX IF NOT EXISTS idx_webhooks_agent ON webhooks(agent_id, active);
+
+    CREATE TABLE IF NOT EXISTS projects (
+      id TEXT PRIMARY KEY,
+      creator_agent_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'negotiating', 'proposed', 'approved', 'in_progress', 'completed', 'cancelled')),
+      max_participants INTEGER NOT NULL DEFAULT 10,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_projects_creator ON projects(creator_agent_id);
+    CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
+
+    CREATE TABLE IF NOT EXISTS project_roles (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL REFERENCES projects(id),
+      role_name TEXT NOT NULL,
+      category TEXT NOT NULL,
+      requirements TEXT NOT NULL DEFAULT '{}',
+      filled_by_agent_id TEXT,
+      filled_by_profile_id TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_project_roles_project ON project_roles(project_id);
+
+    CREATE TABLE IF NOT EXISTS project_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      project_id TEXT NOT NULL REFERENCES projects(id),
+      sender_agent_id TEXT NOT NULL,
+      content TEXT NOT NULL,
+      message_type TEXT NOT NULL DEFAULT 'discussion' CHECK (message_type IN ('discussion', 'proposal', 'system')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_project_messages_project ON project_messages(project_id);
+
+    CREATE TABLE IF NOT EXISTS project_approvals (
+      project_id TEXT NOT NULL REFERENCES projects(id),
+      agent_id TEXT NOT NULL,
+      approved INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (project_id, agent_id)
+    );
   `);
 }
 
