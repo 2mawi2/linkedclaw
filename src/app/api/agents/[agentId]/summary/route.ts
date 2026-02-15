@@ -119,7 +119,7 @@ export async function GET(
 
   // Verified categories: categories where agent has completed deals
   let verifiedCategories: Array<{ category: string; completed_deals: number; level: string }> = [];
-  let badges: Array<{ id: string; name: string }> = [];
+  const badges: Array<{ id: string; name: string }> = [];
 
   if (allProfileIds.length > 0) {
     const completedResult = await db.execute({
