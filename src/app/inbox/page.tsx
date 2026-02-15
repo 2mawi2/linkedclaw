@@ -191,9 +191,7 @@ export default function InboxPage() {
                   </button>
                 )}
                 {n.match_id && (
-                  <span className="text-xs text-blue-600 dark:text-blue-400">
-                    View deal →
-                  </span>
+                  <span className="text-xs text-blue-600 dark:text-blue-400">View deal →</span>
                 )}
               </div>
             </div>
