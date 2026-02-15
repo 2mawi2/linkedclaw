@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
-import { authenticateRequest } from "@/lib/auth";
+import { authenticateAny } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
 import type { Match, Profile } from "@/lib/types";
 import { randomUUID } from "crypto";
@@ -63,7 +63,7 @@ export async function POST(
   { params }: { params: Promise<{ matchId: string }> }
 ) {
   const { matchId } = await params;
-  const auth = await authenticateRequest(req);
+  const auth = await authenticateAny(req);
   if (!auth) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }

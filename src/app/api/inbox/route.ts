@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
-import { authenticateRequest } from "@/lib/auth";
+import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   const rateLimited = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, RATE_LIMITS.READ.prefix);
   if (rateLimited) return rateLimited;
 
-  const auth = await authenticateRequest(req);
+  const auth = await authenticateAny(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
