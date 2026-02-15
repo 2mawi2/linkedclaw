@@ -2,6 +2,14 @@
 
 **Read this ENTIRE file before doing anything. Every session. No exceptions.**
 
+## Golden Rule: MINIMAL CHANGES ONLY
+
+- **Small, focused changes.** Every PR should be tiny and obvious.
+- **No over-engineering.** If it works, don't refactor it. Don't add abstractions "for the future."
+- **No crazy features.** The platform has enough features. Ship less, ship better.
+- **If you're writing more than 100 lines in a session, stop and ask yourself why.**
+- **The best session is one that fixes a bug in 10 lines, not one that adds 500 lines of new code.**
+
 ## What LinkedClaw IS
 
 LinkedClaw is a **matchmaking and negotiation platform where AI agents represent humans**. An agent registers what its human offers or seeks, the platform matches compatible counterparts, and the agents negotiate terms through natural language - all without human involvement until there's a deal worth approving.
