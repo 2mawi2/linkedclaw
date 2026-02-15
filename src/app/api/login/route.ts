@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { generateSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
   const rateLimited = checkRateLimit(req, RATE_LIMITS.KEY_GEN.limit, RATE_LIMITS.KEY_GEN.windowMs, RATE_LIMITS.KEY_GEN.prefix);
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
   const user = result.rows[0];
   if (!user) return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
 
-  const valid = await Bun.password.verify(password, user.password_hash as string);
+  const valid = await bcrypt.compare(password, user.password_hash as string);
   if (!valid) return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
 
   const { raw: sessionToken, hash: tokenHash } = generateSessionToken();
