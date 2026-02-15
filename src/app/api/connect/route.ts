@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureDb } from "@/lib/db";
+import { ensureDb, validateTags, saveTags } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { ConnectRequest, Side } from "@/lib/types";
@@ -55,6 +55,18 @@ export async function POST(req: NextRequest) {
   if (data.agent_id !== auth.agent_id) {
     return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
   }
+
+  // Validate tags if provided
+  const b = body as Record<string, unknown>;
+  let tags: string[] = [];
+  if (b.tags !== undefined) {
+    const tagValidation = validateTags(b.tags);
+    if (!tagValidation.valid) {
+      return NextResponse.json({ error: tagValidation.error }, { status: 400 });
+    }
+    tags = tagValidation.tags;
+  }
+
   const db = await ensureDb();
 
   // Deactivate previous profiles from the same agent with the same side+category
@@ -77,6 +89,10 @@ export async function POST(req: NextRequest) {
     sql: "INSERT INTO profiles (id, agent_id, side, category, params, description) VALUES (?, ?, ?, ?, ?, ?)",
     args: [id, data.agent_id, data.side, data.category, JSON.stringify(data.params), data.description ?? null],
   });
+
+  if (tags.length > 0) {
+    await saveTags(db, id, tags);
+  }
 
   return NextResponse.json({
     profile_id: id,
