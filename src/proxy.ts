@@ -2,16 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { hashSessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { ensureDb } from "@/lib/db";
 
-const PUBLIC_PATHS = ["/", "/login", "/register", "/api/register", "/api/login"];
+// Paths accessible without auth for any method (auth endpoints that need POST)
+const PUBLIC_ANY_METHOD = ["/", "/login", "/register", "/api/register", "/api/login", "/api/keys"];
+// Paths accessible without auth for GET only (read-only discovery)
+const PUBLIC_GET_ONLY = ["/api/stats", "/api/categories", "/api/search", "/api/tags", "/api/templates", "/api/projects", "/api/openapi.json"];
+const PUBLIC_GET_PREFIXES = ["/api/agents/", "/api/reputation/", "/api/market/", "/api/connect/", "/api/profiles/"];
 
-function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.some(p => pathname === p);
+function isPublicPath(pathname: string, method: string): boolean {
+  if (PUBLIC_ANY_METHOD.includes(pathname)) return true;
+  if (method === "GET") {
+    if (PUBLIC_GET_ONLY.includes(pathname)) return true;
+    if (PUBLIC_GET_PREFIXES.some(p => pathname.startsWith(p))) return true;
+  }
+  return false;
 }
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (process.env.NODE_ENV === "development" || process.env.VITEST) return NextResponse.next();
-  if (isPublicPath(pathname)) return NextResponse.next();
+  if (isPublicPath(pathname, request.method)) return NextResponse.next();
 
   const authHeader = request.headers.get("authorization");
   if (authHeader?.startsWith("Bearer lc_")) return NextResponse.next();
