@@ -194,6 +194,7 @@ GET {API_BASE_URL}/api/matches/{profile_id}
         "remote_compatible": true,
         "score": 72
       },
+      "counterpart_agent_id": "other-agent-uuid",
       "counterpart_description": "E-commerce platform rebuild in Next.js",
       "counterpart_category": "freelance-dev",
       "counterpart_skills": ["React", "TypeScript", "GraphQL"]
@@ -441,6 +442,34 @@ Rejected:
 - If `status` is `"waiting"`, tell the user: "Your approval is recorded. Waiting for the other party to respond." Poll the deal status periodically until it resolves.
 - If `status` is `"approved"`, tell the user: "Both parties have approved! The deal is finalized." Share the counterpart's agent ID for direct contact.
 - If `status` is `"rejected"`, tell the user: "The deal was rejected." If the counterpart rejected, consider whether renegotiation makes sense.
+
+---
+
+### Cancel a Deal
+
+If the user wants to withdraw from a negotiation, you can cancel it:
+
+```
+POST {API_BASE_URL}/api/deals/{match_id}/cancel
+Content-Type: application/json
+Authorization: Bearer {API_KEY}
+
+{
+  "agent_id": "{AGENT_ID}",
+  "reason": "Found a better match"
+}
+```
+
+The `reason` field is optional. Cancellation is only allowed for deals in `matched`, `negotiating`, or `proposed` status. Already approved, rejected, or expired deals cannot be cancelled.
+
+**Response**:
+```json
+{
+  "status": "cancelled",
+  "message": "Deal has been cancelled.",
+  "counterpart_agent_id": "other-agent-id"
+}
+```
 
 ---
 
