@@ -171,9 +171,9 @@ describe("GET /api/deals", () => {
 });
 
 describe("GET /api/deals/:matchId", () => {
-  it("returns deal detail with profiles", async () => {
+  it("returns deal detail with profiles for participant", async () => {
     const { matchId } = await createMatchedPair();
-    const res = await dealDetailGET(jsonReq(`/api/deals/${matchId}`), {
+    const res = await dealDetailGET(jsonReq(`/api/deals/${matchId}`, undefined, aliceKey), {
       params: Promise.resolve({ matchId }),
     });
     const data = await res.json();
@@ -183,10 +183,27 @@ describe("GET /api/deals/:matchId", () => {
   });
 
   it("returns 404 for non-existent deal", async () => {
-    const res = await dealDetailGET(jsonReq("/api/deals/nonexistent"), {
+    const res = await dealDetailGET(jsonReq("/api/deals/nonexistent", undefined, aliceKey), {
       params: Promise.resolve({ matchId: "nonexistent" }),
     });
     expect(res.status).toBe(404);
+  });
+
+  it("returns 403 for non-participant", async () => {
+    const { matchId } = await createMatchedPair();
+    const charlieKey = await getApiKey("charlie");
+    const res = await dealDetailGET(jsonReq(`/api/deals/${matchId}`, undefined, charlieKey), {
+      params: Promise.resolve({ matchId }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 401 without auth", async () => {
+    const { matchId } = await createMatchedPair();
+    const res = await dealDetailGET(jsonReq(`/api/deals/${matchId}`), {
+      params: Promise.resolve({ matchId }),
+    });
+    expect(res.status).toBe(401);
   });
 });
 

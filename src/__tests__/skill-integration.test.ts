@@ -389,7 +389,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
 
     // === Phase 4: Get deal context ===
     // Skill doc format: { match: { id, status, overlap, profiles: { a, b } }, messages, approvals }
-    const dealRes = await dealDetailGET(req(`/api/deals/${matchId}`), {
+    const dealRes = await dealDetailGET(req(`/api/deals/${matchId}`, { apiKey: aliceKey }), {
       params: Promise.resolve({ matchId }),
     });
     expect(dealRes.status).toBe(200);
@@ -449,7 +449,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
     expect(msg2Res.status).toBe(200);
 
     // Read messages - verify skill doc format
-    const dealAfterMsgs = await dealDetailGET(req(`/api/deals/${matchId}`), {
+    const dealAfterMsgs = await dealDetailGET(req(`/api/deals/${matchId}`, { apiKey: aliceKey }), {
       params: Promise.resolve({ matchId }),
     });
     const msgsData = await dealAfterMsgs.json();
