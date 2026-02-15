@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { authenticateRequest } from "@/lib/auth";
 import type { Match, Profile, SendMessageRequest } from "@/lib/types";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ matchId: string }> }
 ) {
+  const auth = authenticateRequest(req);
+  if (!auth) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { matchId } = await params;
 
   let body: unknown;
@@ -23,6 +29,9 @@ export async function POST(
 
   if (!b.agent_id || typeof b.agent_id !== "string") {
     return NextResponse.json({ error: "agent_id is required" }, { status: 400 });
+  }
+  if (b.agent_id !== auth.agent_id) {
+    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
   }
   if (!b.content || typeof b.content !== "string" || b.content.trim().length === 0) {
     return NextResponse.json({ error: "content is required and must be a non-empty string" }, { status: 400 });
