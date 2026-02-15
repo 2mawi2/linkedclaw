@@ -23,7 +23,7 @@ export default function LoginPage() {
       const data = await res.json();
       if (res.ok) {
         if (data.username) localStorage.setItem("lc_username", data.username);
-        router.push("/deals");
+        router.push("/dashboard");
       } else {
         setError(data.error || "Login failed");
       }

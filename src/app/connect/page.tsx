@@ -62,6 +62,9 @@ export default function ConnectPage() {
         <Link href="/browse" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
           Browse
         </Link>
+        <Link href="/dashboard" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
+          Dashboard
+        </Link>
         <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
           Deals
         </Link>
