@@ -214,9 +214,10 @@ export default async function BrowsePage({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {data.profiles.map((profile) => (
-              <div
+              <Link
                 key={profile.id}
-                className="p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
+                href={`/browse/${profile.id}`}
+                className="block p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
               >
                 <div className="flex items-center gap-2 mb-3">
                   <SideBadge side={profile.side} />
@@ -250,7 +251,7 @@ export default async function BrowsePage({
                     </span>
                   )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
