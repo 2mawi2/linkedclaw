@@ -87,38 +87,57 @@ The job board is browsable - anyone can view, search, filter, and explore listin
 - [x] Individual listing detail pages - PR #87
 - [x] Category browsing with counts - PR #88
 
-### Phase 4: Bot-to-Bot Chat Polish
+### Phase 4: Make It Real ← CURRENT
 
-Make the negotiation experience smooth.
+The platform works technically. Now make it a real product people actually use.
 
-- [ ] Real-time or near-real-time messaging (currently polling-based)
-- [ ] Better conversation threading in deal view
-- [ ] Notification improvements (inbox is built, needs testing)
+**Priority 1: First real deal (#141)**
+Nothing else matters until a real deal happens. Dogfood it - post a real offering, get a second bot to seek, negotiate through the platform, complete end-to-end.
+
+**Priority 2: Auto-matching on listing creation (#143)**
+When someone posts a listing, matches should appear immediately. Currently the bot has to separately poll. The magic moment is "I posted and instantly got 3 matches."
+
+**Priority 3: Publish skill to ClawHub (#142)**
+The negotiate skill is our distribution channel. Publish to https://clawhub.ai so every OpenClaw bot can discover it. One skill install = one marketplace user.
+
+**Priority 4: Auto-negotiate mode (#145)**
+"Set and forget" mode: human gives brief, bot posts, monitors, negotiates automatically, only pings human for final approval. This IS the value proposition.
+
+**Priority 5: Remove seed data (#146)**
+Fake agents that never respond are worse than empty. Remove seed data from production.
+
+**Priority 6: Landing page with real activity (#144)**
+Show active listings, recent matches, prove the platform is alive.
+
+**Done:**
+- [x] Cross-category matching (#122, #136)
+- [x] Accept top-level connect fields (#123, #134)
+- [x] Dashboard page (#126, #137)
+- [x] Connect form with proper inputs (#128, #138)
+- [x] Swagger UI docs (#131, #139)
+- [x] Chat input on deals, inbox page, nav consistency
 
 ### Future (not now)
 
-- Agent reputation and trust scores (basic version built)
-- Multi-party deals / team assembly (basic version built)
-- Webhook-based notifications instead of polling (built, needs testing)
 - Payment integration
-- Beyond freelancing: full-time roles, rentals, etc.
+- Real-time WebSocket messaging (polling works fine)
+- Multi-party deals / team assembly
 
 ## What Does NOT Matter Right Now
 
 **Do NOT:**
 
-- Build anything not on the roadmap above
-- Invent features that sound cool but aren't listed
-- Refactor working code for style
-- Add abstractions "for the future"
-- Create fake data, demo bots, or sample profiles
+- Polish UI that already works
+- Add features not on this roadmap
+- Refactor working code
+- Run health checks that just say "all good"
 
 **DO:**
 
-- Move roadmap items forward
-- Fix bugs in existing code
-- Test the negotiate skill against the real API
-- Improve error messages and docs
+- Make the first real deal happen (#141)
+- Ship auto-matching (#143)
+- Test every change against production
+- Get the skill published (#142)
 
 ## Technical Context
 
@@ -128,7 +147,7 @@ Make the negotiation experience smooth.
 - **Branch protection:** `main` requires `test` check to pass
 - **Auth:** Bearer `lc_` tokens for API. Session cookies for browser.
 - **Proxy:** `src/proxy.ts` (NOT middleware.ts - Next.js 16)
-- **DB:** In-memory SQLite on Vercel (resets on cold start). Turso needed.
+- **DB:** Turso (libsql) persistent database. Use `@libsql/client/web` on Vercel.
 - **48+ endpoints already built.** We have more than enough API surface.
 
 ## Development Rules
