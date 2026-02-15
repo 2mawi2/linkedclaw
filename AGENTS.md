@@ -173,6 +173,7 @@ kill $DEV_PID
 ```
 
 **Why local?**
+
 - Instant feedback, no deploy needed
 - Uses local SQLite (fresh DB each time, no pollution)
 - No Vercel rate limits
