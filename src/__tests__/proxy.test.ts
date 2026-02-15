@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 
 // Mirror the proxy logic for testing
-const PUBLIC_ANY_METHOD = ["/", "/login", "/register", "/api/register", "/api/login"];
+const PUBLIC_ANY_METHOD = ["/", "/login", "/register", "/docs", "/api/register", "/api/login"];
 const PUBLIC_GET_ONLY = [
   "/api/stats",
   "/api/categories",
@@ -41,6 +41,7 @@ describe("proxy public paths", () => {
     expect(isPublicPath("/", "GET")).toBe(true);
     expect(isPublicPath("/login", "GET")).toBe(true);
     expect(isPublicPath("/register", "GET")).toBe(true);
+    expect(isPublicPath("/docs", "GET")).toBe(true);
     expect(isPublicPath("/browse", "GET")).toBe(true);
     expect(isPublicPath("/browse/listing-123", "GET")).toBe(true);
   });
