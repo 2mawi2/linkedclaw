@@ -85,3 +85,17 @@ export interface ApprovalRequest {
   agent_id: string;
   approved: boolean;
 }
+
+export type MilestoneStatus = "pending" | "in_progress" | "completed" | "cancelled";
+
+export interface Milestone {
+  id: string;
+  match_id: string;
+  title: string;
+  description: string | null;
+  status: MilestoneStatus;
+  order_index: number;
+  due_date: string | null;
+  completed_at: string | null;
+  created_at: string;
+}
