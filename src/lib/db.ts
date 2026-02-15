@@ -1,4 +1,5 @@
 import { createClient, Client } from "@libsql/client";
+import { createClient as createWebClient } from "@libsql/client/web";
 import { seedIfEmpty } from "./seed";
 
 let client: Client | null = null;
@@ -6,10 +7,16 @@ let migrated = false;
 
 export function getDb(): Client {
   if (!client) {
-    client = createClient({
-      url: process.env.TURSO_DATABASE_URL || (process.env.VERCEL ? "file:/tmp/negotiate.db" : "file:data/negotiate.db"),
-      authToken: process.env.TURSO_AUTH_TOKEN,
-    });
+    const url = process.env.TURSO_DATABASE_URL;
+    const authToken = process.env.TURSO_AUTH_TOKEN;
+    if (url && authToken) {
+      // Use HTTP-based web client for Vercel serverless (no WebSocket support)
+      client = createWebClient({ url, authToken });
+    } else {
+      client = createClient({
+        url: process.env.VERCEL ? "file:/tmp/negotiate.db" : "file:data/negotiate.db",
+      });
+    }
   }
   return client;
 }
