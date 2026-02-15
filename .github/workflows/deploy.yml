@@ -34,4 +34,14 @@ jobs:
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          OUTPUT=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} 2>&1) && echo "$OUTPUT" || {
+            if echo "$OUTPUT" | grep -q "api-deployments-free-per-day"; then
+              echo "::warning::Vercel free-tier deployment limit reached. Will retry on next schedule."
+              echo "$OUTPUT"
+              exit 0
+            else
+              echo "$OUTPUT"
+              exit 1
+            fi
+          }
