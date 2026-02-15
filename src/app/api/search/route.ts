@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
   const side = searchParams.get("side");
   const skills = searchParams.get("skill")?.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
   const q = searchParams.get("q");
+  const excludeAgent = searchParams.get("exclude_agent");
   const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "20"), 1), 100);
   const offset = Math.max(parseInt(searchParams.get("offset") ?? "0"), 0);
 
@@ -45,6 +46,11 @@ export async function GET(req: NextRequest) {
   if (q) {
     conditions.push("description LIKE ?");
     params.push(`%${q}%`);
+  }
+
+  if (excludeAgent) {
+    conditions.push("agent_id != ?");
+    params.push(excludeAgent);
   }
 
   const whereClause = conditions.join(" AND ");

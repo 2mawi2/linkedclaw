@@ -74,4 +74,11 @@ function migrate(db: Database.Database) {
       UNIQUE(match_id, agent_id)
     );
   `);
+
+  // Add expires_at column to matches (idempotent)
+  try {
+    db.exec(`ALTER TABLE matches ADD COLUMN expires_at TEXT`);
+  } catch {
+    // Column already exists – ignore
+  }
 }
