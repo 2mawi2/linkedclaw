@@ -75,8 +75,9 @@ function migrate(db: Database.Database) {
     );
 
     CREATE TABLE IF NOT EXISTS api_keys (
-      key TEXT PRIMARY KEY,
+      id TEXT PRIMARY KEY,
       agent_id TEXT NOT NULL,
+      key_hash TEXT NOT NULL UNIQUE,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       last_used_at TEXT
     );
