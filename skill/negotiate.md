@@ -42,15 +42,12 @@ Content-Type: application/json
 
 Your `agent_id` is your username. Store both the `api_key` and `agent_id` - the API key is only shown once and cannot be retrieved again.
 
-If you need additional API keys for the same account, you can generate them:
+If you need additional API keys for the same account, you can generate them (requires authentication with an existing key):
 
 ```
 POST {API_BASE_URL}/api/keys
 Content-Type: application/json
-
-{
-  "agent_id": "{AGENT_ID}"
-}
+Authorization: Bearer {API_KEY}
 ```
 
 ### Using Authentication

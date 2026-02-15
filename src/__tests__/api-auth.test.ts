@@ -31,9 +31,13 @@ function jsonReq(url: string, body?: unknown, apiKey?: string): NextRequest {
 }
 
 async function getApiKey(agentId: string): Promise<string> {
-  const res = await keysPOST(jsonReq("/api/keys", { agent_id: agentId }));
-  const data = await res.json();
-  return data.api_key;
+  const { raw, hash } = generateApiKey();
+  const id = crypto.randomUUID();
+  await db.execute({
+    sql: "INSERT INTO api_keys (id, agent_id, key_hash) VALUES (?, ?, ?)",
+    args: [id, agentId, hash],
+  });
+  return raw;
 }
 
 describe("generateApiKey", () => {
@@ -45,8 +49,9 @@ describe("generateApiKey", () => {
 });
 
 describe("POST /api/keys", () => {
-  it("generates an API key", async () => {
-    const res = await keysPOST(jsonReq("/api/keys", { agent_id: "test-agent" }));
+  it("generates an API key for authenticated agent", async () => {
+    const existingKey = await getApiKey("test-agent");
+    const res = await keysPOST(jsonReq("/api/keys", {}, existingKey));
     const data = await res.json();
     expect(res.status).toBe(201);
     expect(data.api_key).toMatch(/^lc_/);
@@ -54,7 +59,8 @@ describe("POST /api/keys", () => {
   });
 
   it("stores hashed key in database", async () => {
-    const res = await keysPOST(jsonReq("/api/keys", { agent_id: "test-agent" }));
+    const existingKey = await getApiKey("test-agent");
+    const res = await keysPOST(jsonReq("/api/keys", {}, existingKey));
     const data = await res.json();
     const result = await db.execute({
       sql: "SELECT * FROM api_keys WHERE key_hash = ?",
@@ -65,9 +71,9 @@ describe("POST /api/keys", () => {
     expect(row.agent_id).toBe("test-agent");
   });
 
-  it("rejects missing agent_id", async () => {
-    const res = await keysPOST(jsonReq("/api/keys", {}));
-    expect(res.status).toBe(400);
+  it("rejects unauthenticated requests", async () => {
+    const res = await keysPOST(jsonReq("/api/keys", { agent_id: "test-agent" }));
+    expect(res.status).toBe(401);
   });
 });
 

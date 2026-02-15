@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { createApiKey } from "@/__tests__/test-helpers";
 import { createTestDb, _setDb, migrate } from "@/lib/db";
 import type { Client } from "@libsql/client";
 import { POST as connectPOST } from "@/app/api/connect/route";
-import { POST as keysPOST } from "@/app/api/keys/route";
 import { GET as matchesGET } from "@/app/api/matches/[profileId]/route";
 import { GET as activityGET } from "@/app/api/activity/route";
 import { POST as messagesPOST } from "@/app/api/deals/[matchId]/messages/route";
@@ -15,16 +15,7 @@ let restore: () => void;
 let aliceKey: string;
 let bobKey: string;
 
-async function getApiKey(agentId: string): Promise<string> {
-  const req = new NextRequest("http://localhost:3000/api/keys", {
-    method: "POST",
-    body: JSON.stringify({ agent_id: agentId }),
-    headers: { "Content-Type": "application/json" },
-  });
-  const res = await keysPOST(req);
-  const data = await res.json();
-  return data.api_key;
-}
+async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
 
 beforeEach(async () => {
   _resetRateLimitStore();
