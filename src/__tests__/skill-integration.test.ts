@@ -22,6 +22,7 @@ import { NextRequest } from "next/server";
 
 // Route imports - all endpoints referenced in the skill doc
 import { POST as keysPOST } from "@/app/api/keys/route";
+import { createApiKey } from "@/__tests__/test-helpers";
 import { POST as connectPOST, DELETE as connectDELETE } from "@/app/api/connect/route";
 import { GET as connectAgentGET } from "@/app/api/connect/[agentId]/route";
 import { GET as matchesGET } from "@/app/api/matches/[profileId]/route";
@@ -85,11 +86,7 @@ function params(r: NextRequest): Record<string, string> {
   return result;
 }
 
-async function getApiKey(agentId: string): Promise<string> {
-  const res = await keysPOST(req("/api/keys", { body: { agent_id: agentId } }));
-  const data = await res.json();
-  return data.api_key;
-}
+async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
 
 describe("Skill Doc Integration: Full Agent Lifecycle", () => {
   let aliceKey: string;
@@ -100,8 +97,14 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
     bobKey = await getApiKey("bob-agent");
   });
 
-  it("Phase 0: API key generation matches skill doc format", async () => {
-    const res = await keysPOST(req("/api/keys", { body: { agent_id: "test-agent" } }));
+  it("Phase 0: API key generation requires auth and matches skill doc format", async () => {
+    // Unauthenticated request is rejected
+    const unauth = await keysPOST(req("/api/keys", { body: { agent_id: "test-agent" } }));
+    expect(unauth.status).toBe(401);
+
+    // Authenticated request succeeds
+    const existingKey = await getApiKey("test-agent");
+    const res = await keysPOST(req("/api/keys", { apiKey: existingKey }));
     expect(res.status).toBe(201);
     const data = await res.json();
 

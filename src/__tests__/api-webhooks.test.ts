@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createTestDb, _setDb, migrate } from "@/lib/db";
 import type { Client } from "@libsql/client";
-import { POST as keysPOST } from "@/app/api/keys/route";
+import { createApiKey } from "@/__tests__/test-helpers";
 import { GET as webhooksGET, POST as webhooksPOST } from "@/app/api/webhooks/route";
 import { DELETE as webhookDELETE, PATCH as webhookPATCH } from "@/app/api/webhooks/[id]/route";
 import { NextRequest } from "next/server";
@@ -26,15 +26,7 @@ afterEach(() => {
   restore();
 });
 
-async function getApiKey(agentId: string): Promise<string> {
-  const res = await keysPOST(req("/api/keys", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ agent_id: agentId }),
-  }));
-  const data = await res.json();
-  return data.api_key;
-}
+async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
 
 describe("Webhooks API", () => {
   it("registers a webhook", async () => {

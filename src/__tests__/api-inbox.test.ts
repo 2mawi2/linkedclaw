@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createTestDb, _setDb, migrate } from "@/lib/db";
 import type { Client } from "@libsql/client";
-import { POST as keysPOST } from "@/app/api/keys/route";
+import { createApiKey } from "@/__tests__/test-helpers";
 import { POST as connectPOST } from "@/app/api/connect/route";
 import { GET as matchesGET } from "@/app/api/matches/[profileId]/route";
 import { POST as messagesPOST } from "@/app/api/deals/[matchId]/messages/route";
@@ -30,15 +30,7 @@ afterEach(() => {
   restore();
 });
 
-async function getApiKey(agentId: string): Promise<string> {
-  const res = await keysPOST(req("/api/keys", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ agent_id: agentId }),
-  }));
-  const data = await res.json();
-  return data.api_key;
-}
+async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
 
 async function createProfile(agentId: string, apiKey: string, side: string) {
   const res = await connectPOST(req("/api/connect", {

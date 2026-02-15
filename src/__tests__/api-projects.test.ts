@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { createApiKey } from "@/__tests__/test-helpers";
 import { createTestDb, _setDb, migrate } from "@/lib/db";
 import type { Client } from "@libsql/client";
 import { POST as projectsPOST, GET as projectsGET } from "@/app/api/projects/route";
@@ -7,7 +8,6 @@ import { POST as joinPOST } from "@/app/api/projects/[projectId]/join/route";
 import { POST as messagesPOST } from "@/app/api/projects/[projectId]/messages/route";
 import { POST as approvePOST } from "@/app/api/projects/[projectId]/approve/route";
 import { POST as leavePOST } from "@/app/api/projects/[projectId]/leave/route";
-import { POST as keysPOST } from "@/app/api/keys/route";
 import { NextRequest } from "next/server";
 
 let db: Client;
@@ -23,16 +23,7 @@ afterEach(() => {
   restore();
 });
 
-async function getApiKey(agentId: string): Promise<string> {
-  const req = new NextRequest("http://localhost:3000/api/keys", {
-    method: "POST",
-    body: JSON.stringify({ agent_id: agentId }),
-    headers: { "Content-Type": "application/json" },
-  });
-  const res = await keysPOST(req);
-  const data = await res.json();
-  return data.api_key;
-}
+async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
 
 function makeParams(projectId: string) {
   return { params: Promise.resolve({ projectId }) };
