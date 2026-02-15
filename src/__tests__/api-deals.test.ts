@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createTestDb, _setDb } from "@/lib/db";
+import { _resetRateLimitStore } from "@/lib/rate-limit";
 import type Database from "better-sqlite3";
 import { POST as connectPOST } from "@/app/api/connect/route";
 import { POST as keysPOST } from "@/app/api/keys/route";
@@ -27,6 +28,7 @@ async function getApiKey(agentId: string): Promise<string> {
 }
 
 beforeEach(async () => {
+  _resetRateLimitStore();
   db = createTestDb();
   restore = _setDb(db);
   aliceKey = await getApiKey("alice");

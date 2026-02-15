@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { withReadRateLimit } from "@/lib/rate-limit";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 /**
@@ -14,6 +15,9 @@ import type { Profile, ProfileParams } from "@/lib/types";
  *   offset - pagination offset (default 0)
  */
 export async function GET(req: NextRequest) {
+  const rateLimited = withReadRateLimit(req);
+  if (rateLimited) return rateLimited;
+
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
   const side = searchParams.get("side");

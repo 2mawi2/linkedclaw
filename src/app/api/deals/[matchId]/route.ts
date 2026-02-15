@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { withReadRateLimit } from "@/lib/rate-limit";
 import type { Match, Message, Approval, Profile } from "@/lib/types";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ matchId: string }> }
 ) {
+  const rateLimited = withReadRateLimit(_req);
+  if (rateLimited) return rateLimited;
+
   const { matchId } = await params;
 
   const db = getDb();

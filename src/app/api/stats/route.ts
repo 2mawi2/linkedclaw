@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { withReadRateLimit } from "@/lib/rate-limit";
 
 /**
  * GET /api/stats - Platform statistics and health check
@@ -7,7 +8,9 @@ import { getDb } from "@/lib/db";
  * Returns counts of profiles, matches, messages, and status breakdown.
  * Useful for monitoring and dashboard display.
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const rateLimited = withReadRateLimit(req);
+  if (rateLimited) return rateLimited;
   const db = getDb();
 
   const profileStats = db.prepare(`

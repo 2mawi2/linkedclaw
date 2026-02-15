@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { generateApiKey } from "@/lib/auth";
+import { withKeyGenRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const rateLimited = withKeyGenRateLimit(req);
+  if (rateLimited) return rateLimited;
   let body: unknown;
   try {
     body = await req.json();

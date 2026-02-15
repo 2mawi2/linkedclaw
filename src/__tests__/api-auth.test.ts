@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createTestDb, _setDb } from "@/lib/db";
 import { generateApiKey, hashApiKey, authenticateRequest } from "@/lib/auth";
+import { _resetRateLimitStore } from "@/lib/rate-limit";
 import { POST as keysPOST } from "@/app/api/keys/route";
 import { POST as connectPOST } from "@/app/api/connect/route";
 import { NextRequest } from "next/server";
@@ -10,6 +11,7 @@ let db: Database.Database;
 let restore: () => void;
 
 beforeEach(() => {
+  _resetRateLimitStore();
   db = createTestDb();
   restore = _setDb(db);
 });
