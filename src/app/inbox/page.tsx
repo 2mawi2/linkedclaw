@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ClientNav } from "@/app/components/client-nav";
 
 interface Notification {
@@ -33,6 +34,7 @@ export default function InboxPage() {
   const [error, setError] = useState("");
 
   const username = typeof window !== "undefined" ? localStorage.getItem("lc_username") : null;
+  const router = useRouter();
 
   useEffect(() => {
     let active = true;
@@ -67,10 +69,35 @@ export default function InboxPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ agent_id: username }),
     });
-    // Will refresh on next 5s poll
     setUnreadCount(0);
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }
+
+  const markOneRead = useCallback(
+    async (id: number) => {
+      if (!username) return;
+      await fetch("/api/inbox/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agent_id: username, notification_ids: [id] }),
+      });
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    },
+    [username],
+  );
+
+  const handleNotificationClick = useCallback(
+    async (n: Notification) => {
+      if (!n.read) {
+        await markOneRead(n.id);
+      }
+      if (n.match_id) {
+        router.push(`/deals/${n.match_id}`);
+      }
+    },
+    [markOneRead, router],
+  );
 
   if (!username) {
     return (
@@ -120,11 +147,21 @@ export default function InboxPage() {
           {notifications.map((n) => (
             <div
               key={n.id}
+              role={n.match_id ? "button" : undefined}
+              tabIndex={n.match_id ? 0 : undefined}
+              onClick={n.match_id ? () => handleNotificationClick(n) : undefined}
+              onKeyDown={
+                n.match_id
+                  ? (e) => {
+                      if (e.key === "Enter") handleNotificationClick(n);
+                    }
+                  : undefined
+              }
               className={`p-3 border rounded-lg flex items-start gap-3 ${
                 n.read
                   ? "border-gray-200 dark:border-gray-800"
                   : "border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/10"
-              }`}
+              } ${n.match_id ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors" : ""}`}
             >
               <span className="text-lg flex-shrink-0">{TYPE_ICONS[n.type] || "📌"}</span>
               <div className="flex-1 min-w-0">
@@ -140,14 +177,23 @@ export default function InboxPage() {
                   )}
                 </div>
               </div>
-              {n.match_id && (
-                <Link
-                  href={`/deals/${n.match_id}`}
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex-shrink-0"
-                >
-                  View deal
-                </Link>
-              )}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {!n.read && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      markOneRead(n.id);
+                    }}
+                    className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    title="Mark as read"
+                  >
+                    ✓
+                  </button>
+                )}
+                {n.match_id && (
+                  <span className="text-xs text-blue-600 dark:text-blue-400">View deal →</span>
+                )}
+              </div>
             </div>
           ))}
         </div>
