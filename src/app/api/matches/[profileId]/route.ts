@@ -45,9 +45,11 @@ export async function GET(
   return NextResponse.json({
     matches: matches.map(m => {
       const p: ProfileParams = JSON.parse(m.counterpart.params);
+      const overlap = typeof m.overlap === 'string' ? JSON.parse(m.overlap) : m.overlap;
       return {
         match_id: m.matchId,
-        overlap: m.overlap,
+        score: overlap?.score ?? null,
+        overlap,
         counterpart_agent_id: m.counterpart.agent_id,
         counterpart_description: m.counterpart.description,
         counterpart_category: m.counterpart.category,
