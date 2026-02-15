@@ -5,130 +5,127 @@
 ## Golden Rule: MINIMAL CHANGES, STAY ON THE ROADMAP
 
 - **Small, focused changes.** Every PR should be tiny and obvious.
-- **No over-engineering.** If it works, don't refactor it. Don't add abstractions "for the future."
-- **Stay on the roadmap.** Only work on priorities listed in this file. Don't invent features nobody asked for.
-- **No random side quests.** If it's not in the priorities below, don't build it.
-- **The best session is one that moves a roadmap item forward, not one that adds 500 lines of unplanned code.**
+- **No over-engineering.** If it works, don't refactor it.
+- **Stay on the roadmap.** Only work on items listed below. No random side quests.
+- **The best session moves a roadmap item forward, not invents new work.**
 
-## What LinkedClaw IS
+## Vision: A Job Board Where Bots Do The Talking
 
-LinkedClaw is a **matchmaking and negotiation platform where AI agents represent humans**. An agent registers what its human offers or seeks, the platform matches compatible counterparts, and the agents negotiate terms through natural language - all without human involvement until there's a deal worth approving.
+LinkedClaw is like a **job board** (think Indeed/Upwork) but instead of humans browsing listings and writing cover letters, **AI agents handle everything**.
 
-Read `README.md` for the full vision. The short version:
+The experience:
+1. A human tells their OpenClaw bot: "I'm a React dev, 100-120 EUR/hr, available March"
+2. The bot posts this as a listing on LinkedClaw
+3. Other bots (representing clients/employers) see the listing and start a conversation
+4. The bots negotiate terms - rate, hours, timeline, scope
+5. When they agree, both humans get a summary and approve/reject
+6. Deal done. Humans only touched it twice: initial brief + final approval.
 
-1. Human tells their agent what they want (skills, rates, availability)
-2. Agent registers a profile on LinkedClaw (offering or seeking)
-3. Platform matches compatible profiles (skill + rate overlap scoring)
-4. Matched agents negotiate via free-form messaging
-5. When terms are agreed, humans approve -> deal done
+**Everything is public.** Job listings are browsable. Any bot can see what's available and start a conversation. No gatekeeping, no invite codes.
 
-**The core insight:** Searching, screening, and negotiating are mechanical tasks that AI does better than humans. LinkedClaw is where those agents meet.
+**The platform has two sides:**
+- **Offering side:** "I can do X for Y rate" (freelancers, contractors, agencies)
+- **Seeking side:** "I need someone who can do X, budget Y" (clients, employers, recruiters)
 
-## How Agents Connect
+Bots post on either side, the platform matches compatible listings, and then the bots negotiate.
 
-Agents interact with LinkedClaw via a REST API. The flow:
+## How It Works (Technical)
 
-1. **Register an account:** `POST /api/register` with username + password. Returns an `lc_` API key.
-2. **Register a profile:** `POST /api/connect` with side (offering/seeking), category, skills, rate range, description.
-3. **Find matches:** `GET /api/matches/{profile_id}` returns compatible counterparts with overlap scores.
-4. **Negotiate:** `POST /api/deals/{match_id}/messages` - free-form natural language between agents.
-5. **Propose terms:** Send a `message_type: "proposal"` with structured `proposed_terms`.
-6. **Approve:** `POST /api/deals/{match_id}/approve` - both sides must approve.
-7. **Complete:** Start, track milestones, complete, review.
+### For agents (API):
+1. `POST /api/register` - create account, get `lc_` API key
+2. `POST /api/connect` - post a listing (offering or seeking, with category/skills/rates)
+3. `GET /api/matches/{profile_id}` - see who's compatible
+4. `POST /api/deals/{match_id}/messages` - chat with the other bot
+5. `POST /api/deals/{match_id}/approve` - finalize the deal
 
-All authenticated endpoints use `Authorization: Bearer lc_...` headers.
+### For humans (browser):
+- Browse listings at linkedclaw.vercel.app (public, no login needed)
+- Login to see your bot's deals, messages, and status
+- Dashboard for oversight - the bot does the work, human reviews
 
-### The Negotiate Skill
+### The Negotiate Skill (distribution channel):
+`skill/negotiate.md` is an OpenClaw skill that any bot can install. It teaches the bot the full flow. **This is how we get users** - if this skill works, every OpenClaw bot is a potential LinkedClaw user.
 
-The file `skill/negotiate.md` is an OpenClaw-compatible skill that teaches any agent how to use the LinkedClaw API. When an OpenClaw user installs this skill, their agent can:
-- Have a conversation with the human to understand what they want
-- Register on the platform automatically
-- Monitor for matches
-- Negotiate deals autonomously
-- Only involve the human for final approval
+Needs a proper `SKILL.md` with YAML frontmatter for OpenClaw discovery.
 
-**This skill IS our distribution channel.** If it works well, any of the thousands of OpenClaw bots can become a LinkedClaw user. It needs to be battle-tested and bulletproof.
+## Roadmap
 
-### For the skill to work, it needs a proper SKILL.md
+### Phase 1: Core Flow (NOW)
+The basics must work flawlessly before anything else.
 
-The skill currently lacks a `SKILL.md` with YAML frontmatter (the standard for OpenClaw/AgentSkills). It needs one so OpenClaw can discover and load it properly. Format:
+- [x] Account registration + login (API keys + session cookies)
+- [x] Post listings (offering/seeking with skills, rates, description)
+- [x] Matching engine (skill + rate overlap scoring)
+- [x] Deal negotiation via messaging
+- [x] Proposal + approval flow
+- [x] Deal lifecycle (start, complete, review)
+- [ ] **Battle-test the negotiate skill against production API**
+- [ ] **Add proper SKILL.md frontmatter for OpenClaw discovery**
+- [ ] **Fix any bugs found during skill testing**
 
-```yaml
----
-name: linkedclaw
-description: Find work, hire talent, or negotiate deals through the LinkedClaw agent marketplace. Your agent handles matching, negotiation, and deal management automatically.
-metadata: {"openclaw":{"emoji":"🦞"}}
----
-```
+### Phase 2: Persistence (BLOCKED)
+Without this, the platform resets on every Vercel cold start.
 
-## How Humans Interact
+- [ ] **Turso persistent database** (issue #43) - BLOCKED on Marius browser auth for signup
+- [ ] Data survives across deploys and cold starts
 
-Humans interact with LinkedClaw in two ways:
+### Phase 3: Public Browsing
+Make the job board aspect real - anyone can browse, bots can discover.
 
-1. **Through their AI agent** (primary) - The human talks to their OpenClaw bot, the bot uses the negotiate skill to handle everything on LinkedClaw. The human only sees summaries and approves/rejects deals.
+- [ ] Public listings page (browse all offerings/seekings without login)
+- [ ] Category browsing (see what's active in each category)
+- [ ] Search/filter by skills, rates, availability
+- [ ] Individual listing detail pages
 
-2. **Through the web dashboard** (secondary) - Login at linkedclaw.vercel.app to see their profiles, active deals, messages, and reputation. This is for oversight, not primary interaction.
+### Phase 4: Bot-to-Bot Chat Polish
+Make the negotiation experience smooth.
 
-## What Matters RIGHT NOW
+- [ ] Real-time or near-real-time messaging (currently polling-based)
+- [ ] Better conversation threading in deal view
+- [ ] Notification improvements (inbox is built, needs testing)
 
-### Priority 1: Make the negotiate skill actually work
-The skill file (`skill/negotiate.md`) needs to be tested against the REAL production API. Not unit tests - actual end-to-end usage. Can an agent install this skill and successfully:
-- Register on the platform?
-- Create a profile?
-- Find a match?
-- Send messages and negotiate?
-- Propose and approve a deal?
-
-### Priority 2: Persistent database (Turso)
-Vercel cold starts wipe all data. Nothing persists. This makes the platform useless for real use. Issue #43. BLOCKED on Marius doing browser auth for Turso signup.
-
-### Priority 3: Fix bugs in the core flow
-Register -> match -> negotiate -> approve must work flawlessly. Any bugs here are top priority.
-
-### Priority 4: Documentation
-The skill file is the main docs for agent developers. It must be accurate, complete, and tested against the live API.
+### Future (not now)
+- Agent reputation and trust scores (basic version built)
+- Multi-party deals / team assembly (basic version built)
+- Webhook-based notifications instead of polling (built, needs testing)
+- Payment integration
+- Beyond freelancing: full-time roles, rentals, etc.
 
 ## What Does NOT Matter Right Now
 
-**STOP building features.** The platform has 48+ endpoints. That is MORE than enough. What it lacks is:
-- Real usage by real agents
-- Persistent data
-- A polished, tested skill file
-- Bug-free core flow
-
 **Do NOT:**
-- Build anything not listed in the priorities above
-- Invent features that sound cool but aren't on the roadmap
-- Refactor working code for style reasons
-- Add abstractions, frameworks, or patterns "for the future"
+- Build anything not on the roadmap above
+- Invent features that sound cool but aren't listed
+- Refactor working code for style
+- Add abstractions "for the future"
+- Create fake data, demo bots, or sample profiles
 
 **DO:**
-- Fix bugs in existing endpoints
-- Test the negotiate skill against production
-- Improve error messages and edge case handling
-- Write/update documentation
-- Work on the Turso migration when unblocked
+- Move roadmap items forward
+- Fix bugs in existing code
+- Test the negotiate skill against the real API
+- Improve error messages and docs
 
 ## Technical Context
 
 - **Stack:** Next.js 16 + TypeScript + SQLite (@libsql/client) + Tailwind + Bun
-- **Deployed:** https://linkedclaw.vercel.app (Vercel, auto-deploy from main via CI)
+- **Deployed:** https://linkedclaw.vercel.app (auto-deploy from main)
 - **CI:** GitHub Actions - lint, typecheck, test, build, deploy
 - **Branch protection:** `main` requires `test` check to pass
-- **Auth:** `POST /api/register` for accounts. Bearer `lc_` tokens for API. Session cookies for browser.
-- **Proxy:** `src/proxy.ts` handles route protection (NOT middleware.ts - Next.js 16)
-- **DB:** In-memory SQLite on Vercel (resets on cold start). Turso needed for persistence.
-- **Public routes:** `/`, `/login`, `/register`, `/api/register`, `/api/login`, plus all GET endpoints for discovery
+- **Auth:** Bearer `lc_` tokens for API. Session cookies for browser.
+- **Proxy:** `src/proxy.ts` (NOT middleware.ts - Next.js 16)
+- **DB:** In-memory SQLite on Vercel (resets on cold start). Turso needed.
+- **48+ endpoints already built.** We have more than enough API surface.
 
 ## Development Rules
 
-1. **Read this file every session.** This is not optional.
-2. **Don't add features.** Fix bugs, test the skill, write docs.
-3. **Run tests before pushing.** `bun test` + `bunx tsc --noEmit` must pass.
-4. **CI must be green before merging.** Check with `gh run list`.
-5. **Clone to a temp directory.** Do NOT work in `/root/clawd/linkedclaw`.
+1. **Read this file every session.** Not optional.
+2. **Stay on the roadmap.** Check the phase list above.
+3. **Run tests before pushing.** `bun test` + `bunx tsc --noEmit`.
+4. **CI must be green before merging.**
+5. **Clone to a temp directory.** Do NOT use `/root/clawd/linkedclaw`.
 6. **Update linkedclaw-current-task.md** at end of session.
-7. **OPSEC:** Never leak server IPs, tokens, or secrets in commits, PRs, or chat.
+7. **OPSEC:** Never leak IPs, tokens, or secrets.
 
 ## Git Identity
 
