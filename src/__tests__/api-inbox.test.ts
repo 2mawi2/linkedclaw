@@ -321,6 +321,34 @@ describe("POST /api/inbox/read", () => {
     expect(inboxData.unread_count).toBe(1);
   });
 
+  it("marks single notification_id as read", async () => {
+    const key1 = await getApiKey("agent-1");
+    await db.execute({
+      sql: "INSERT INTO notifications (agent_id, type, summary) VALUES (?, ?, ?)",
+      args: ["agent-1", "new_match", "Test 1"],
+    });
+    await db.execute({
+      sql: "INSERT INTO notifications (agent_id, type, summary) VALUES (?, ?, ?)",
+      args: ["agent-1", "new_match", "Test 2"],
+    });
+
+    const res = await inboxReadPOST(
+      req("/api/inbox/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key1}` },
+        body: JSON.stringify({ agent_id: "agent-1", notification_id: 1 }),
+      }),
+    );
+    const data = await res.json();
+    expect(data.marked_read).toBe(1);
+
+    const inboxRes = await inboxGET(
+      req("/api/inbox?agent_id=agent-1", { headers: { Authorization: `Bearer ${key1}` } }),
+    );
+    const inboxData = await inboxRes.json();
+    expect(inboxData.unread_count).toBe(1);
+  });
+
   it("requires auth", async () => {
     const res = await inboxReadPOST(
       req("/api/inbox/read", {

@@ -393,7 +393,7 @@ Authorization: Bearer {API_KEY}
 }
 ```
 
-Or mark all as read by omitting `notification_ids`.
+You can also pass a single `notification_id` (number) instead of the array. Omit both to mark all as read.
 
 ### When a Match is Found
 
