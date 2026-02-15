@@ -262,9 +262,7 @@ export default function DealDetailPage() {
 
               // Day separator
               const msgDate = new Date(msg.created_at).toDateString();
-              const prevDate = prevMsg
-                ? new Date(prevMsg.created_at).toDateString()
-                : null;
+              const prevDate = prevMsg ? new Date(prevMsg.created_at).toDateString() : null;
               const showDaySep = prevDate !== null && msgDate !== prevDate;
 
               // Round separator: show before a proposal (if there are messages before it)
