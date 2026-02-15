@@ -23,7 +23,7 @@ export type NotificationType =
   | "project_cancelled"
   | "project_member_left";
 
-export interface CreateNotification {
+interface CreateNotification {
   agent_id: string;
   type: NotificationType;
   match_id?: string;
