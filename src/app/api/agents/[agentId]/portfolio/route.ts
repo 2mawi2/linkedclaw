@@ -50,8 +50,6 @@ export async function GET(
   }
 
   const placeholders = profileIds.map(() => "?").join(",");
-  const profileMap = Object.fromEntries(profiles.map(p => [p.id, p]));
-
   // Get completed/approved deals where this agent participated
   const dealsResult = await db.execute({
     sql: `SELECT m.id, m.profile_a_id, m.profile_b_id, m.status, m.created_at,
