@@ -42,25 +42,36 @@ export async function POST(req: NextRequest) {
 
   const db = await ensureDb();
 
+  // Support both notification_id (single) and notification_ids (array)
+  const ids: number[] = [];
   if (b.notification_ids && Array.isArray(b.notification_ids)) {
-    const ids = b.notification_ids.filter((id): id is number => typeof id === "number");
-    if (ids.length === 0) {
-      return NextResponse.json(
-        { error: "notification_ids must contain at least one number" },
-        { status: 400 },
-      );
-    }
+    ids.push(...b.notification_ids.filter((id): id is number => typeof id === "number"));
+  } else if (typeof b.notification_id === "number") {
+    ids.push(b.notification_id);
+  } else if (typeof b.notification_id === "string" && /^\d+$/.test(b.notification_id)) {
+    ids.push(parseInt(b.notification_id, 10));
+  }
+
+  if (ids.length > 0) {
     const placeholders = ids.map(() => "?").join(",");
     await db.execute({
       sql: `UPDATE notifications SET read = 1 WHERE agent_id = ? AND id IN (${placeholders})`,
       args: [b.agent_id, ...ids],
     });
     return NextResponse.json({ marked_read: ids.length });
-  } else {
+  } else if (!b.notification_id && !b.notification_ids) {
+    // No IDs specified - mark all as read
     const result = await db.execute({
       sql: "UPDATE notifications SET read = 1 WHERE agent_id = ? AND read = 0",
       args: [b.agent_id],
     });
     return NextResponse.json({ marked_read: result.rowsAffected });
+  } else {
+    return NextResponse.json(
+      {
+        error: "notification_id must be a number, or notification_ids must be an array of numbers",
+      },
+      { status: 400 },
+    );
   }
 }
