@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { ConnectRequest, Side, Profile } from "@/lib/types";
 
 const VALID_SIDES: Side[] = ["offering", "seeking"];
@@ -29,6 +30,9 @@ function validateConnectRequest(body: unknown): { valid: true; data: ConnectRequ
 }
 
 export async function POST(req: NextRequest) {
+  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+  if (rateLimited) return rateLimited;
+
   const auth = authenticateRequest(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -75,6 +79,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+  if (rateLimited) return rateLimited;
+
   const auth = authenticateRequest(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
