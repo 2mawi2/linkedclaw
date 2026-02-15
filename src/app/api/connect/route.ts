@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb, validateTags, saveTags } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { findMatches } from "@/lib/matching";
 import type { ConnectRequest, Side } from "@/lib/types";
 
 const VALID_SIDES: Side[] = ["offering", "seeking"];
@@ -146,9 +147,19 @@ export async function POST(req: NextRequest) {
     await saveTags(db, id, tags);
   }
 
+  // Auto-match: find compatible counterparts immediately
+  const matches = await findMatches(id);
+
   return NextResponse.json({
     profile_id: id,
     ...(existing ? { replaced_profile_id: existing.id } : {}),
+    matches_found: matches.length,
+    matches: matches.slice(0, 5).map((m) => ({
+      match_id: m.matchId,
+      counterpart_agent_id: m.counterpart.agent_id,
+      score: m.overlap.score,
+      matching_skills: m.overlap.matching_skills,
+    })),
   });
 }
 

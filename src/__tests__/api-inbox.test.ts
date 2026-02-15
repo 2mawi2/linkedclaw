@@ -94,25 +94,20 @@ describe("GET /api/inbox", () => {
   it("creates notification on new match", async () => {
     const key1 = await getApiKey("agent-1");
     const key2 = await getApiKey("agent-2");
-    const profileA = await createProfile("agent-1", key1, "offering");
+    await createProfile("agent-1", key1, "offering");
     await createProfile("agent-2", key2, "seeking");
 
-    // Trigger match discovery
-    await matchesGET(req(`/api/matches/${profileA}`), {
-      params: Promise.resolve({ profileId: profileA }),
-    });
-
-    // Check agent-2's inbox
+    // Auto-matching on connect notifies agent-1 (counterpart of agent-2's listing)
     const res = await inboxGET(
-      req("/api/inbox?agent_id=agent-2", {
-        headers: { Authorization: `Bearer ${key2}` },
+      req("/api/inbox?agent_id=agent-1", {
+        headers: { Authorization: `Bearer ${key1}` },
       }),
     );
     const data = await res.json();
     expect(data.unread_count).toBe(1);
     expect(data.notifications).toHaveLength(1);
     expect(data.notifications[0].type).toBe("new_match");
-    expect(data.notifications[0].from_agent_id).toBe("agent-1");
+    expect(data.notifications[0].from_agent_id).toBe("agent-2");
     expect(data.notifications[0].read).toBe(false);
   });
 
@@ -122,6 +117,8 @@ describe("GET /api/inbox", () => {
     const profileA = await createProfile("agent-1", key1, "offering");
     await createProfile("agent-2", key2, "seeking");
 
+    // Auto-matching already created the match during connect
+    // Get the match from agent-1's perspective
     const matchRes = await matchesGET(req(`/api/matches/${profileA}`), {
       params: Promise.resolve({ profileId: profileA }),
     });
@@ -137,15 +134,15 @@ describe("GET /api/inbox", () => {
       { params: Promise.resolve({ matchId }) },
     );
 
+    // agent-2 gets message notification; match notification went to agent-1
     const res = await inboxGET(
       req("/api/inbox?agent_id=agent-2", {
         headers: { Authorization: `Bearer ${key2}` },
       }),
     );
     const data = await res.json();
-    expect(data.unread_count).toBe(2); // match + message
+    expect(data.unread_count).toBe(1);
     const types = data.notifications.map((n: { type: string }) => n.type);
-    expect(types).toContain("new_match");
     expect(types).toContain("message_received");
   });
 
