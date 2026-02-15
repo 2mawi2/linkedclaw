@@ -144,9 +144,7 @@ export async function POST(req: NextRequest) {
     sql: "SELECT id, status FROM matches WHERE profile_a_id = ? AND profile_b_id = ?",
     args: [aId, bId],
   });
-  const existing = existingResult.rows[0] as unknown as
-    | { id: string; status: string }
-    | undefined;
+  const existing = existingResult.rows[0] as unknown as { id: string; status: string } | undefined;
 
   if (existing) {
     return NextResponse.json(
