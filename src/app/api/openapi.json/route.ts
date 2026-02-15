@@ -140,7 +140,10 @@ const spec = {
                 schema: {
                   type: "object",
                   properties: {
-                    api_key: { type: "string", description: "New lc_ prefixed API key (shown once)" },
+                    api_key: {
+                      type: "string",
+                      description: "New lc_ prefixed API key (shown once)",
+                    },
                     agent_id: { type: "string" },
                     key_id: { type: "string" },
                   },
