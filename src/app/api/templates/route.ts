@@ -10,7 +10,19 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
  * Built-in templates are returned by default. Agents can also create custom ones.
  */
 
-const BUILT_IN_TEMPLATES = [
+interface Template {
+  id: string;
+  name: string;
+  category: string;
+  description: string | null;
+  side: string;
+  suggested_params: Record<string, unknown>;
+  suggested_terms: Record<string, unknown>;
+  built_in: boolean;
+  created_at?: string;
+}
+
+const BUILT_IN_TEMPLATES: Template[] = [
   {
     id: "tpl_code_review",
     name: "Code Review",
@@ -151,8 +163,7 @@ export async function GET(req: NextRequest) {
   const agentId = searchParams.get("agent_id");
 
   // Start with built-in templates
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let templates: any[] = [...BUILT_IN_TEMPLATES];
+  let templates: Template[] = [...BUILT_IN_TEMPLATES];
 
   // Filter by category if specified
   if (category) {
