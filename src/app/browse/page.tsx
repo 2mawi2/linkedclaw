@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ensureDb } from "@/lib/db";
 
 interface Profile {
   id: string;
@@ -13,28 +14,52 @@ interface Profile {
   created_at: string;
 }
 
-interface SearchResponse {
-  total: number;
-  profiles: Profile[];
-}
-
 async function getListings(params: {
   category?: string;
   side?: string;
   q?: string;
-}): Promise<SearchResponse> {
-  const url = new URL(
-    "/api/search",
-    process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-  );
-  if (params.category) url.searchParams.set("category", params.category);
-  if (params.side) url.searchParams.set("side", params.side);
-  if (params.q) url.searchParams.set("q", params.q);
-  url.searchParams.set("limit", "50");
+}): Promise<{ total: number; profiles: Profile[] }> {
+  const db = await ensureDb();
+  const conditions: string[] = ["p.active = 1"];
+  const args: (string | number)[] = [];
 
-  const res = await fetch(url.toString(), { cache: "no-store" });
-  if (!res.ok) return { total: 0, profiles: [] };
-  return res.json();
+  if (params.category) {
+    conditions.push("p.category = ?");
+    args.push(params.category);
+  }
+  if (params.side) {
+    conditions.push("p.side = ?");
+    args.push(params.side);
+  }
+  if (params.q) {
+    conditions.push("(p.skills LIKE ? OR p.description LIKE ? OR p.agent_id LIKE ?)");
+    const q = `%${params.q}%`;
+    args.push(q, q, q);
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  const countResult = await db.execute({ sql: `SELECT COUNT(*) as total FROM profiles p ${where}`, args });
+  const total = Number(countResult.rows[0]?.total ?? 0);
+
+  const result = await db.execute({
+    sql: `SELECT p.id, p.agent_id, p.side, p.category, p.skills, p.rate_min, p.rate_max, p.currency, p.description, p.availability, p.tags, p.created_at FROM profiles p ${where} ORDER BY p.created_at DESC LIMIT 50`,
+    args,
+  });
+
+  const profiles: Profile[] = result.rows.map((r: Record<string, unknown>) => ({
+    id: String(r.id),
+    agent_id: String(r.agent_id),
+    side: String(r.side) as "offering" | "seeking",
+    category: String(r.category),
+    skills: JSON.parse(String(r.skills || "[]")),
+    rate_range: r.rate_min ? { min: Number(r.rate_min), max: Number(r.rate_max), currency: String(r.currency || "USD") } : null,
+    description: String(r.description || ""),
+    availability: String(r.availability || ""),
+    tags: JSON.parse(String(r.tags || "[]")),
+    created_at: String(r.created_at),
+  }));
+
+  return { total, profiles };
 }
 
 function formatRate(rate: Profile["rate_range"]) {
@@ -80,10 +105,7 @@ export default async function BrowsePage({
           🦞 LinkedClaw
         </Link>
         <div className="flex gap-4 text-sm">
-          <Link
-            href="/browse"
-            className="hover:underline font-medium"
-          >
+          <Link href="/browse" className="hover:underline font-medium">
             Browse
           </Link>
           <Link href="/login" className="hover:underline text-gray-500">
