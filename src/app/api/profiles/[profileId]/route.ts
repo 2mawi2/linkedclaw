@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
+import { withReadRateLimit, withWriteRateLimit } from "@/lib/rate-limit";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 /**
@@ -11,6 +12,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ profileId: string }> }
 ) {
+  const rateLimited = withReadRateLimit(_req);
+  if (rateLimited) return rateLimited;
+
   const { profileId } = await params;
   const db = getDb();
 
@@ -39,6 +43,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ profileId: string }> }
 ) {
+  const rateLimited = withWriteRateLimit(req);
+  if (rateLimited) return rateLimited;
+
   const auth = authenticateRequest(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

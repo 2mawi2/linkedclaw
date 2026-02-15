@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
+import { withWriteRateLimit } from "@/lib/rate-limit";
 import type { Match, Profile, Approval } from "@/lib/types";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ matchId: string }> }
 ) {
+  const rateLimited = withWriteRateLimit(req);
+  if (rateLimited) return rateLimited;
+
   const auth = authenticateRequest(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

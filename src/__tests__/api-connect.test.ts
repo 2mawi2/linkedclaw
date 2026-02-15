@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createTestDb, _setDb } from "@/lib/db";
+import { _resetRateLimitStore } from "@/lib/rate-limit";
 import type Database from "better-sqlite3";
 import { POST, DELETE } from "@/app/api/connect/route";
 import { POST as keysPOST } from "@/app/api/keys/route";
@@ -9,6 +10,7 @@ let db: Database.Database;
 let restore: () => void;
 
 beforeEach(() => {
+  _resetRateLimitStore();
   db = createTestDb();
   restore = _setDb(db);
 });

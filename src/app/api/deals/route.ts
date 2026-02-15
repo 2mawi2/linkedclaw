@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { withReadRateLimit } from "@/lib/rate-limit";
 
 interface DealRow {
   id: string;
@@ -11,6 +12,9 @@ interface DealRow {
 }
 
 export async function GET(req: NextRequest) {
+  const rateLimited = withReadRateLimit(req);
+  if (rateLimited) return rateLimited;
+
   const { searchParams } = new URL(req.url);
   const agentId = searchParams.get("agent_id");
 
