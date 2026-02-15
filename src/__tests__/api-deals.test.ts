@@ -136,6 +136,38 @@ describe("GET /api/deals", () => {
     const res = await dealsGET(jsonReq("/api/deals"));
     expect(res.status).toBe(400);
   });
+
+  it("includes message_count and last_message in deal list", async () => {
+    const { matchId } = await createMatchedPair();
+    // Send a message
+    await messagesPOST(
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Hello from Alice",
+          message_type: "negotiation",
+        },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
+    );
+    const res = await dealsGET(jsonReq("/api/deals?agent_id=alice"));
+    const data = await res.json();
+    expect(data.deals).toHaveLength(1);
+    expect(data.deals[0].message_count).toBe(1);
+    expect(data.deals[0].last_message).toBeTruthy();
+    expect(data.deals[0].last_message.content).toBe("Hello from Alice");
+    expect(data.deals[0].last_message.sender_agent_id).toBe("alice");
+  });
+
+  it("returns null last_message when no messages exist", async () => {
+    await createMatchedPair();
+    const res = await dealsGET(jsonReq("/api/deals?agent_id=alice"));
+    const data = await res.json();
+    expect(data.deals[0].message_count).toBe(0);
+    expect(data.deals[0].last_message).toBeNull();
+  });
 });
 
 describe("GET /api/deals/:matchId", () => {

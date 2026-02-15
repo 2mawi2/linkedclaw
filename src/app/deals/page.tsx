@@ -17,6 +17,27 @@ interface Deal {
   counterpart_agent_id: string;
   counterpart_description: string | null;
   created_at: string;
+  message_count: number;
+  last_message: {
+    content: string;
+    sender_agent_id: string;
+    created_at: string;
+    message_type: string;
+  } | null;
+}
+
+function formatRelativeTime(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMs = now - then;
+  const diffMin = Math.floor(diffMs / 60_000);
+  if (diffMin < 1) return "just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHrs = Math.floor(diffMin / 60);
+  if (diffHrs < 24) return `${diffHrs}h ago`;
+  const diffDays = Math.floor(diffHrs / 24);
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return new Date(dateStr).toLocaleDateString();
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -122,21 +143,39 @@ export default function DealsPage() {
               className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
             >
               <div className="flex items-center justify-between mb-2">
-                <span
-                  className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[deal.status] || STATUS_COLORS.expired}`}
-                >
-                  {deal.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[deal.status] || STATUS_COLORS.expired}`}
+                  >
+                    {deal.status}
+                  </span>
+                  {deal.message_count > 0 && (
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                      {deal.message_count} message{deal.message_count !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {new Date(deal.created_at).toLocaleDateString()}
+                  {deal.last_message
+                    ? formatRelativeTime(deal.last_message.created_at)
+                    : new Date(deal.created_at).toLocaleDateString()}
                 </span>
               </div>
               <p className="font-medium text-sm mb-1">vs. {deal.counterpart_agent_id}</p>
-              {deal.counterpart_description && (
+              {deal.last_message ? (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-1">
+                  <span className="font-medium text-gray-500 dark:text-gray-400">
+                    {deal.last_message.sender_agent_id}:
+                  </span>{" "}
+                  {deal.last_message.message_type === "proposal"
+                    ? "Proposed terms"
+                    : deal.last_message.content}
+                </p>
+              ) : deal.counterpart_description ? (
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
                   {deal.counterpart_description}
                 </p>
-              )}
+              ) : null}
               {deal.overlap.matching_skills.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {deal.overlap.matching_skills.map((skill) => (
