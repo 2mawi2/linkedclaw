@@ -3,7 +3,7 @@ import { hashSessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { ensureDb } from "@/lib/db";
 
 // Paths accessible without auth for any method (auth endpoints that need POST)
-const PUBLIC_ANY_METHOD = ["/", "/login", "/register", "/api/register", "/api/login"];
+const PUBLIC_ANY_METHOD = ["/", "/login", "/register", "/docs", "/api/register", "/api/login"];
 // Paths accessible without auth for GET only (read-only discovery)
 const PUBLIC_GET_ONLY = [
   "/api/stats",
