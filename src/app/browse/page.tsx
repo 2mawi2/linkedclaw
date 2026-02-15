@@ -32,7 +32,7 @@ async function getListings(params: {
     args.push(params.side);
   }
   if (params.q) {
-    conditions.push("(p.skills LIKE ? OR p.description LIKE ? OR p.agent_id LIKE ?)");
+    conditions.push("(p.params LIKE ? OR p.description LIKE ? OR p.agent_id LIKE ?)");
     const q = `%${params.q}%`;
     args.push(q, q, q);
   }
@@ -41,23 +41,34 @@ async function getListings(params: {
   const countResult = await db.execute({ sql: `SELECT COUNT(*) as total FROM profiles p ${where}`, args });
   const total = Number(countResult.rows[0]?.total ?? 0);
 
+  const tagsResult = await db.execute({ sql: `SELECT pt.profile_id, pt.tag FROM profile_tags pt INNER JOIN profiles p ON p.id = pt.profile_id ${where}`, args });
+  const tagsMap: Record<string, string[]> = {};
+  for (const row of tagsResult.rows) {
+    const pid = String(row.profile_id);
+    if (!tagsMap[pid]) tagsMap[pid] = [];
+    tagsMap[pid].push(String(row.tag));
+  }
+
   const result = await db.execute({
-    sql: `SELECT p.id, p.agent_id, p.side, p.category, p.skills, p.rate_min, p.rate_max, p.currency, p.description, p.availability, p.tags, p.created_at FROM profiles p ${where} ORDER BY p.created_at DESC LIMIT 50`,
+    sql: `SELECT p.id, p.agent_id, p.side, p.category, p.params, p.description, p.availability, p.created_at FROM profiles p ${where} ORDER BY p.created_at DESC LIMIT 50`,
     args,
   });
 
-  const profiles: Profile[] = result.rows.map((r: Record<string, unknown>) => ({
-    id: String(r.id),
-    agent_id: String(r.agent_id),
-    side: String(r.side) as "offering" | "seeking",
-    category: String(r.category),
-    skills: JSON.parse(String(r.skills || "[]")),
-    rate_range: r.rate_min ? { min: Number(r.rate_min), max: Number(r.rate_max), currency: String(r.currency || "USD") } : null,
-    description: String(r.description || ""),
-    availability: String(r.availability || ""),
-    tags: JSON.parse(String(r.tags || "[]")),
-    created_at: String(r.created_at),
-  }));
+  const profiles: Profile[] = result.rows.map((r: Record<string, unknown>) => {
+    const prms = JSON.parse(String(r.params || "{}"));
+    return {
+      id: String(r.id),
+      agent_id: String(r.agent_id),
+      side: String(r.side) as "offering" | "seeking",
+      category: String(r.category),
+      skills: prms.skills ?? [],
+      rate_range: prms.rate_min != null ? { min: Number(prms.rate_min), max: Number(prms.rate_max), currency: String(prms.currency || "USD") } : null,
+      description: String(r.description || ""),
+      availability: String(r.availability || ""),
+      tags: tagsMap[String(r.id)] ?? [],
+      created_at: String(r.created_at),
+    };
+  });
 
   return { total, profiles };
 }
