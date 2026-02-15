@@ -21,8 +21,20 @@ function validateConnectRequest(
   if (!b.category || typeof b.category !== "string" || b.category.trim().length === 0) {
     return { valid: false, error: "category is required and must be a non-empty string" };
   }
+  // Accept top-level skills/rate fields and wrap into params
   if (!b.params || typeof b.params !== "object" || Array.isArray(b.params)) {
-    return { valid: false, error: "params must be an object" };
+    // Build params from top-level fields if present
+    if (b.skills || b.rate_min != null || b.rate_max != null || b.currency || b.remote != null) {
+      b.params = {
+        ...(b.skills ? { skills: b.skills } : {}),
+        ...(b.rate_min != null ? { rate_min: b.rate_min } : {}),
+        ...(b.rate_max != null ? { rate_max: b.rate_max } : {}),
+        ...(b.currency ? { currency: b.currency } : {}),
+        ...(b.remote != null ? { remote: b.remote } : {}),
+      };
+    } else {
+      return { valid: false, error: "params must be an object, or provide top-level skills/rate_min/rate_max/currency/remote fields" };
+    }
   }
   if (b.description !== undefined && typeof b.description !== "string") {
     return { valid: false, error: "description must be a string" };
