@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useSyncExternalStore, useCallback } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 function getStoredUsername(): string | null {
   if (typeof window === "undefined") return null;
@@ -20,27 +20,28 @@ export function ClientNav() {
 
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const fetchUnread = useCallback(async () => {
-    if (!username) {
-      setUnreadCount(0);
-      return;
-    }
-    try {
-      const res = await fetch(`/api/inbox?agent_id=${encodeURIComponent(username)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setUnreadCount(data.unread_count ?? 0);
-      }
-    } catch {
-      // Silently ignore - badge just won't update
-    }
-  }, [username]);
-
   useEffect(() => {
+    if (!username) return;
+    let active = true;
+    const user = username;
+    async function fetchUnread() {
+      try {
+        const res = await fetch(`/api/inbox?agent_id=${encodeURIComponent(user)}`);
+        if (res.ok && active) {
+          const data = await res.json();
+          setUnreadCount(data.unread_count ?? 0);
+        }
+      } catch {
+        // Silently ignore - badge just won't update
+      }
+    }
     fetchUnread();
     const interval = setInterval(fetchUnread, 10_000);
-    return () => clearInterval(interval);
-  }, [fetchUnread]);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [username]);
 
   return (
     <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-6">
