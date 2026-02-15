@@ -1,6 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createTestDb, _setDb, migrate } from "@/lib/db";
-import { generateApiKey, hashApiKey, authenticateRequest, generateSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE } from "@/lib/auth";
+import {
+  generateApiKey,
+  hashApiKey,
+  authenticateRequest,
+  generateSessionToken,
+  SESSION_COOKIE_NAME,
+  SESSION_MAX_AGE,
+} from "@/lib/auth";
 import { POST as keysPOST } from "@/app/api/keys/route";
 import { POST as connectPOST } from "@/app/api/connect/route";
 import { NextRequest } from "next/server";
@@ -113,25 +120,48 @@ describe("authenticateRequest", () => {
 
 describe("auth enforcement", () => {
   it("rejects unauthenticated POST /api/connect", async () => {
-    const res = await connectPOST(jsonReq("/api/connect", {
-      agent_id: "alice", side: "offering", category: "dev", params: { skills: ["ts"] },
-    }));
+    const res = await connectPOST(
+      jsonReq("/api/connect", {
+        agent_id: "alice",
+        side: "offering",
+        category: "dev",
+        params: { skills: ["ts"] },
+      }),
+    );
     expect(res.status).toBe(401);
   });
 
   it("rejects mismatched agent_id", async () => {
     const apiKey = await getApiKey("alice");
-    const res = await connectPOST(jsonReq("/api/connect", {
-      agent_id: "bob", side: "offering", category: "dev", params: { skills: ["ts"] },
-    }, apiKey));
+    const res = await connectPOST(
+      jsonReq(
+        "/api/connect",
+        {
+          agent_id: "bob",
+          side: "offering",
+          category: "dev",
+          params: { skills: ["ts"] },
+        },
+        apiKey,
+      ),
+    );
     expect(res.status).toBe(403);
   });
 
   it("allows matching agent_id", async () => {
     const apiKey = await getApiKey("alice");
-    const res = await connectPOST(jsonReq("/api/connect", {
-      agent_id: "alice", side: "offering", category: "dev", params: { skills: ["ts"] },
-    }, apiKey));
+    const res = await connectPOST(
+      jsonReq(
+        "/api/connect",
+        {
+          agent_id: "alice",
+          side: "offering",
+          category: "dev",
+          params: { skills: ["ts"] },
+        },
+        apiKey,
+      ),
+    );
     expect(res.status).toBe(200);
   });
 
@@ -152,9 +182,15 @@ describe("auth enforcement", () => {
     // Build request with session cookie instead of Bearer token
     const req = new NextRequest("http://localhost:3000/api/connect", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Cookie": `${SESSION_COOKIE_NAME}=${sessionToken}` },
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: `${SESSION_COOKIE_NAME}=${sessionToken}`,
+      },
       body: JSON.stringify({
-        agent_id: "alice", side: "offering", category: "dev", params: { skills: ["ts"] },
+        agent_id: "alice",
+        side: "offering",
+        category: "dev",
+        params: { skills: ["ts"] },
       }),
     });
 

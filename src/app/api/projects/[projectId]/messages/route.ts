@@ -8,9 +8,14 @@ import type { Project } from "@/lib/types";
 /** POST /api/projects/:projectId/messages - Send a message to the project thread */
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
+  { params }: { params: Promise<{ projectId: string }> },
 ) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -33,7 +38,10 @@ export async function POST(
     return NextResponse.json({ error: "agent_id is required" }, { status: 400 });
   }
   if (b.agent_id !== auth.agent_id) {
-    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+    return NextResponse.json(
+      { error: "agent_id does not match authenticated key" },
+      { status: 403 },
+    );
   }
   if (!b.content || typeof b.content !== "string" || b.content.trim().length === 0) {
     return NextResponse.json({ error: "content is required" }, { status: 400 });
@@ -54,7 +62,10 @@ export async function POST(
 
   // Check terminal states
   if (project.status === "completed" || project.status === "cancelled") {
-    return NextResponse.json({ error: `Project is ${project.status}, no further messages allowed` }, { status: 400 });
+    return NextResponse.json(
+      { error: `Project is ${project.status}, no further messages allowed` },
+      { status: 400 },
+    );
   }
 
   // Verify agent is a participant (creator or role filler)
@@ -66,13 +77,19 @@ export async function POST(
   const isRoleFiller = roleResult.rows.length > 0;
 
   if (!isCreator && !isRoleFiller) {
-    return NextResponse.json({ error: "Agent is not a participant in this project" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Agent is not a participant in this project" },
+      { status: 403 },
+    );
   }
 
   let messageType = (b.message_type as string) ?? "discussion";
   if (messageType === "text") messageType = "discussion";
   if (!["discussion", "proposal", "system"].includes(messageType)) {
-    return NextResponse.json({ error: "message_type must be 'discussion', 'proposal', or 'text'" }, { status: 400 });
+    return NextResponse.json(
+      { error: "message_type must be 'discussion', 'proposal', or 'text'" },
+      { status: 400 },
+    );
   }
 
   // Insert message
@@ -82,7 +99,10 @@ export async function POST(
   });
 
   // Update status if proposal
-  if (messageType === "proposal" && (project.status === "open" || project.status === "negotiating")) {
+  if (
+    messageType === "proposal" &&
+    (project.status === "open" || project.status === "negotiating")
+  ) {
     await db.execute({
       sql: "UPDATE projects SET status = 'proposed' WHERE id = ?",
       args: [projectId],

@@ -68,11 +68,6 @@ export default function DealDetailPage() {
   const [approving, setApproving] = useState(false);
   const [approvalResult, setApprovalResult] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const isLoggedIn = useSyncExternalStore(
-    (cb) => { window.addEventListener("storage", cb); return () => window.removeEventListener("storage", cb); },
-    getStoredUsername,
-    () => null,
-  ) !== null;
 
   // Auto-detect logged-in user from localStorage if not in URL
   useEffect(() => {
@@ -117,7 +112,7 @@ export default function DealDetailPage() {
 
   async function handleApproval(approved: boolean) {
     if (!agentId) {
-      setApprovalResult("Not signed in. Please sign in first.");
+      setApprovalResult("No agent_id provided. Add ?agent_id=xxx to the URL.");
       return;
     }
     setApproving(true);
@@ -167,7 +162,8 @@ export default function DealDetailPage() {
   }
 
   const { match, messages, approvals } = data;
-  const isActive = match.status === "negotiating" || match.status === "matched" || match.status === "proposed";
+  const isActive =
+    match.status === "negotiating" || match.status === "matched" || match.status === "proposed";
 
   // Find the latest proposal
   const latestProposal = [...messages].reverse().find((m) => m.message_type === "proposal");
@@ -178,14 +174,13 @@ export default function DealDetailPage() {
       <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-10">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <Link
-            href="/deals"
-            className="text-gray-500 hover:text-foreground"
-          >
+          <Link href="/deals" className="text-gray-500 hover:text-foreground">
             &larr; Back
           </Link>
           <h1 className="text-xl font-bold">Deal</h1>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[match.status] || STATUS_COLORS.expired}`}>
+          <span
+            className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[match.status] || STATUS_COLORS.expired}`}
+          >
             {match.status}
           </span>
         </div>
@@ -198,10 +193,14 @@ export default function DealDetailPage() {
 
         {/* Overlap */}
         <div className="mb-6 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
-          <h3 className="text-sm font-semibold mb-2">Match overlap (score: {match.overlap.score})</h3>
+          <h3 className="text-sm font-semibold mb-2">
+            Match overlap (score: {match.overlap.score})
+          </h3>
           <div className="flex flex-wrap gap-2 text-sm">
             {match.overlap.matching_skills.map((s) => (
-              <span key={s} className="bg-gray-200 dark:bg-gray-800 px-2 py-0.5 rounded text-xs">{s}</span>
+              <span key={s} className="bg-gray-200 dark:bg-gray-800 px-2 py-0.5 rounded text-xs">
+                {s}
+              </span>
             ))}
             {match.overlap.rate_overlap && (
               <span className="text-xs text-gray-600 dark:text-gray-400">
@@ -234,17 +233,19 @@ export default function DealDetailPage() {
                         : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
                     }`}
                   >
-                    <p className={`text-xs mb-1 ${isMe ? "opacity-70" : "text-gray-500 dark:text-gray-400"}`}>
+                    <p
+                      className={`text-xs mb-1 ${isMe ? "opacity-70" : "text-gray-500 dark:text-gray-400"}`}
+                    >
                       {msg.sender_agent_id}
                       {msg.message_type !== "negotiation" && (
-                        <span className="ml-1 font-medium">
-                          [{msg.message_type}]
-                        </span>
+                        <span className="ml-1 font-medium">[{msg.message_type}]</span>
                       )}
                     </p>
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                     {msg.proposed_terms && (
-                      <pre className={`mt-2 text-xs p-2 rounded ${isMe ? "bg-black/20" : "bg-gray-100 dark:bg-gray-800"}`}>
+                      <pre
+                        className={`mt-2 text-xs p-2 rounded ${isMe ? "bg-black/20" : "bg-gray-100 dark:bg-gray-800"}`}
+                      >
                         {JSON.stringify(msg.proposed_terms, null, 2)}
                       </pre>
                     )}
@@ -268,8 +269,10 @@ export default function DealDetailPage() {
                 {JSON.stringify(latestProposal.proposed_terms, null, 2)}
               </pre>
             )}
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{latestProposal.content}</p>
-            {agentId && isLoggedIn ? (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              {latestProposal.content}
+            </p>
+            {agentId && (
               <div className="flex gap-3">
                 <button
                   onClick={() => handleApproval(true)}
@@ -286,11 +289,7 @@ export default function DealDetailPage() {
                   Reject
                 </button>
               </div>
-            ) : !isLoggedIn ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                <Link href="/login" className="text-blue-600 dark:text-blue-400 hover:underline">Sign in</Link> to approve or reject this deal.
-              </p>
-            ) : null}
+            )}
           </div>
         )}
 
@@ -304,11 +303,25 @@ export default function DealDetailPage() {
         {/* Approved state */}
         {match.status === "approved" && (
           <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-            <h3 className="font-semibold text-green-700 dark:text-green-400 mb-2">Deal approved!</h3>
-            <p className="text-sm mb-2">Both parties have approved. Here are the agent IDs for direct contact:</p>
+            <h3 className="font-semibold text-green-700 dark:text-green-400 mb-2">
+              Deal approved!
+            </h3>
+            <p className="text-sm mb-2">
+              Both parties have approved. Here are the agent IDs for direct contact:
+            </p>
             <div className="text-sm space-y-1">
-              <p>Agent A: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{match.profiles.a.agent_id}</code></p>
-              <p>Agent B: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{match.profiles.b.agent_id}</code></p>
+              <p>
+                Agent A:{" "}
+                <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">
+                  {match.profiles.a.agent_id}
+                </code>
+              </p>
+              <p>
+                Agent B:{" "}
+                <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">
+                  {match.profiles.b.agent_id}
+                </code>
+              </p>
             </div>
           </div>
         )}
@@ -320,7 +333,13 @@ export default function DealDetailPage() {
             <div className="space-y-1">
               {approvals.map((a, i) => (
                 <div key={i} className="text-sm flex items-center gap-2">
-                  <span className={a.approved ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+                  <span
+                    className={
+                      a.approved
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
+                    }
+                  >
                     {a.approved ? "Approved" : "Rejected"}
                   </span>
                   <span className="text-gray-500 dark:text-gray-400">by {a.agent_id}</span>
@@ -341,7 +360,10 @@ function getStoredUsername(): string | null {
 
 function Nav() {
   const username = useSyncExternalStore(
-    (cb) => { window.addEventListener("storage", cb); return () => window.removeEventListener("storage", cb); },
+    (cb) => {
+      window.addEventListener("storage", cb);
+      return () => window.removeEventListener("storage", cb);
+    },
     getStoredUsername,
     () => null,
   );
@@ -365,7 +387,10 @@ function Nav() {
           <>
             <span className="text-sm text-gray-500 dark:text-gray-400">{username}</span>
             <button
-              onClick={() => { localStorage.removeItem("lc_username"); window.location.href = "/"; }}
+              onClick={() => {
+                localStorage.removeItem("lc_username");
+                window.location.href = "/";
+              }}
               className="text-sm text-gray-500 hover:text-foreground"
             >
               Sign out
@@ -384,7 +409,9 @@ function Nav() {
 function ProfileCard({ profile, label }: { profile: ProfileInfo; label: string }) {
   return (
     <div className="p-3 border border-gray-200 dark:border-gray-800 rounded-lg">
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label} ({profile.side})</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+        {label} ({profile.side})
+      </p>
       <p className="font-medium text-sm">{profile.agent_id}</p>
       <p className="text-xs text-gray-600 dark:text-gray-400">{profile.category}</p>
       {profile.description && (

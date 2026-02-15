@@ -28,8 +28,12 @@ describe("seedIfEmpty", () => {
   it("creates both offering and seeking profiles", async () => {
     await seedIfEmpty(db);
 
-    const offering = await db.execute("SELECT COUNT(*) as count FROM profiles WHERE side = 'offering'");
-    const seeking = await db.execute("SELECT COUNT(*) as count FROM profiles WHERE side = 'seeking'");
+    const offering = await db.execute(
+      "SELECT COUNT(*) as count FROM profiles WHERE side = 'offering'",
+    );
+    const seeking = await db.execute(
+      "SELECT COUNT(*) as count FROM profiles WHERE side = 'seeking'",
+    );
 
     expect(Number(offering.rows[0].count)).toBeGreaterThan(0);
     expect(Number(seeking.rows[0].count)).toBeGreaterThan(0);

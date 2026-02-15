@@ -30,20 +30,24 @@ afterEach(() => {
   restore();
 });
 
-async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
+async function getApiKey(agentId: string): Promise<string> {
+  return createApiKey(agentId);
+}
 
 async function createProfile(agentId: string, apiKey: string, side: string) {
-  const res = await connectPOST(req("/api/connect", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      agent_id: agentId,
-      side,
-      category: "dev",
-      params: { skills: ["typescript"], rate_min: 50, rate_max: 100, remote: "remote" },
-      description: `${agentId} profile`,
+  const res = await connectPOST(
+    req("/api/connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        agent_id: agentId,
+        side,
+        category: "dev",
+        params: { skills: ["typescript"], rate_min: 50, rate_max: 100, remote: "remote" },
+        description: `${agentId} profile`,
+      }),
     }),
-  }));
+  );
   const data = await res.json();
   return data.profile_id as string;
 }
@@ -51,9 +55,11 @@ async function createProfile(agentId: string, apiKey: string, side: string) {
 describe("GET /api/inbox", () => {
   it("returns empty inbox for new agent", async () => {
     const key = await getApiKey("agent-1");
-    const res = await inboxGET(req("/api/inbox?agent_id=agent-1", {
-      headers: { "Authorization": `Bearer ${key}` },
-    }));
+    const res = await inboxGET(
+      req("/api/inbox?agent_id=agent-1", {
+        headers: { Authorization: `Bearer ${key}` },
+      }),
+    );
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.unread_count).toBe(0);
@@ -67,17 +73,21 @@ describe("GET /api/inbox", () => {
 
   it("requires agent_id", async () => {
     const key = await getApiKey("agent-1");
-    const res = await inboxGET(req("/api/inbox", {
-      headers: { "Authorization": `Bearer ${key}` },
-    }));
+    const res = await inboxGET(
+      req("/api/inbox", {
+        headers: { Authorization: `Bearer ${key}` },
+      }),
+    );
     expect(res.status).toBe(400);
   });
 
   it("blocks access to other agent inbox", async () => {
     const key = await getApiKey("agent-1");
-    const res = await inboxGET(req("/api/inbox?agent_id=agent-2", {
-      headers: { "Authorization": `Bearer ${key}` },
-    }));
+    const res = await inboxGET(
+      req("/api/inbox?agent_id=agent-2", {
+        headers: { Authorization: `Bearer ${key}` },
+      }),
+    );
     expect(res.status).toBe(403);
   });
 
@@ -88,12 +98,16 @@ describe("GET /api/inbox", () => {
     await createProfile("agent-2", key2, "seeking");
 
     // Trigger match discovery
-    await matchesGET(req(`/api/matches/${profileA}`), { params: Promise.resolve({ profileId: profileA }) });
+    await matchesGET(req(`/api/matches/${profileA}`), {
+      params: Promise.resolve({ profileId: profileA }),
+    });
 
     // Check agent-2's inbox
-    const res = await inboxGET(req("/api/inbox?agent_id=agent-2", {
-      headers: { "Authorization": `Bearer ${key2}` },
-    }));
+    const res = await inboxGET(
+      req("/api/inbox?agent_id=agent-2", {
+        headers: { Authorization: `Bearer ${key2}` },
+      }),
+    );
     const data = await res.json();
     expect(data.unread_count).toBe(1);
     expect(data.notifications).toHaveLength(1);
@@ -108,22 +122,26 @@ describe("GET /api/inbox", () => {
     const profileA = await createProfile("agent-1", key1, "offering");
     await createProfile("agent-2", key2, "seeking");
 
-    const matchRes = await matchesGET(req(`/api/matches/${profileA}`), { params: Promise.resolve({ profileId: profileA }) });
+    const matchRes = await matchesGET(req(`/api/matches/${profileA}`), {
+      params: Promise.resolve({ profileId: profileA }),
+    });
     const matchData = await matchRes.json();
     const matchId = matchData.matches[0].match_id;
 
     await messagesPOST(
       req(`/api/deals/${matchId}/messages`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key1}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key1}` },
         body: JSON.stringify({ agent_id: "agent-1", content: "Hello!" }),
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
 
-    const res = await inboxGET(req("/api/inbox?agent_id=agent-2", {
-      headers: { "Authorization": `Bearer ${key2}` },
-    }));
+    const res = await inboxGET(
+      req("/api/inbox?agent_id=agent-2", {
+        headers: { Authorization: `Bearer ${key2}` },
+      }),
+    );
     const data = await res.json();
     expect(data.unread_count).toBe(2); // match + message
     const types = data.notifications.map((n: { type: string }) => n.type);
@@ -137,7 +155,9 @@ describe("GET /api/inbox", () => {
     const profileA = await createProfile("agent-1", key1, "offering");
     await createProfile("agent-2", key2, "seeking");
 
-    const matchRes = await matchesGET(req(`/api/matches/${profileA}`), { params: Promise.resolve({ profileId: profileA }) });
+    const matchRes = await matchesGET(req(`/api/matches/${profileA}`), {
+      params: Promise.resolve({ profileId: profileA }),
+    });
     const matchData = await matchRes.json();
     const matchId = matchData.matches[0].match_id;
 
@@ -145,41 +165,50 @@ describe("GET /api/inbox", () => {
     await messagesPOST(
       req(`/api/deals/${matchId}/messages`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key1}` },
-        body: JSON.stringify({ agent_id: "agent-1", content: "Deal!", message_type: "proposal", proposed_terms: { rate: 50 } }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key1}` },
+        body: JSON.stringify({
+          agent_id: "agent-1",
+          content: "Deal!",
+          message_type: "proposal",
+          proposed_terms: { rate: 50 },
+        }),
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
 
     // Both approve
     await approvePOST(
       req(`/api/deals/${matchId}/approve`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key1}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key1}` },
         body: JSON.stringify({ agent_id: "agent-1", approved: true }),
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     await approvePOST(
       req(`/api/deals/${matchId}/approve`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key2}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key2}` },
         body: JSON.stringify({ agent_id: "agent-2", approved: true }),
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
 
     // Both agents should have deal_approved notifications
-    const res1 = await inboxGET(req("/api/inbox?agent_id=agent-1", {
-      headers: { "Authorization": `Bearer ${key1}` },
-    }));
+    const res1 = await inboxGET(
+      req("/api/inbox?agent_id=agent-1", {
+        headers: { Authorization: `Bearer ${key1}` },
+      }),
+    );
     const data1 = await res1.json();
     const types1 = data1.notifications.map((n: { type: string }) => n.type);
     expect(types1).toContain("deal_approved");
 
-    const res2 = await inboxGET(req("/api/inbox?agent_id=agent-2", {
-      headers: { "Authorization": `Bearer ${key2}` },
-    }));
+    const res2 = await inboxGET(
+      req("/api/inbox?agent_id=agent-2", {
+        headers: { Authorization: `Bearer ${key2}` },
+      }),
+    );
     const data2 = await res2.json();
     const types2 = data2.notifications.map((n: { type: string }) => n.type);
     expect(types2).toContain("deal_approved");
@@ -196,9 +225,11 @@ describe("GET /api/inbox", () => {
       args: ["agent-1", "message_received", "Unread one", 0],
     });
 
-    const res = await inboxGET(req("/api/inbox?agent_id=agent-1&unread_only=true", {
-      headers: { "Authorization": `Bearer ${key1}` },
-    }));
+    const res = await inboxGET(
+      req("/api/inbox?agent_id=agent-1&unread_only=true", {
+        headers: { Authorization: `Bearer ${key1}` },
+      }),
+    );
     const data = await res.json();
     expect(data.notifications).toHaveLength(1);
     expect(data.notifications[0].type).toBe("message_received");
@@ -213,9 +244,11 @@ describe("GET /api/inbox", () => {
       });
     }
 
-    const res = await inboxGET(req("/api/inbox?agent_id=agent-1&limit=2", {
-      headers: { "Authorization": `Bearer ${key1}` },
-    }));
+    const res = await inboxGET(
+      req("/api/inbox?agent_id=agent-1&limit=2", {
+        headers: { Authorization: `Bearer ${key1}` },
+      }),
+    );
     const data = await res.json();
     expect(data.notifications).toHaveLength(2);
     expect(data.unread_count).toBe(5);
@@ -225,46 +258,68 @@ describe("GET /api/inbox", () => {
 describe("POST /api/inbox/read", () => {
   it("marks all as read", async () => {
     const key1 = await getApiKey("agent-1");
-    await db.execute({ sql: "INSERT INTO notifications (agent_id, type, summary) VALUES (?, ?, ?)", args: ["agent-1", "new_match", "Test 1"] });
-    await db.execute({ sql: "INSERT INTO notifications (agent_id, type, summary) VALUES (?, ?, ?)", args: ["agent-1", "new_match", "Test 2"] });
+    await db.execute({
+      sql: "INSERT INTO notifications (agent_id, type, summary) VALUES (?, ?, ?)",
+      args: ["agent-1", "new_match", "Test 1"],
+    });
+    await db.execute({
+      sql: "INSERT INTO notifications (agent_id, type, summary) VALUES (?, ?, ?)",
+      args: ["agent-1", "new_match", "Test 2"],
+    });
 
-    const res = await inboxReadPOST(req("/api/inbox/read", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key1}` },
-      body: JSON.stringify({ agent_id: "agent-1" }),
-    }));
+    const res = await inboxReadPOST(
+      req("/api/inbox/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key1}` },
+        body: JSON.stringify({ agent_id: "agent-1" }),
+      }),
+    );
     const data = await res.json();
     expect(data.marked_read).toBe(2);
 
-    const inboxRes = await inboxGET(req("/api/inbox?agent_id=agent-1", { headers: { "Authorization": `Bearer ${key1}` } }));
+    const inboxRes = await inboxGET(
+      req("/api/inbox?agent_id=agent-1", { headers: { Authorization: `Bearer ${key1}` } }),
+    );
     const inboxData = await inboxRes.json();
     expect(inboxData.unread_count).toBe(0);
   });
 
   it("marks specific ids as read", async () => {
     const key1 = await getApiKey("agent-1");
-    await db.execute({ sql: "INSERT INTO notifications (agent_id, type, summary) VALUES (?, ?, ?)", args: ["agent-1", "new_match", "Test 1"] });
-    await db.execute({ sql: "INSERT INTO notifications (agent_id, type, summary) VALUES (?, ?, ?)", args: ["agent-1", "new_match", "Test 2"] });
+    await db.execute({
+      sql: "INSERT INTO notifications (agent_id, type, summary) VALUES (?, ?, ?)",
+      args: ["agent-1", "new_match", "Test 1"],
+    });
+    await db.execute({
+      sql: "INSERT INTO notifications (agent_id, type, summary) VALUES (?, ?, ?)",
+      args: ["agent-1", "new_match", "Test 2"],
+    });
 
-    const res = await inboxReadPOST(req("/api/inbox/read", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key1}` },
-      body: JSON.stringify({ agent_id: "agent-1", notification_ids: [1] }),
-    }));
+    const res = await inboxReadPOST(
+      req("/api/inbox/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key1}` },
+        body: JSON.stringify({ agent_id: "agent-1", notification_ids: [1] }),
+      }),
+    );
     const data = await res.json();
     expect(data.marked_read).toBe(1);
 
-    const inboxRes = await inboxGET(req("/api/inbox?agent_id=agent-1", { headers: { "Authorization": `Bearer ${key1}` } }));
+    const inboxRes = await inboxGET(
+      req("/api/inbox?agent_id=agent-1", { headers: { Authorization: `Bearer ${key1}` } }),
+    );
     const inboxData = await inboxRes.json();
     expect(inboxData.unread_count).toBe(1);
   });
 
   it("requires auth", async () => {
-    const res = await inboxReadPOST(req("/api/inbox/read", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ agent_id: "agent-1" }),
-    }));
+    const res = await inboxReadPOST(
+      req("/api/inbox/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agent_id: "agent-1" }),
+      }),
+    );
     expect(res.status).toBe(401);
   });
 });

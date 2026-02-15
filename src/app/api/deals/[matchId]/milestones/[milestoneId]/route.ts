@@ -15,7 +15,7 @@ const VALID_STATUSES: MilestoneStatus[] = ["pending", "in_progress", "completed"
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ matchId: string; milestoneId: string }> }
+  { params }: { params: Promise<{ matchId: string; milestoneId: string }> },
 ) {
   const { matchId, milestoneId } = await params;
   const auth = await authenticateAny(req);
@@ -46,7 +46,7 @@ export async function PATCH(
   if (body.status && !VALID_STATUSES.includes(body.status)) {
     return NextResponse.json(
       { error: `status must be one of: ${VALID_STATUSES.join(", ")}` },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -156,7 +156,8 @@ export async function PATCH(
           agent_id: agentA,
           type: "milestone_updated",
           match_id: matchId,
-          summary: "All milestones completed! Use /api/deals/:matchId/complete to finalize the deal.",
+          summary:
+            "All milestones completed! Use /api/deals/:matchId/complete to finalize the deal.",
         });
       }
       if (agentB) {
@@ -164,7 +165,8 @@ export async function PATCH(
           agent_id: agentB,
           type: "milestone_updated",
           match_id: matchId,
-          summary: "All milestones completed! Use /api/deals/:matchId/complete to finalize the deal.",
+          summary:
+            "All milestones completed! Use /api/deals/:matchId/complete to finalize the deal.",
         });
       }
     }

@@ -21,7 +21,7 @@ async function insertProfile(
   side: "offering" | "seeking",
   category: string,
   params: Record<string, unknown>,
-  description?: string
+  description?: string,
 ): Promise<string> {
   const id = crypto.randomUUID();
   await db.execute({
@@ -273,7 +273,7 @@ describe("findMatches", () => {
 
     const matches = await findMatches(id1);
     expect(matches).toHaveLength(2);
-    const agents = matches.map(m => m.counterpart.agent_id).sort();
+    const agents = matches.map((m) => m.counterpart.agent_id).sort();
     expect(agents).toEqual(["bob", "charlie"]);
   });
 });

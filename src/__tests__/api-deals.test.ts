@@ -17,7 +17,9 @@ let restore: () => void;
 let aliceKey: string;
 let bobKey: string;
 
-async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
+async function getApiKey(agentId: string): Promise<string> {
+  return createApiKey(agentId);
+}
 
 beforeEach(async () => {
   db = createTestDb();
@@ -42,23 +44,42 @@ function jsonReq(url: string, body?: unknown, apiKey?: string): NextRequest {
   });
 }
 
-async function createMatchedPair(): Promise<{ offeringId: string; seekingId: string; matchId: string }> {
-  const r1 = await connectPOST(jsonReq("/api/connect", {
-    agent_id: "alice", side: "offering", category: "dev",
-    params: { skills: ["react", "ts"], rate_min: 50, rate_max: 70 },
-  }, aliceKey));
+async function createMatchedPair(): Promise<{
+  offeringId: string;
+  seekingId: string;
+  matchId: string;
+}> {
+  const r1 = await connectPOST(
+    jsonReq(
+      "/api/connect",
+      {
+        agent_id: "alice",
+        side: "offering",
+        category: "dev",
+        params: { skills: ["react", "ts"], rate_min: 50, rate_max: 70 },
+      },
+      aliceKey,
+    ),
+  );
   const { profile_id: offeringId } = await r1.json();
 
-  const r2 = await connectPOST(jsonReq("/api/connect", {
-    agent_id: "bob", side: "seeking", category: "dev",
-    params: { skills: ["react"], rate_min: 40, rate_max: 60 },
-  }, bobKey));
+  const r2 = await connectPOST(
+    jsonReq(
+      "/api/connect",
+      {
+        agent_id: "bob",
+        side: "seeking",
+        category: "dev",
+        params: { skills: ["react"], rate_min: 40, rate_max: 60 },
+      },
+      bobKey,
+    ),
+  );
   const { profile_id: seekingId } = await r2.json();
 
-  const matchRes = await matchesGET(
-    jsonReq(`/api/matches/${offeringId}`),
-    { params: Promise.resolve({ profileId: offeringId }) }
-  );
+  const matchRes = await matchesGET(jsonReq(`/api/matches/${offeringId}`), {
+    params: Promise.resolve({ profileId: offeringId }),
+  });
   const { matches } = await matchRes.json();
   return { offeringId, seekingId, matchId: matches[0].match_id };
 }
@@ -71,19 +92,27 @@ describe("GET /api/matches/:profileId", () => {
 
   it("returns 404 for inactive profile", async () => {
     const xKey = await getApiKey("x");
-    const r = await connectPOST(jsonReq("/api/connect", {
-      agent_id: "x", side: "offering", category: "dev", params: {},
-    }, xKey));
+    const r = await connectPOST(
+      jsonReq(
+        "/api/connect",
+        {
+          agent_id: "x",
+          side: "offering",
+          category: "dev",
+          params: {},
+        },
+        xKey,
+      ),
+    );
     const { profile_id } = await r.json();
     await db.execute({
       sql: "UPDATE profiles SET active = 0 WHERE id = ?",
       args: [profile_id],
     });
 
-    const res = await matchesGET(
-      jsonReq(`/api/matches/${profile_id}`),
-      { params: Promise.resolve({ profileId: profile_id }) }
-    );
+    const res = await matchesGET(jsonReq(`/api/matches/${profile_id}`), {
+      params: Promise.resolve({ profileId: profile_id }),
+    });
     expect(res.status).toBe(404);
   });
 });
@@ -112,10 +141,9 @@ describe("GET /api/deals", () => {
 describe("GET /api/deals/:matchId", () => {
   it("returns deal detail with profiles", async () => {
     const { matchId } = await createMatchedPair();
-    const res = await dealDetailGET(
-      jsonReq(`/api/deals/${matchId}`),
-      { params: Promise.resolve({ matchId }) }
-    );
+    const res = await dealDetailGET(jsonReq(`/api/deals/${matchId}`), {
+      params: Promise.resolve({ matchId }),
+    });
     const data = await res.json();
     expect(data.match.status).toBe("matched");
     expect(data.messages).toHaveLength(0);
@@ -123,10 +151,9 @@ describe("GET /api/deals/:matchId", () => {
   });
 
   it("returns 404 for non-existent deal", async () => {
-    const res = await dealDetailGET(
-      jsonReq("/api/deals/nonexistent"),
-      { params: Promise.resolve({ matchId: "nonexistent" }) }
-    );
+    const res = await dealDetailGET(jsonReq("/api/deals/nonexistent"), {
+      params: Promise.resolve({ matchId: "nonexistent" }),
+    });
     expect(res.status).toBe(404);
   });
 });
@@ -136,12 +163,16 @@ describe("POST /api/deals/:matchId/messages", () => {
     const { matchId } = await createMatchedPair();
 
     const res = await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice",
-        content: "Hi, let's discuss terms.",
-        message_type: "negotiation",
-      }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Hi, let's discuss terms.",
+          message_type: "negotiation",
+        },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
     const data = await res.json();
     expect(res.status).toBe(200);
@@ -152,13 +183,17 @@ describe("POST /api/deals/:matchId/messages", () => {
     const { matchId } = await createMatchedPair();
 
     const res = await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "bob",
-        content: "Here's my offer",
-        message_type: "proposal",
-        proposed_terms: { rate: 55, hours: 25 },
-      }, bobKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "bob",
+          content: "Here's my offer",
+          message_type: "proposal",
+          proposed_terms: { rate: 55, hours: 25 },
+        },
+        bobKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
     const data = await res.json();
     expect(data.status).toBe("proposed");
@@ -169,11 +204,15 @@ describe("POST /api/deals/:matchId/messages", () => {
     const charlieKey = await getApiKey("charlie");
 
     const res = await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "charlie",
-        content: "I'm an intruder",
-      }, charlieKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "charlie",
+          content: "I'm an intruder",
+        },
+        charlieKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
     expect(res.status).toBe(403);
   });
@@ -182,12 +221,16 @@ describe("POST /api/deals/:matchId/messages", () => {
     const { matchId } = await createMatchedPair();
 
     const res = await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice",
-        content: "Proposal",
-        message_type: "proposal",
-      }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Proposal",
+          message_type: "proposal",
+        },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
     expect(res.status).toBe(400);
   });
@@ -199,17 +242,23 @@ describe("POST /api/deals/:matchId/approve", () => {
 
     // Move to proposed first (required for approval)
     await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice", content: "Offer", message_type: "proposal",
-        proposed_terms: { rate: 55 },
-      }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Offer",
+          message_type: "proposal",
+          proposed_terms: { rate: 55 },
+        },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
 
     // Alice approves
     const r1 = await approvePOST(
       jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "alice", approved: true }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     const d1 = await r1.json();
     expect(d1.status).toBe("waiting");
@@ -217,7 +266,7 @@ describe("POST /api/deals/:matchId/approve", () => {
     // Bob approves
     const r2 = await approvePOST(
       jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "bob", approved: true }, bobKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     const d2 = await r2.json();
     expect(d2.status).toBe("approved");
@@ -227,16 +276,22 @@ describe("POST /api/deals/:matchId/approve", () => {
     const { matchId } = await createMatchedPair();
 
     await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice", content: "Offer", message_type: "proposal",
-        proposed_terms: { rate: 55 },
-      }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Offer",
+          message_type: "proposal",
+          proposed_terms: { rate: 55 },
+        },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
 
     const res = await approvePOST(
       jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "alice", approved: false }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     const data = await res.json();
     expect(data.status).toBe("rejected");
@@ -247,7 +302,7 @@ describe("POST /api/deals/:matchId/approve", () => {
 
     const res = await approvePOST(
       jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "alice", approved: true }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(res.status).toBe(400);
   });
@@ -257,16 +312,22 @@ describe("POST /api/deals/:matchId/approve", () => {
     const charlieKey = await getApiKey("charlie");
 
     await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice", content: "Offer", message_type: "proposal",
-        proposed_terms: { rate: 55 },
-      }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Offer",
+          message_type: "proposal",
+          proposed_terms: { rate: 55 },
+        },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
 
     const res = await approvePOST(
       jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "charlie", approved: true }, charlieKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(res.status).toBe(403);
   });
@@ -274,10 +335,16 @@ describe("POST /api/deals/:matchId/approve", () => {
   it("accepts 'text' as message_type alias for negotiation", async () => {
     const { matchId } = await createMatchedPair();
     const res = await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice", content: "Hello, interested in working together!", message_type: "text",
-      }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Hello, interested in working together!",
+          message_type: "text",
+        },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
     expect(res.status).toBe(200);
     const data = await res.json();
@@ -289,27 +356,39 @@ describe("POST /api/deals/:matchId/approve", () => {
     const { matchId } = await createMatchedPair();
     // Propose
     await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice", content: "Offer", message_type: "proposal",
-        proposed_terms: { rate: 50 },
-      }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Offer",
+          message_type: "proposal",
+          proposed_terms: { rate: 50 },
+        },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
     // Both approve
     await approvePOST(
       jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "alice", approved: true }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     await approvePOST(
       jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "bob", approved: true }, bobKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     // Should be able to message after approval
     const res = await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice", content: "Great, let's coordinate delivery details", message_type: "negotiation",
-      }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Great, let's coordinate delivery details",
+          message_type: "negotiation",
+        },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
     expect(res.status).toBe(200);
     const data = await res.json();
@@ -319,21 +398,33 @@ describe("POST /api/deals/:matchId/approve", () => {
   it("blocks messaging on rejected deals", async () => {
     const { matchId } = await createMatchedPair();
     await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice", content: "Offer", message_type: "proposal",
-        proposed_terms: { rate: 50 },
-      }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Offer",
+          message_type: "proposal",
+          proposed_terms: { rate: 50 },
+        },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
     await approvePOST(
       jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "bob", approved: false }, bobKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     const res = await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice", content: "Can we reconsider?", message_type: "negotiation",
-      }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Can we reconsider?",
+          message_type: "negotiation",
+        },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
     expect(res.status).toBe(400);
   });
@@ -343,19 +434,25 @@ describe("POST /api/deals/:matchId/approve", () => {
 async function createApprovedDeal(): Promise<{ matchId: string }> {
   const { matchId } = await createMatchedPair();
   await messagesPOST(
-    jsonReq(`/api/deals/${matchId}/messages`, {
-      agent_id: "alice", content: "Offer", message_type: "proposal",
-      proposed_terms: { rate: 55 },
-    }, aliceKey),
-    { params: Promise.resolve({ matchId }) }
+    jsonReq(
+      `/api/deals/${matchId}/messages`,
+      {
+        agent_id: "alice",
+        content: "Offer",
+        message_type: "proposal",
+        proposed_terms: { rate: 55 },
+      },
+      aliceKey,
+    ),
+    { params: Promise.resolve({ matchId }) },
   );
   await approvePOST(
     jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "alice", approved: true }, aliceKey),
-    { params: Promise.resolve({ matchId }) }
+    { params: Promise.resolve({ matchId }) },
   );
   await approvePOST(
     jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "bob", approved: true }, bobKey),
-    { params: Promise.resolve({ matchId }) }
+    { params: Promise.resolve({ matchId }) },
   );
   return { matchId };
 }
@@ -366,7 +463,7 @@ describe("POST /api/deals/:matchId/start", () => {
 
     const res = await startPOST(
       jsonReq(`/api/deals/${matchId}/start`, { agent_id: "alice" }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     const data = await res.json();
     expect(res.status).toBe(200);
@@ -378,7 +475,7 @@ describe("POST /api/deals/:matchId/start", () => {
 
     const res = await startPOST(
       jsonReq(`/api/deals/${matchId}/start`, { agent_id: "alice" }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(res.status).toBe(400);
     const data = await res.json();
@@ -391,7 +488,7 @@ describe("POST /api/deals/:matchId/start", () => {
 
     const res = await startPOST(
       jsonReq(`/api/deals/${matchId}/start`, { agent_id: "charlie" }, charlieKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(res.status).toBe(403);
   });
@@ -399,10 +496,9 @@ describe("POST /api/deals/:matchId/start", () => {
   it("creates a system message when deal is started", async () => {
     const { matchId } = await createApprovedDeal();
 
-    await startPOST(
-      jsonReq(`/api/deals/${matchId}/start`, { agent_id: "bob" }, bobKey),
-      { params: Promise.resolve({ matchId }) }
-    );
+    await startPOST(jsonReq(`/api/deals/${matchId}/start`, { agent_id: "bob" }, bobKey), {
+      params: Promise.resolve({ matchId }),
+    });
 
     const msgs = await db.execute({
       sql: "SELECT * FROM messages WHERE match_id = ? AND message_type = 'system' AND content LIKE '%started%'",
@@ -417,21 +513,20 @@ describe("POST /api/deals/:matchId/complete", () => {
   it("requires both parties to confirm completion", async () => {
     const { matchId } = await createApprovedDeal();
 
-    await startPOST(
-      jsonReq(`/api/deals/${matchId}/start`, { agent_id: "alice" }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
-    );
+    await startPOST(jsonReq(`/api/deals/${matchId}/start`, { agent_id: "alice" }, aliceKey), {
+      params: Promise.resolve({ matchId }),
+    });
 
     const r1 = await completePOST(
       jsonReq(`/api/deals/${matchId}/complete`, { agent_id: "alice" }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     const d1 = await r1.json();
     expect(d1.status).toBe("waiting");
 
     const r2 = await completePOST(
       jsonReq(`/api/deals/${matchId}/complete`, { agent_id: "bob" }, bobKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     const d2 = await r2.json();
     expect(d2.status).toBe("completed");
@@ -442,7 +537,7 @@ describe("POST /api/deals/:matchId/complete", () => {
 
     const res = await completePOST(
       jsonReq(`/api/deals/${matchId}/complete`, { agent_id: "alice" }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(res.status).toBe(400);
     const data = await res.json();
@@ -453,14 +548,13 @@ describe("POST /api/deals/:matchId/complete", () => {
     const { matchId } = await createApprovedDeal();
     const charlieKey = await getApiKey("charlie");
 
-    await startPOST(
-      jsonReq(`/api/deals/${matchId}/start`, { agent_id: "alice" }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
-    );
+    await startPOST(jsonReq(`/api/deals/${matchId}/start`, { agent_id: "alice" }, aliceKey), {
+      params: Promise.resolve({ matchId }),
+    });
 
     const res = await completePOST(
       jsonReq(`/api/deals/${matchId}/complete`, { agent_id: "charlie" }, charlieKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(res.status).toBe(403);
   });
@@ -470,53 +564,65 @@ describe("POST /api/deals/:matchId/complete", () => {
 
     // matched -> negotiating
     const msgRes = await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice", content: "Let's discuss", message_type: "negotiation",
-      }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Let's discuss",
+          message_type: "negotiation",
+        },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
     expect((await msgRes.json()).status).toBe("negotiating");
 
     // negotiating -> proposed
     const propRes = await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "bob", content: "My offer", message_type: "proposal",
-        proposed_terms: { rate: 55, hours: 20 },
-      }, bobKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "bob",
+          content: "My offer",
+          message_type: "proposal",
+          proposed_terms: { rate: 55, hours: 20 },
+        },
+        bobKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
     expect((await propRes.json()).status).toBe("proposed");
 
     // proposed -> approved
     const a1 = await approvePOST(
       jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "alice", approved: true }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect((await a1.json()).status).toBe("waiting");
 
     const a2 = await approvePOST(
       jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "bob", approved: true }, bobKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect((await a2.json()).status).toBe("approved");
 
     // approved -> in_progress
     const startRes = await startPOST(
       jsonReq(`/api/deals/${matchId}/start`, { agent_id: "alice" }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect((await startRes.json()).status).toBe("in_progress");
 
     // in_progress -> completed
     const c1 = await completePOST(
       jsonReq(`/api/deals/${matchId}/complete`, { agent_id: "alice" }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect((await c1.json()).status).toBe("waiting");
 
     const c2 = await completePOST(
       jsonReq(`/api/deals/${matchId}/complete`, { agent_id: "bob" }, bobKey),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect((await c2.json()).status).toBe("completed");
 
@@ -531,16 +637,21 @@ describe("POST /api/deals/:matchId/complete", () => {
   it("allows messaging on in_progress deals", async () => {
     const { matchId } = await createApprovedDeal();
 
-    await startPOST(
-      jsonReq(`/api/deals/${matchId}/start`, { agent_id: "alice" }, aliceKey),
-      { params: Promise.resolve({ matchId }) }
-    );
+    await startPOST(jsonReq(`/api/deals/${matchId}/start`, { agent_id: "alice" }, aliceKey), {
+      params: Promise.resolve({ matchId }),
+    });
 
     const res = await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "bob", content: "Progress update: halfway done", message_type: "negotiation",
-      }, bobKey),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "bob",
+          content: "Progress update: halfway done",
+          message_type: "negotiation",
+        },
+        bobKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
     );
     expect(res.status).toBe(200);
   });

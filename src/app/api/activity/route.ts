@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     req,
     RATE_LIMITS.READ.limit,
     RATE_LIMITS.READ.windowMs,
-    RATE_LIMITS.READ.prefix
+    RATE_LIMITS.READ.prefix,
   );
   if (rateLimited) return rateLimited;
 
@@ -31,16 +31,13 @@ export async function GET(req: NextRequest) {
   const agentId = searchParams.get("agent_id");
 
   if (!agentId || agentId.trim().length === 0) {
-    return NextResponse.json(
-      { error: "agent_id query parameter is required" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "agent_id query parameter is required" }, { status: 400 });
   }
 
   if (auth.agent_id !== agentId) {
     return NextResponse.json(
       { error: "Forbidden: agent_id does not match authenticated user" },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
@@ -56,9 +53,7 @@ export async function GET(req: NextRequest) {
     sql: "SELECT id FROM profiles WHERE agent_id = ?",
     args: [agentId],
   });
-  const profileIds = (profilesResult.rows as unknown as Array<{ id: string }>).map(
-    (p) => p.id
-  );
+  const profileIds = (profilesResult.rows as unknown as Array<{ id: string }>).map((p) => p.id);
 
   if (profileIds.length === 0) {
     return NextResponse.json({ events: [] });
@@ -85,10 +80,9 @@ export async function GET(req: NextRequest) {
 
     const result = await db.execute({ sql, args });
     for (const row of result.rows) {
-      const counterpart =
-        profileIds.includes(row.profile_a_id as string)
-          ? (row.agent_b as string)
-          : (row.agent_a as string);
+      const counterpart = profileIds.includes(row.profile_a_id as string)
+        ? (row.agent_b as string)
+        : (row.agent_a as string);
       const profileId = profileIds.includes(row.profile_a_id as string)
         ? (row.profile_a_id as string)
         : (row.profile_b_id as string);
@@ -122,9 +116,7 @@ export async function GET(req: NextRequest) {
     const result = await db.execute({ sql, args });
     for (const row of result.rows) {
       const eventType =
-        (row.message_type as string) === "proposal"
-          ? "deal_proposed"
-          : "message_received";
+        (row.message_type as string) === "proposal" ? "deal_proposed" : "message_received";
       const summary =
         eventType === "deal_proposed"
           ? `Deal proposed by agent ${row.sender_agent_id}`
@@ -198,9 +190,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Sort by timestamp descending
-  events.sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
+  events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   const limited = events.slice(0, limit);
 

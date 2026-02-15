@@ -16,7 +16,9 @@ let restore: () => void;
 let aliceKey: string;
 let bobKey: string;
 
-async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
+async function getApiKey(agentId: string): Promise<string> {
+  return createApiKey(agentId);
+}
 
 beforeEach(async () => {
   db = createTestDb();
@@ -42,43 +44,68 @@ function jsonReq(url: string, body?: unknown, apiKey?: string): NextRequest {
 }
 
 /** Create two profiles, match them, propose, and approve from both sides. */
-async function createApprovedDeal(): Promise<{ offeringId: string; seekingId: string; matchId: string }> {
-  const r1 = await connectPOST(jsonReq("/api/connect", {
-    agent_id: "alice", side: "offering", category: "dev",
-    params: { skills: ["react", "ts"], rate_min: 50, rate_max: 70 },
-  }, aliceKey));
+async function createApprovedDeal(): Promise<{
+  offeringId: string;
+  seekingId: string;
+  matchId: string;
+}> {
+  const r1 = await connectPOST(
+    jsonReq(
+      "/api/connect",
+      {
+        agent_id: "alice",
+        side: "offering",
+        category: "dev",
+        params: { skills: ["react", "ts"], rate_min: 50, rate_max: 70 },
+      },
+      aliceKey,
+    ),
+  );
   const { profile_id: offeringId } = await r1.json();
 
-  const r2 = await connectPOST(jsonReq("/api/connect", {
-    agent_id: "bob", side: "seeking", category: "dev",
-    params: { skills: ["react"], rate_min: 40, rate_max: 60 },
-  }, bobKey));
+  const r2 = await connectPOST(
+    jsonReq(
+      "/api/connect",
+      {
+        agent_id: "bob",
+        side: "seeking",
+        category: "dev",
+        params: { skills: ["react"], rate_min: 40, rate_max: 60 },
+      },
+      bobKey,
+    ),
+  );
   const { profile_id: seekingId } = await r2.json();
 
-  const matchRes = await matchesGET(
-    jsonReq(`/api/matches/${offeringId}`),
-    { params: Promise.resolve({ profileId: offeringId }) }
-  );
+  const matchRes = await matchesGET(jsonReq(`/api/matches/${offeringId}`), {
+    params: Promise.resolve({ profileId: offeringId }),
+  });
   const { matches } = await matchRes.json();
   const matchId = matches[0].match_id;
 
   // Proposal (moves to 'proposed')
   await messagesPOST(
-    jsonReq(`/api/deals/${matchId}/messages`, {
-      agent_id: "alice", content: "Offer terms", message_type: "proposal",
-      proposed_terms: { rate: 55 },
-    }, aliceKey),
-    { params: Promise.resolve({ matchId }) }
+    jsonReq(
+      `/api/deals/${matchId}/messages`,
+      {
+        agent_id: "alice",
+        content: "Offer terms",
+        message_type: "proposal",
+        proposed_terms: { rate: 55 },
+      },
+      aliceKey,
+    ),
+    { params: Promise.resolve({ matchId }) },
   );
 
   // Both approve
   await approvePOST(
     jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "alice", approved: true }, aliceKey),
-    { params: Promise.resolve({ matchId }) }
+    { params: Promise.resolve({ matchId }) },
   );
   await approvePOST(
     jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "bob", approved: true }, bobKey),
-    { params: Promise.resolve({ matchId }) }
+    { params: Promise.resolve({ matchId }) },
   );
 
   return { offeringId, seekingId, matchId };
@@ -91,8 +118,12 @@ describe("POST /api/reputation/:agentId/review", () => {
     const { matchId } = await createApprovedDeal();
 
     const res = await reviewPOST(
-      jsonReq("/api/reputation/bob/review", { match_id: matchId, rating: 5, comment: "Great agent!" }, aliceKey),
-      { params: Promise.resolve({ agentId: "bob" }) }
+      jsonReq(
+        "/api/reputation/bob/review",
+        { match_id: matchId, rating: 5, comment: "Great agent!" },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ agentId: "bob" }) },
     );
     expect(res.status).toBe(201);
     const data = await res.json();
@@ -108,7 +139,7 @@ describe("POST /api/reputation/:agentId/review", () => {
 
     const res = await reviewPOST(
       jsonReq("/api/reputation/bob/review", { match_id: matchId, rating: 3 }, aliceKey),
-      { params: Promise.resolve({ agentId: "bob" }) }
+      { params: Promise.resolve({ agentId: "bob" }) },
     );
     expect(res.status).toBe(201);
     const data = await res.json();
@@ -120,11 +151,11 @@ describe("POST /api/reputation/:agentId/review", () => {
 
     await reviewPOST(
       jsonReq("/api/reputation/bob/review", { match_id: matchId, rating: 5 }, aliceKey),
-      { params: Promise.resolve({ agentId: "bob" }) }
+      { params: Promise.resolve({ agentId: "bob" }) },
     );
     const res = await reviewPOST(
       jsonReq("/api/reputation/bob/review", { match_id: matchId, rating: 3 }, aliceKey),
-      { params: Promise.resolve({ agentId: "bob" }) }
+      { params: Promise.resolve({ agentId: "bob" }) },
     );
     expect(res.status).toBe(409);
   });
@@ -134,34 +165,49 @@ describe("POST /api/reputation/:agentId/review", () => {
 
     const res = await reviewPOST(
       jsonReq("/api/reputation/bob/review", { match_id: matchId, rating: 5 }),
-      { params: Promise.resolve({ agentId: "bob" }) }
+      { params: Promise.resolve({ agentId: "bob" }) },
     );
     expect(res.status).toBe(401);
   });
 
   it("only allows reviews for approved deals", async () => {
     // Create match but don't approve
-    const r1 = await connectPOST(jsonReq("/api/connect", {
-      agent_id: "alice", side: "offering", category: "design",
-      params: { skills: ["figma"], rate_min: 30, rate_max: 50 },
-    }, aliceKey));
+    const r1 = await connectPOST(
+      jsonReq(
+        "/api/connect",
+        {
+          agent_id: "alice",
+          side: "offering",
+          category: "design",
+          params: { skills: ["figma"], rate_min: 30, rate_max: 50 },
+        },
+        aliceKey,
+      ),
+    );
     const { profile_id: offeringId } = await r1.json();
 
-    await connectPOST(jsonReq("/api/connect", {
-      agent_id: "bob", side: "seeking", category: "design",
-      params: { skills: ["figma"], rate_min: 20, rate_max: 40 },
-    }, bobKey));
-
-    const matchRes = await matchesGET(
-      jsonReq(`/api/matches/${offeringId}`),
-      { params: Promise.resolve({ profileId: offeringId }) }
+    await connectPOST(
+      jsonReq(
+        "/api/connect",
+        {
+          agent_id: "bob",
+          side: "seeking",
+          category: "design",
+          params: { skills: ["figma"], rate_min: 20, rate_max: 40 },
+        },
+        bobKey,
+      ),
     );
+
+    const matchRes = await matchesGET(jsonReq(`/api/matches/${offeringId}`), {
+      params: Promise.resolve({ profileId: offeringId }),
+    });
     const { matches } = await matchRes.json();
     const matchId = matches[0].match_id;
 
     const res = await reviewPOST(
       jsonReq("/api/reputation/bob/review", { match_id: matchId, rating: 5 }, aliceKey),
-      { params: Promise.resolve({ agentId: "bob" }) }
+      { params: Promise.resolve({ agentId: "bob" }) },
     );
     expect(res.status).toBe(400);
     expect((await res.json()).error).toContain("approved");
@@ -173,7 +219,7 @@ describe("POST /api/reputation/:agentId/review", () => {
     for (const bad of [0, 6, 3.5, -1]) {
       const res = await reviewPOST(
         jsonReq("/api/reputation/bob/review", { match_id: matchId, rating: bad }, aliceKey),
-        { params: Promise.resolve({ agentId: "bob" }) }
+        { params: Promise.resolve({ agentId: "bob" }) },
       );
       expect(res.status).toBe(400);
     }
@@ -184,7 +230,7 @@ describe("POST /api/reputation/:agentId/review", () => {
 
     const res = await reviewPOST(
       jsonReq("/api/reputation/alice/review", { match_id: matchId, rating: 5 }, aliceKey),
-      { params: Promise.resolve({ agentId: "alice" }) }
+      { params: Promise.resolve({ agentId: "alice" }) },
     );
     expect(res.status).toBe(400);
     expect((await res.json()).error).toContain("yourself");
@@ -196,7 +242,7 @@ describe("POST /api/reputation/:agentId/review", () => {
 
     const res = await reviewPOST(
       jsonReq("/api/reputation/bob/review", { match_id: matchId, rating: 5 }, charlieKey),
-      { params: Promise.resolve({ agentId: "bob" }) }
+      { params: Promise.resolve({ agentId: "bob" }) },
     );
     expect(res.status).toBe(403);
   });
@@ -206,10 +252,9 @@ describe("POST /api/reputation/:agentId/review", () => {
 
 describe("GET /api/reputation/:agentId", () => {
   it("returns empty reputation for agent with no reviews", async () => {
-    const res = await reputationGET(
-      jsonReq("/api/reputation/alice"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await reputationGET(jsonReq("/api/reputation/alice"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.agent_id).toBe("alice");
@@ -223,14 +268,17 @@ describe("GET /api/reputation/:agentId", () => {
     const { matchId } = await createApprovedDeal();
 
     await reviewPOST(
-      jsonReq("/api/reputation/bob/review", { match_id: matchId, rating: 4, comment: "Good" }, aliceKey),
-      { params: Promise.resolve({ agentId: "bob" }) }
+      jsonReq(
+        "/api/reputation/bob/review",
+        { match_id: matchId, rating: 4, comment: "Good" },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ agentId: "bob" }) },
     );
 
-    const res = await reputationGET(
-      jsonReq("/api/reputation/bob"),
-      { params: Promise.resolve({ agentId: "bob" }) }
-    );
+    const res = await reputationGET(jsonReq("/api/reputation/bob"), {
+      params: Promise.resolve({ agentId: "bob" }),
+    });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.agent_id).toBe("bob");
@@ -251,13 +299,12 @@ describe("GET /api/agents/:agentId/summary (reputation)", () => {
 
     await reviewPOST(
       jsonReq("/api/reputation/bob/review", { match_id: matchId, rating: 5 }, aliceKey),
-      { params: Promise.resolve({ agentId: "bob" }) }
+      { params: Promise.resolve({ agentId: "bob" }) },
     );
 
-    const res = await summaryGET(
-      jsonReq("/api/agents/bob/summary"),
-      { params: Promise.resolve({ agentId: "bob" }) }
-    );
+    const res = await summaryGET(jsonReq("/api/agents/bob/summary"), {
+      params: Promise.resolve({ agentId: "bob" }),
+    });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.reputation).toBeDefined();
@@ -275,26 +322,41 @@ describe("GET /api/matches/:profileId (counterpart reputation)", () => {
     // Alice reviews Bob (rating 4)
     await reviewPOST(
       jsonReq("/api/reputation/bob/review", { match_id: matchId, rating: 4 }, aliceKey),
-      { params: Promise.resolve({ agentId: "bob" }) }
+      { params: Promise.resolve({ agentId: "bob" }) },
     );
 
     // New match where charlie sees bob as counterpart
     const charlieKey = await getApiKey("charlie");
-    const r1 = await connectPOST(jsonReq("/api/connect", {
-      agent_id: "charlie", side: "offering", category: "qa",
-      params: { skills: ["testing"], rate_min: 30, rate_max: 50 },
-    }, charlieKey));
+    const r1 = await connectPOST(
+      jsonReq(
+        "/api/connect",
+        {
+          agent_id: "charlie",
+          side: "offering",
+          category: "qa",
+          params: { skills: ["testing"], rate_min: 30, rate_max: 50 },
+        },
+        charlieKey,
+      ),
+    );
     const { profile_id: charlieProfileId } = await r1.json();
 
-    await connectPOST(jsonReq("/api/connect", {
-      agent_id: "bob", side: "seeking", category: "qa",
-      params: { skills: ["testing"], rate_min: 20, rate_max: 40 },
-    }, bobKey));
-
-    const matchRes = await matchesGET(
-      jsonReq(`/api/matches/${charlieProfileId}`),
-      { params: Promise.resolve({ profileId: charlieProfileId }) }
+    await connectPOST(
+      jsonReq(
+        "/api/connect",
+        {
+          agent_id: "bob",
+          side: "seeking",
+          category: "qa",
+          params: { skills: ["testing"], rate_min: 20, rate_max: 40 },
+        },
+        bobKey,
+      ),
     );
+
+    const matchRes = await matchesGET(jsonReq(`/api/matches/${charlieProfileId}`), {
+      params: Promise.resolve({ profileId: charlieProfileId }),
+    });
     const data = await matchRes.json();
     expect(data.matches).toHaveLength(1);
     expect(data.matches[0].counterpart_reputation).toBeDefined();

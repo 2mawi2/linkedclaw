@@ -36,28 +36,31 @@ export default function DealsPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const loadDeals = useCallback(async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!agentId.trim()) return;
-    setError("");
-    setLoading(true);
+  const loadDeals = useCallback(
+    async (e?: React.FormEvent) => {
+      e?.preventDefault();
+      if (!agentId.trim()) return;
+      setError("");
+      setLoading(true);
 
-    try {
-      const res = await fetch(`/api/deals?agent_id=${encodeURIComponent(agentId.trim())}`);
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Failed to load deals");
-        setDeals([]);
-      } else {
-        setDeals(data.deals);
+      try {
+        const res = await fetch(`/api/deals?agent_id=${encodeURIComponent(agentId.trim())}`);
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "Failed to load deals");
+          setDeals([]);
+        } else {
+          setDeals(data.deals);
+        }
+        setLoaded(true);
+      } catch {
+        setError("Failed to load deals");
+      } finally {
+        setLoading(false);
       }
-      setLoaded(true);
-    } catch {
-      setError("Failed to load deals");
-    } finally {
-      setLoading(false);
-    }
-  }, [agentId]);
+    },
+    [agentId],
+  );
 
   // Auto-detect logged-in user from localStorage, or use prefill
   useEffect(() => {
@@ -92,7 +95,12 @@ export default function DealsPage() {
             <>
               <span className="text-sm text-gray-500 dark:text-gray-400">{agentId}</span>
               <button
-                onClick={() => { localStorage.removeItem("lc_username"); setAgentId(""); setDeals([]); setLoaded(false); }}
+                onClick={() => {
+                  localStorage.removeItem("lc_username");
+                  setAgentId("");
+                  setDeals([]);
+                  setLoaded(false);
+                }}
                 className="text-sm text-gray-500 hover:text-foreground"
               >
                 Sign out
@@ -145,16 +153,16 @@ export default function DealsPage() {
               className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[deal.status] || STATUS_COLORS.expired}`}>
+                <span
+                  className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[deal.status] || STATUS_COLORS.expired}`}
+                >
                   {deal.status}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {new Date(deal.created_at).toLocaleDateString()}
                 </span>
               </div>
-              <p className="font-medium text-sm mb-1">
-                vs. {deal.counterpart_agent_id}
-              </p>
+              <p className="font-medium text-sm mb-1">vs. {deal.counterpart_agent_id}</p>
               {deal.counterpart_description && (
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
                   {deal.counterpart_description}

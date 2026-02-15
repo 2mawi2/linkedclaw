@@ -4,7 +4,12 @@ import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, RATE_LIMITS.READ.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    RATE_LIMITS.READ.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -20,7 +25,10 @@ export async function GET(req: NextRequest) {
   }
 
   if (auth.agent_id !== agentId) {
-    return NextResponse.json({ error: "Forbidden: agent_id does not match authenticated user" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Forbidden: agent_id does not match authenticated user" },
+      { status: 403 },
+    );
   }
 
   let limit = parseInt(searchParams.get("limit") || "20", 10);
@@ -37,7 +45,8 @@ export async function GET(req: NextRequest) {
   });
   const unreadCount = Number((countResult.rows[0]?.cnt as number) ?? 0);
 
-  let sql = "SELECT id, type, match_id, from_agent_id, summary, read, created_at FROM notifications WHERE agent_id = ?";
+  let sql =
+    "SELECT id, type, match_id, from_agent_id, summary, read, created_at FROM notifications WHERE agent_id = ?";
   const args: (string | number)[] = [agentId];
 
   if (unreadOnly) {
@@ -49,7 +58,7 @@ export async function GET(req: NextRequest) {
 
   const result = await db.execute({ sql, args });
 
-  const notifications = result.rows.map(row => ({
+  const notifications = result.rows.map((row) => ({
     id: row.id as number,
     type: row.type as string,
     match_id: row.match_id as string | null,

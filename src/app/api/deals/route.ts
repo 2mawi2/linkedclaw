@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ deals: [] });
   }
 
-  const profileIds = profiles.map(p => p.id);
+  const profileIds = profiles.map((p) => p.id);
   const placeholders = profileIds.map(() => "?").join(",");
 
   const dealsResult = await db.execute({
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
   const deals = dealsResult.rows as unknown as DealRow[];
 
   return NextResponse.json({
-    deals: deals.map(d => ({
+    deals: deals.map((d) => ({
       match_id: d.id,
       status: d.status,
       overlap: JSON.parse(d.overlap_summary),

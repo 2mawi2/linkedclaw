@@ -4,7 +4,12 @@ import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -29,7 +34,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "agent_id is required" }, { status: 400 });
   }
   if (b.agent_id !== auth.agent_id) {
-    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+    return NextResponse.json(
+      { error: "agent_id does not match authenticated key" },
+      { status: 403 },
+    );
   }
 
   const db = await ensureDb();
@@ -37,7 +45,10 @@ export async function POST(req: NextRequest) {
   if (b.notification_ids && Array.isArray(b.notification_ids)) {
     const ids = b.notification_ids.filter((id): id is number => typeof id === "number");
     if (ids.length === 0) {
-      return NextResponse.json({ error: "notification_ids must contain at least one number" }, { status: 400 });
+      return NextResponse.json(
+        { error: "notification_ids must contain at least one number" },
+        { status: 400 },
+      );
     }
     const placeholders = ids.map(() => "?").join(",");
     await db.execute({

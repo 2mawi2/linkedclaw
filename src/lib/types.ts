@@ -1,7 +1,16 @@
 // v2 types for the negotiation platform
 
 export type Side = "offering" | "seeking";
-export type MatchStatus = "matched" | "negotiating" | "proposed" | "approved" | "in_progress" | "completed" | "rejected" | "expired" | "cancelled";
+export type MatchStatus =
+  | "matched"
+  | "negotiating"
+  | "proposed"
+  | "approved"
+  | "in_progress"
+  | "completed"
+  | "rejected"
+  | "expired"
+  | "cancelled";
 export type MessageType = "negotiation" | "proposal" | "system";
 
 export interface Profile {
@@ -66,7 +75,14 @@ export interface OverlapSummary {
 
 // Project types (multi-agent deals)
 
-export type ProjectStatus = "open" | "negotiating" | "proposed" | "approved" | "in_progress" | "completed" | "cancelled";
+export type ProjectStatus =
+  | "open"
+  | "negotiating"
+  | "proposed"
+  | "approved"
+  | "in_progress"
+  | "completed"
+  | "cancelled";
 
 export interface Project {
   id: string;

@@ -23,8 +23,10 @@ function getReq(url: string): NextRequest {
 }
 
 async function insertProfile(
-  agentId: string, side: string, category: string,
-  opts: { active?: number } = {}
+  agentId: string,
+  side: string,
+  category: string,
+  opts: { active?: number } = {},
 ): Promise<string> {
   const id = crypto.randomUUID();
   await db.execute({
@@ -35,7 +37,11 @@ async function insertProfile(
   return id;
 }
 
-async function insertMatch(profileAId: string, profileBId: string, status = "matched"): Promise<string> {
+async function insertMatch(
+  profileAId: string,
+  profileBId: string,
+  status = "matched",
+): Promise<string> {
   const matchId = crypto.randomUUID();
   const [aId, bId] = profileAId < profileBId ? [profileAId, profileBId] : [profileBId, profileAId];
   await db.execute({
@@ -46,7 +52,13 @@ async function insertMatch(profileAId: string, profileBId: string, status = "mat
   return matchId;
 }
 
-async function insertReview(matchId: string, reviewerAgentId: string, reviewedAgentId: string, rating: number, comment: string | null = null): Promise<void> {
+async function insertReview(
+  matchId: string,
+  reviewerAgentId: string,
+  reviewedAgentId: string,
+  rating: number,
+  comment: string | null = null,
+): Promise<void> {
   await db.execute({
     sql: `INSERT INTO reviews (id, match_id, reviewer_agent_id, reviewed_agent_id, rating, comment)
           VALUES (?, ?, ?, ?, ?, ?)`,
@@ -64,20 +76,18 @@ async function insertMilestone(matchId: string, title: string, status = "pending
 
 describe("GET /api/agents/:agentId/portfolio", () => {
   it("returns 404 for unknown agent", async () => {
-    const res = await portfolioGET(
-      getReq("/api/agents/nobody/portfolio"),
-      { params: Promise.resolve({ agentId: "nobody" }) }
-    );
+    const res = await portfolioGET(getReq("/api/agents/nobody/portfolio"), {
+      params: Promise.resolve({ agentId: "nobody" }),
+    });
     expect(res.status).toBe(404);
   });
 
   it("returns empty portfolio for agent with no deals", async () => {
     await insertProfile("alice", "offering", "dev");
 
-    const res = await portfolioGET(
-      getReq("/api/agents/alice/portfolio"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await portfolioGET(getReq("/api/agents/alice/portfolio"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     expect(res.status).toBe(200);
     const data = await res.json();
 
@@ -93,10 +103,9 @@ describe("GET /api/agents/:agentId/portfolio", () => {
     const b = await insertProfile("bob", "seeking", "dev");
     const matchId = await insertMatch(a, b, "completed");
 
-    const res = await portfolioGET(
-      getReq("/api/agents/alice/portfolio"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await portfolioGET(getReq("/api/agents/alice/portfolio"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.completed_deals).toHaveLength(1);
@@ -113,10 +122,9 @@ describe("GET /api/agents/:agentId/portfolio", () => {
     const b = await insertProfile("bob", "seeking", "dev");
     await insertMatch(a, b, "in_progress");
 
-    const res = await portfolioGET(
-      getReq("/api/agents/alice/portfolio"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await portfolioGET(getReq("/api/agents/alice/portfolio"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.completed_deals).toHaveLength(1);
@@ -135,10 +143,9 @@ describe("GET /api/agents/:agentId/portfolio", () => {
     await insertMatch(a, c, "matched");
     await insertMatch(a, d, "completed");
 
-    const res = await portfolioGET(
-      getReq("/api/agents/alice/portfolio"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await portfolioGET(getReq("/api/agents/alice/portfolio"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.completed_deals).toHaveLength(1);
@@ -151,10 +158,9 @@ describe("GET /api/agents/:agentId/portfolio", () => {
     const matchId = await insertMatch(a, b, "completed");
     await insertReview(matchId, "bob", "alice", 5, "Excellent work!");
 
-    const res = await portfolioGET(
-      getReq("/api/agents/alice/portfolio"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await portfolioGET(getReq("/api/agents/alice/portfolio"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.completed_deals[0].rating_received).toEqual({
@@ -174,10 +180,9 @@ describe("GET /api/agents/:agentId/portfolio", () => {
     await insertMilestone(matchId, "Phase 2", "completed");
     await insertMilestone(matchId, "Phase 3", "pending");
 
-    const res = await portfolioGET(
-      getReq("/api/agents/alice/portfolio"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await portfolioGET(getReq("/api/agents/alice/portfolio"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.completed_deals[0].milestones).toEqual({ total: 3, completed: 2 });
@@ -192,10 +197,9 @@ describe("GET /api/agents/:agentId/portfolio", () => {
     const b2 = await insertProfile("charlie", "seeking", "dev");
     await insertMatch(a2, b2, "completed");
 
-    const res = await portfolioGET(
-      getReq("/api/agents/alice/portfolio"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await portfolioGET(getReq("/api/agents/alice/portfolio"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.verified_categories).toHaveLength(1);
@@ -212,10 +216,9 @@ describe("GET /api/agents/:agentId/portfolio", () => {
       await insertMatch(a, b, "completed");
     }
 
-    const res = await portfolioGET(
-      getReq("/api/agents/alice/portfolio"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await portfolioGET(getReq("/api/agents/alice/portfolio"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.verified_categories[0].level).toBe("silver");
@@ -226,10 +229,9 @@ describe("GET /api/agents/:agentId/portfolio", () => {
     const b = await insertProfile("bob", "seeking", "dev");
     await insertMatch(a, b, "completed");
 
-    const res = await portfolioGET(
-      getReq("/api/agents/alice/portfolio"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await portfolioGET(getReq("/api/agents/alice/portfolio"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.badges.some((b: { id: string }) => b.id === "first_deal")).toBe(true);
@@ -243,10 +245,9 @@ describe("GET /api/agents/:agentId/portfolio", () => {
       await insertReview(matchId, `reviewer${i}`, "alice", 5);
     }
 
-    const res = await portfolioGET(
-      getReq("/api/agents/alice/portfolio"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await portfolioGET(getReq("/api/agents/alice/portfolio"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.badges.some((b: { id: string }) => b.id === "highly_rated")).toBe(true);
@@ -261,10 +262,9 @@ describe("GET /api/agents/:agentId/portfolio", () => {
       await insertReview(matchId, `reviewer${i}`, "alice", 2);
     }
 
-    const res = await portfolioGET(
-      getReq("/api/agents/alice/portfolio"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await portfolioGET(getReq("/api/agents/alice/portfolio"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.badges.some((b: { id: string }) => b.id === "highly_rated")).toBe(false);
@@ -275,10 +275,9 @@ describe("GET /api/agents/:agentId/summary - verified categories & badges", () =
   it("includes verified_categories and badges in summary", async () => {
     await insertProfile("alice", "offering", "dev");
 
-    const res = await summaryGET(
-      getReq("/api/agents/alice/summary"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await summaryGET(getReq("/api/agents/alice/summary"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data).toHaveProperty("verified_categories");
@@ -292,10 +291,9 @@ describe("GET /api/agents/:agentId/summary - verified categories & badges", () =
     const b = await insertProfile("bob", "seeking", "dev");
     await insertMatch(a, b, "completed");
 
-    const res = await summaryGET(
-      getReq("/api/agents/alice/summary"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await summaryGET(getReq("/api/agents/alice/summary"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.verified_categories).toHaveLength(1);
@@ -309,10 +307,9 @@ describe("GET /api/agents/:agentId/summary - verified categories & badges", () =
     const b = await insertProfile("bob", "seeking", "dev");
     await insertMatch(a, b, "completed");
 
-    const res = await summaryGET(
-      getReq("/api/agents/alice/summary"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await summaryGET(getReq("/api/agents/alice/summary"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.badges).toHaveLength(1);
@@ -328,10 +325,9 @@ describe("GET /api/agents/:agentId/summary - verified categories & badges", () =
       await insertReview(matchId, `r${i}`, "alice", 5);
     }
 
-    const res = await summaryGET(
-      getReq("/api/agents/alice/summary"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await summaryGET(getReq("/api/agents/alice/summary"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     const badgeIds = data.badges.map((b: { id: string }) => b.id);

@@ -9,10 +9,7 @@ import { randomUUID } from "crypto";
  * GET /api/deals/:matchId/milestones - List milestones for a deal
  * Public endpoint.
  */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
   const { matchId } = await params;
   const db = await ensureDb();
 
@@ -58,10 +55,7 @@ export async function GET(
  *
  * Body: { agent_id, milestones: [{ title, description?, due_date?, position? }] }
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
   const { matchId } = await params;
   const auth = await authenticateAny(req);
   if (!auth) {
@@ -70,7 +64,12 @@ export async function POST(
 
   let body: {
     agent_id: string;
-    milestones: Array<{ title: string; description?: string; due_date?: string; position?: number }>;
+    milestones: Array<{
+      title: string;
+      description?: string;
+      due_date?: string;
+      position?: number;
+    }>;
   };
   try {
     body = await req.json();
@@ -97,7 +96,10 @@ export async function POST(
   // Validate each milestone
   for (const m of body.milestones) {
     if (!m.title || typeof m.title !== "string" || m.title.trim().length === 0) {
-      return NextResponse.json({ error: "Each milestone must have a non-empty title" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Each milestone must have a non-empty title" },
+        { status: 400 },
+      );
     }
   }
 
@@ -133,7 +135,7 @@ export async function POST(
   if (!allowedStatuses.includes(match.status)) {
     return NextResponse.json(
       { error: `Cannot add milestones to a deal with status '${match.status}'` },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -145,8 +147,10 @@ export async function POST(
   const existingCount = Number((existingResult.rows[0] as unknown as { count: number }).count);
   if (existingCount + body.milestones.length > 20) {
     return NextResponse.json(
-      { error: `Maximum 20 milestones per deal. Currently ${existingCount}, trying to add ${body.milestones.length}.` },
-      { status: 400 }
+      {
+        error: `Maximum 20 milestones per deal. Currently ${existingCount}, trying to add ${body.milestones.length}.`,
+      },
+      { status: 400 },
     );
   }
 
@@ -158,7 +162,15 @@ export async function POST(
     await db.execute({
       sql: `INSERT INTO deal_milestones (id, match_id, title, description, due_date, position, created_by)
             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      args: [id, matchId, m.title.trim(), m.description?.trim() ?? null, m.due_date ?? null, position, body.agent_id],
+      args: [
+        id,
+        matchId,
+        m.title.trim(),
+        m.description?.trim() ?? null,
+        m.due_date ?? null,
+        position,
+        body.agent_id,
+      ],
     });
     created.push({ id, title: m.title.trim(), position, status: "pending" });
   }

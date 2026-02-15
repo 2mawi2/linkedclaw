@@ -26,16 +26,20 @@ afterEach(() => {
   restore();
 });
 
-async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
+async function getApiKey(agentId: string): Promise<string> {
+  return createApiKey(agentId);
+}
 
 describe("Webhooks API", () => {
   it("registers a webhook", async () => {
     const apiKey = await getApiKey("agent-1");
-    const res = await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({ url: "https://example.com/webhook" }),
-    }));
+    const res = await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ url: "https://example.com/webhook" }),
+      }),
+    );
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.webhook_id).toBeDefined();
@@ -47,14 +51,16 @@ describe("Webhooks API", () => {
 
   it("registers a webhook with specific events", async () => {
     const apiKey = await getApiKey("agent-1");
-    const res = await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        url: "https://example.com/webhook",
-        events: ["new_match", "deal_approved"],
+    const res = await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          url: "https://example.com/webhook",
+          events: ["new_match", "deal_approved"],
+        }),
       }),
-    }));
+    );
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.events).toEqual(["new_match", "deal_approved"]);
@@ -62,63 +68,77 @@ describe("Webhooks API", () => {
 
   it("rejects invalid event types", async () => {
     const apiKey = await getApiKey("agent-1");
-    const res = await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        url: "https://example.com/webhook",
-        events: ["invalid_event"],
+    const res = await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          url: "https://example.com/webhook",
+          events: ["invalid_event"],
+        }),
       }),
-    }));
+    );
     expect(res.status).toBe(400);
   });
 
   it("rejects invalid URL", async () => {
     const apiKey = await getApiKey("agent-1");
-    const res = await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({ url: "not-a-url" }),
-    }));
+    const res = await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ url: "not-a-url" }),
+      }),
+    );
     expect(res.status).toBe(400);
   });
 
   it("rejects non-http URLs", async () => {
     const apiKey = await getApiKey("agent-1");
-    const res = await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({ url: "ftp://example.com/webhook" }),
-    }));
+    const res = await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ url: "ftp://example.com/webhook" }),
+      }),
+    );
     expect(res.status).toBe(400);
   });
 
   it("requires authentication", async () => {
-    const res = await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: "https://example.com/webhook" }),
-    }));
+    const res = await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: "https://example.com/webhook" }),
+      }),
+    );
     expect(res.status).toBe(401);
   });
 
   it("lists webhooks", async () => {
     const apiKey = await getApiKey("agent-1");
     // Register two webhooks
-    await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({ url: "https://example.com/hook1" }),
-    }));
-    await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({ url: "https://example.com/hook2", events: ["new_match"] }),
-    }));
+    await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ url: "https://example.com/hook1" }),
+      }),
+    );
+    await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ url: "https://example.com/hook2", events: ["new_match"] }),
+      }),
+    );
 
-    const res = await webhooksGET(req("/api/webhooks", {
-      headers: { "Authorization": `Bearer ${apiKey}` },
-    }));
+    const res = await webhooksGET(
+      req("/api/webhooks", {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      }),
+    );
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.webhooks).toHaveLength(2);
@@ -130,43 +150,51 @@ describe("Webhooks API", () => {
     const apiKey1 = await getApiKey("agent-1");
     const apiKey2 = await getApiKey("agent-2");
 
-    await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey1}` },
-      body: JSON.stringify({ url: "https://example.com/hook1" }),
-    }));
+    await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey1}` },
+        body: JSON.stringify({ url: "https://example.com/hook1" }),
+      }),
+    );
 
-    const res = await webhooksGET(req("/api/webhooks", {
-      headers: { "Authorization": `Bearer ${apiKey2}` },
-    }));
+    const res = await webhooksGET(
+      req("/api/webhooks", {
+        headers: { Authorization: `Bearer ${apiKey2}` },
+      }),
+    );
     const data = await res.json();
     expect(data.webhooks).toHaveLength(0);
   });
 
   it("deletes a webhook", async () => {
     const apiKey = await getApiKey("agent-1");
-    const createRes = await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({ url: "https://example.com/hook" }),
-    }));
+    const createRes = await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ url: "https://example.com/hook" }),
+      }),
+    );
     const { webhook_id } = await createRes.json();
 
     const delRes = await webhookDELETE(
       req(`/api/webhooks/${webhook_id}`, {
         method: "DELETE",
-        headers: { "Authorization": `Bearer ${apiKey}` },
+        headers: { Authorization: `Bearer ${apiKey}` },
       }),
-      { params: Promise.resolve({ id: webhook_id }) }
+      { params: Promise.resolve({ id: webhook_id }) },
     );
     expect(delRes.status).toBe(200);
     const data = await delRes.json();
     expect(data.deleted).toBe(webhook_id);
 
     // Verify it's gone
-    const listRes = await webhooksGET(req("/api/webhooks", {
-      headers: { "Authorization": `Bearer ${apiKey}` },
-    }));
+    const listRes = await webhooksGET(
+      req("/api/webhooks", {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      }),
+    );
     const listData = await listRes.json();
     expect(listData.webhooks).toHaveLength(0);
   });
@@ -175,30 +203,34 @@ describe("Webhooks API", () => {
     const apiKey1 = await getApiKey("agent-1");
     const apiKey2 = await getApiKey("agent-2");
 
-    const createRes = await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey1}` },
-      body: JSON.stringify({ url: "https://example.com/hook" }),
-    }));
+    const createRes = await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey1}` },
+        body: JSON.stringify({ url: "https://example.com/hook" }),
+      }),
+    );
     const { webhook_id } = await createRes.json();
 
     const delRes = await webhookDELETE(
       req(`/api/webhooks/${webhook_id}`, {
         method: "DELETE",
-        headers: { "Authorization": `Bearer ${apiKey2}` },
+        headers: { Authorization: `Bearer ${apiKey2}` },
       }),
-      { params: Promise.resolve({ id: webhook_id }) }
+      { params: Promise.resolve({ id: webhook_id }) },
     );
     expect(delRes.status).toBe(403);
   });
 
   it("updates a webhook (reactivate)", async () => {
     const apiKey = await getApiKey("agent-1");
-    const createRes = await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({ url: "https://example.com/hook" }),
-    }));
+    const createRes = await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ url: "https://example.com/hook" }),
+      }),
+    );
     const { webhook_id } = await createRes.json();
 
     // Manually deactivate (simulate failure)
@@ -211,10 +243,10 @@ describe("Webhooks API", () => {
     const patchRes = await webhookPATCH(
       req(`/api/webhooks/${webhook_id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
         body: JSON.stringify({ active: true }),
       }),
-      { params: Promise.resolve({ id: webhook_id }) }
+      { params: Promise.resolve({ id: webhook_id }) },
     );
     expect(patchRes.status).toBe(200);
 
@@ -231,20 +263,24 @@ describe("Webhooks API", () => {
     const apiKey = await getApiKey("agent-1");
     // Register 5 webhooks (the limit)
     for (let i = 0; i < 5; i++) {
-      const res = await webhooksPOST(req("/api/webhooks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-        body: JSON.stringify({ url: `https://example.com/hook${i}` }),
-      }));
+      const res = await webhooksPOST(
+        req("/api/webhooks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+          body: JSON.stringify({ url: `https://example.com/hook${i}` }),
+        }),
+      );
       expect(res.status).toBe(200);
     }
 
     // 6th should fail
-    const res = await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({ url: "https://example.com/hook6" }),
-    }));
+    const res = await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ url: "https://example.com/hook6" }),
+      }),
+    );
     expect(res.status).toBe(400);
     const data = await res.json();
     expect(data.error).toContain("Maximum");
@@ -254,14 +290,16 @@ describe("Webhooks API", () => {
 describe("Webhook delivery", () => {
   it("stores webhooks in DB correctly", async () => {
     const apiKey = await getApiKey("agent-1");
-    await webhooksPOST(req("/api/webhooks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        url: "https://example.com/hook",
-        events: ["new_match", "deal_approved"],
+    await webhooksPOST(
+      req("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          url: "https://example.com/hook",
+          events: ["new_match", "deal_approved"],
+        }),
       }),
-    }));
+    );
 
     const result = await db.execute({
       sql: "SELECT * FROM webhooks WHERE agent_id = ?",

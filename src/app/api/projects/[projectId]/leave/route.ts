@@ -8,9 +8,14 @@ import type { Project } from "@/lib/types";
 /** POST /api/projects/:projectId/leave - Leave a project (vacate role) */
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
+  { params }: { params: Promise<{ projectId: string }> },
 ) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -33,7 +38,10 @@ export async function POST(
     return NextResponse.json({ error: "agent_id is required" }, { status: 400 });
   }
   if (b.agent_id !== auth.agent_id) {
-    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+    return NextResponse.json(
+      { error: "agent_id does not match authenticated key" },
+      { status: 403 },
+    );
   }
 
   const db = await ensureDb();
@@ -50,12 +58,18 @@ export async function POST(
   }
 
   if (project.status === "completed" || project.status === "cancelled") {
-    return NextResponse.json({ error: `Project is ${project.status}, cannot leave` }, { status: 400 });
+    return NextResponse.json(
+      { error: `Project is ${project.status}, cannot leave` },
+      { status: 400 },
+    );
   }
 
   // Creator can't leave (they should cancel instead)
   if (project.creator_agent_id === b.agent_id) {
-    return NextResponse.json({ error: "Project creator cannot leave. Use cancel instead." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Project creator cannot leave. Use cancel instead." },
+      { status: 400 },
+    );
   }
 
   // Check if agent fills a role
@@ -65,7 +79,10 @@ export async function POST(
   });
 
   if (roleResult.rows.length === 0) {
-    return NextResponse.json({ error: "Agent is not a participant in this project" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Agent is not a participant in this project" },
+      { status: 400 },
+    );
   }
 
   const roleName = roleResult.rows[0].role_name as string;
@@ -83,7 +100,11 @@ export async function POST(
   });
 
   // Revert to open status if we were in negotiating/proposed
-  if (project.status === "negotiating" || project.status === "proposed" || project.status === "approved") {
+  if (
+    project.status === "negotiating" ||
+    project.status === "proposed" ||
+    project.status === "approved"
+  ) {
     await db.execute({
       sql: "UPDATE projects SET status = 'open' WHERE id = ?",
       args: [projectId],

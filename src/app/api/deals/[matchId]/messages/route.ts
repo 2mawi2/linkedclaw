@@ -5,11 +5,13 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { Match, Profile, SendMessageRequest } from "@/lib/types";
 import { createNotification } from "@/lib/notifications";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> }
-) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+export async function POST(req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -36,21 +38,33 @@ export async function POST(
     return NextResponse.json({ error: "agent_id is required" }, { status: 400 });
   }
   if (b.agent_id !== auth.agent_id) {
-    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+    return NextResponse.json(
+      { error: "agent_id does not match authenticated key" },
+      { status: 403 },
+    );
   }
   if (!b.content || typeof b.content !== "string" || b.content.trim().length === 0) {
-    return NextResponse.json({ error: "content is required and must be a non-empty string" }, { status: 400 });
+    return NextResponse.json(
+      { error: "content is required and must be a non-empty string" },
+      { status: 400 },
+    );
   }
 
   let messageType = (b.message_type as string) ?? "negotiation";
   // Accept "text" as alias for "negotiation" (agents naturally use this)
   if (messageType === "text") messageType = "negotiation";
   if (!["negotiation", "proposal", "system"].includes(messageType)) {
-    return NextResponse.json({ error: "message_type must be 'negotiation', 'proposal', 'system', or 'text'" }, { status: 400 });
+    return NextResponse.json(
+      { error: "message_type must be 'negotiation', 'proposal', 'system', or 'text'" },
+      { status: 400 },
+    );
   }
 
   if (messageType === "proposal" && (!b.proposed_terms || typeof b.proposed_terms !== "object")) {
-    return NextResponse.json({ error: "proposed_terms is required when message_type is 'proposal'" }, { status: 400 });
+    return NextResponse.json(
+      { error: "proposed_terms is required when message_type is 'proposal'" },
+      { status: 400 },
+    );
   }
 
   const data: SendMessageRequest = {
@@ -73,7 +87,10 @@ export async function POST(
 
   // Block messaging on terminal/cancelled states, but allow on approved (post-deal coordination)
   if (match.status === "rejected" || match.status === "expired" || match.status === "cancelled") {
-    return NextResponse.json({ error: `Deal is ${match.status}, no further messages allowed` }, { status: 400 });
+    return NextResponse.json(
+      { error: `Deal is ${match.status}, no further messages allowed` },
+      { status: 400 },
+    );
   }
 
   // Verify the agent is part of this deal
@@ -96,7 +113,13 @@ export async function POST(
   // Insert message
   const result = await db.execute({
     sql: "INSERT INTO messages (match_id, sender_agent_id, content, message_type, proposed_terms) VALUES (?, ?, ?, ?, ?)",
-    args: [matchId, data.agent_id, data.content, data.message_type ?? "negotiation", data.proposed_terms ? JSON.stringify(data.proposed_terms) : null],
+    args: [
+      matchId,
+      data.agent_id,
+      data.content,
+      data.message_type ?? "negotiation",
+      data.proposed_terms ? JSON.stringify(data.proposed_terms) : null,
+    ],
   });
 
   // Update match status
@@ -119,13 +142,19 @@ export async function POST(
     type: data.message_type === "proposal" ? "deal_proposed" : "message_received",
     match_id: matchId,
     from_agent_id: data.agent_id,
-    summary: data.message_type === "proposal"
-      ? `Deal proposed by ${data.agent_id}`
-      : `New message from ${data.agent_id}`,
+    summary:
+      data.message_type === "proposal"
+        ? `Deal proposed by ${data.agent_id}`
+        : `New message from ${data.agent_id}`,
   });
 
   return NextResponse.json({
     message_id: Number(result.lastInsertRowid),
-    status: data.message_type === "proposal" ? "proposed" : (match.status === "matched" ? "negotiating" : match.status),
+    status:
+      data.message_type === "proposal"
+        ? "proposed"
+        : match.status === "matched"
+          ? "negotiating"
+          : match.status,
   });
 }

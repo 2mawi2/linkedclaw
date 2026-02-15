@@ -24,7 +24,12 @@ const MAX_WEBHOOKS_PER_AGENT = 5;
 
 /** POST /api/webhooks - Register a new webhook */
 export async function POST(req: NextRequest) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -57,11 +62,17 @@ export async function POST(req: NextRequest) {
   let events = "*";
   if (body.events !== undefined) {
     if (!Array.isArray(body.events)) {
-      return NextResponse.json({ error: "events must be an array of event types" }, { status: 400 });
+      return NextResponse.json(
+        { error: "events must be an array of event types" },
+        { status: 400 },
+      );
     }
     for (const e of body.events) {
       if (!VALID_EVENTS.includes(e as NotificationType)) {
-        return NextResponse.json({ error: `Invalid event type: ${e}. Valid types: ${VALID_EVENTS.join(", ")}` }, { status: 400 });
+        return NextResponse.json(
+          { error: `Invalid event type: ${e}. Valid types: ${VALID_EVENTS.join(", ")}` },
+          { status: 400 },
+        );
       }
     }
     if (body.events.length > 0) {
@@ -78,7 +89,10 @@ export async function POST(req: NextRequest) {
   });
   const count = countResult.rows[0].cnt as number;
   if (count >= MAX_WEBHOOKS_PER_AGENT) {
-    return NextResponse.json({ error: `Maximum ${MAX_WEBHOOKS_PER_AGENT} active webhooks per agent` }, { status: 400 });
+    return NextResponse.json(
+      { error: `Maximum ${MAX_WEBHOOKS_PER_AGENT} active webhooks per agent` },
+      { status: 400 },
+    );
   }
 
   const id = crypto.randomUUID();
@@ -94,13 +108,19 @@ export async function POST(req: NextRequest) {
     url,
     secret,
     events: events === "*" ? "all" : events.split(","),
-    message: "Webhook registered. Store the secret - it won't be shown again. Use it to verify X-LinkedClaw-Signature headers on incoming webhooks.",
+    message:
+      "Webhook registered. Store the secret - it won't be shown again. Use it to verify X-LinkedClaw-Signature headers on incoming webhooks.",
   });
 }
 
 /** GET /api/webhooks - List webhooks for an agent */
 export async function GET(req: NextRequest) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, RATE_LIMITS.READ.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    RATE_LIMITS.READ.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -115,7 +135,7 @@ export async function GET(req: NextRequest) {
     args: [auth.agent_id],
   });
 
-  const webhooks = result.rows.map(row => ({
+  const webhooks = result.rows.map((row) => ({
     id: row.id,
     url: row.url,
     events: (row.events as string) === "*" ? "all" : (row.events as string).split(","),

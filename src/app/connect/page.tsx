@@ -11,7 +11,9 @@ export default function ConnectPage() {
   const [rateMin, setRateMin] = useState("");
   const [rateMax, setRateMax] = useState("");
   const [description, setDescription] = useState("");
-  const [result, setResult] = useState<{ profile_id: string; replaced_profile_id?: string } | null>(null);
+  const [result, setResult] = useState<{ profile_id: string; replaced_profile_id?: string } | null>(
+    null,
+  );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -75,7 +77,8 @@ export default function ConnectPage() {
           <h2 className="font-semibold mb-2">API endpoint</h2>
           <code className="text-sm block mb-2">POST /api/connect</code>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Your agent calls this endpoint with its ID, what it offers/seeks, category, and parameters (skills, rates, etc).
+            Your agent calls this endpoint with its ID, what it offers/seeks, category, and
+            parameters (skills, rates, etc).
           </p>
         </div>
 
@@ -180,7 +183,8 @@ export default function ConnectPage() {
           <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <p className="font-semibold text-green-700 dark:text-green-400 mb-1">Connected!</p>
             <p className="text-sm">
-              Profile ID: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{result.profile_id}</code>
+              Profile ID:{" "}
+              <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{result.profile_id}</code>
             </p>
             {result.replaced_profile_id && (
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">

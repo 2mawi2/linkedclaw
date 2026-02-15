@@ -19,7 +19,9 @@ afterEach(() => {
   restore();
 });
 
-async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
+async function getApiKey(agentId: string): Promise<string> {
+  return createApiKey(agentId);
+}
 
 async function createProfile(
   agentId: string,
@@ -27,7 +29,7 @@ async function createProfile(
   category: string,
   params: Record<string, unknown>,
   apiKey: string,
-  description?: string
+  description?: string,
 ) {
   const req = new NextRequest("http://localhost:3000/api/connect", {
     method: "POST",
@@ -68,9 +70,21 @@ describe("GET /api/market/:category", () => {
 
   it("returns basic stats for a category", async () => {
     const key = await getApiKey("agent-a");
-    await createProfile("agent-a", "offering", "dev", { skills: ["typescript", "react"], rate_min: 80, rate_max: 120, currency: "EUR" }, key);
+    await createProfile(
+      "agent-a",
+      "offering",
+      "dev",
+      { skills: ["typescript", "react"], rate_min: 80, rate_max: 120, currency: "EUR" },
+      key,
+    );
     const key2 = await getApiKey("agent-b");
-    await createProfile("agent-b", "seeking", "dev", { skills: ["typescript", "python"], rate_min: 60, rate_max: 100, currency: "EUR" }, key2);
+    await createProfile(
+      "agent-b",
+      "seeking",
+      "dev",
+      { skills: ["typescript", "python"], rate_min: 60, rate_max: 100, currency: "EUR" },
+      key2,
+    );
 
     const { status, data } = await callMarket("dev");
     expect(status).toBe(200);
@@ -84,16 +98,22 @@ describe("GET /api/market/:category", () => {
   it("computes rate percentiles correctly", async () => {
     const agents = ["a", "b", "c", "d", "e"];
     const rates = [
-      { rate_min: 40, rate_max: 60 },   // midpoint: 50
-      { rate_min: 70, rate_max: 90 },   // midpoint: 80
-      { rate_min: 90, rate_max: 110 },  // midpoint: 100
+      { rate_min: 40, rate_max: 60 }, // midpoint: 50
+      { rate_min: 70, rate_max: 90 }, // midpoint: 80
+      { rate_min: 90, rate_max: 110 }, // midpoint: 100
       { rate_min: 100, rate_max: 140 }, // midpoint: 120
       { rate_min: 180, rate_max: 220 }, // midpoint: 200
     ];
 
     for (let i = 0; i < agents.length; i++) {
       const key = await getApiKey(`agent-${agents[i]}`);
-      await createProfile(`agent-${agents[i]}`, "offering", "consulting", { ...rates[i], currency: "EUR" }, key);
+      await createProfile(
+        `agent-${agents[i]}`,
+        "offering",
+        "consulting",
+        { ...rates[i], currency: "EUR" },
+        key,
+      );
     }
 
     const { status, data } = await callMarket("consulting");
@@ -112,7 +132,13 @@ describe("GET /api/market/:category", () => {
     const key1 = await getApiKey("agent-1");
     const key2 = await getApiKey("agent-2");
     const key3 = await getApiKey("agent-3");
-    await createProfile("agent-1", "offering", "dev", { skills: ["typescript", "react", "node"] }, key1);
+    await createProfile(
+      "agent-1",
+      "offering",
+      "dev",
+      { skills: ["typescript", "react", "node"] },
+      key1,
+    );
     await createProfile("agent-2", "offering", "dev", { skills: ["typescript", "python"] }, key2);
     await createProfile("agent-3", "seeking", "dev", { skills: ["typescript", "react"] }, key3);
 
@@ -166,7 +192,10 @@ describe("GET /api/market/:category", () => {
     // Deactivate via direct DB insert
     const key2 = await getApiKey("agent-inactive");
     await createProfile("agent-inactive", "seeking", "ops", { rate_min: 100 }, key2);
-    await db.execute({ sql: "UPDATE profiles SET active = 0 WHERE agent_id = ?", args: ["agent-inactive"] });
+    await db.execute({
+      sql: "UPDATE profiles SET active = 0 WHERE agent_id = ?",
+      args: ["agent-inactive"],
+    });
 
     const { data } = await callMarket("ops");
     expect(data.active_profiles).toBe(1);

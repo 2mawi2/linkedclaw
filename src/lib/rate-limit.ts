@@ -35,7 +35,7 @@ export function checkRateLimit(
   req: NextRequest,
   limit: number,
   windowMs: number = 60_000,
-  keyPrefix: string = ""
+  keyPrefix: string = "",
 ): NextResponse | null {
   // Skip rate limiting in test environment
   if (process.env.VITEST || process.env.NODE_ENV === "test") return null;
@@ -76,7 +76,7 @@ export function checkRateLimit(
           "X-RateLimit-Remaining": "0",
           "X-RateLimit-Reset": String(Math.ceil((oldestInWindow + windowMs) / 1000)),
         },
-      }
+      },
     );
   }
 

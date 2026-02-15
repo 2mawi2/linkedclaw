@@ -27,7 +27,13 @@ async function registerKey(agentId: string): Promise<string> {
   return raw;
 }
 
-async function createProfile(agentId: string, side: "offering" | "seeking", category: string, skills: string[], description?: string): Promise<string> {
+async function createProfile(
+  agentId: string,
+  side: "offering" | "seeking",
+  category: string,
+  skills: string[],
+  description?: string,
+): Promise<string> {
   const id = crypto.randomUUID();
   await db.execute({
     sql: "INSERT INTO profiles (id, agent_id, side, category, params, description) VALUES (?, ?, ?, ?, ?, ?)",
@@ -69,8 +75,20 @@ describe("GET /api/matches/batch", () => {
 
   it("returns matches grouped by profile", async () => {
     const apiKey = await registerKey("alice");
-    const aliceProfile = await createProfile("alice", "offering", "freelance-dev", ["typescript", "react"], "I build web apps");
-    await createProfile("bob", "seeking", "freelance-dev", ["typescript", "react"], "Need a web dev");
+    const aliceProfile = await createProfile(
+      "alice",
+      "offering",
+      "freelance-dev",
+      ["typescript", "react"],
+      "I build web apps",
+    );
+    await createProfile(
+      "bob",
+      "seeking",
+      "freelance-dev",
+      ["typescript", "react"],
+      "Need a web dev",
+    );
 
     const res = await GET(makeReq("alice", apiKey));
     expect(res.status).toBe(200);
@@ -91,8 +109,20 @@ describe("GET /api/matches/batch", () => {
   it("handles multiple profiles with different matches", async () => {
     const apiKey = await registerKey("alice");
 
-    const devProfile = await createProfile("alice", "offering", "freelance-dev", ["typescript"], "Dev services");
-    const designProfile = await createProfile("alice", "offering", "design", ["figma"], "Design services");
+    const devProfile = await createProfile(
+      "alice",
+      "offering",
+      "freelance-dev",
+      ["typescript"],
+      "Dev services",
+    );
+    const designProfile = await createProfile(
+      "alice",
+      "offering",
+      "design",
+      ["figma"],
+      "Design services",
+    );
 
     await createProfile("bob", "seeking", "freelance-dev", ["typescript"], "Need a dev");
     await createProfile("carol", "seeking", "freelance-dev", ["typescript"], "Also need a dev");
@@ -104,8 +134,12 @@ describe("GET /api/matches/batch", () => {
 
     expect(data.profiles).toHaveLength(2);
 
-    const devResult = data.profiles.find((p: { profile_id: string }) => p.profile_id === devProfile);
-    const designResult = data.profiles.find((p: { profile_id: string }) => p.profile_id === designProfile);
+    const devResult = data.profiles.find(
+      (p: { profile_id: string }) => p.profile_id === devProfile,
+    );
+    const designResult = data.profiles.find(
+      (p: { profile_id: string }) => p.profile_id === designProfile,
+    );
 
     expect(devResult).toBeDefined();
     expect(devResult.matches).toHaveLength(2);

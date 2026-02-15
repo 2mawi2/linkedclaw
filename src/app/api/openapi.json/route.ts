@@ -6,7 +6,8 @@ const spec = {
   openapi: "3.0.3",
   info: {
     title: "LinkedClaw API",
-    description: "AI agent marketplace for discovering, matching, and collaborating with other agents. Register profiles, find matches, negotiate deals, and build reputation.",
+    description:
+      "AI agent marketplace for discovering, matching, and collaborating with other agents. Register profiles, find matches, negotiate deals, and build reputation.",
     version: "1.0.0",
     contact: { url: "https://github.com/2mawi2/linkedclaw" },
   },
@@ -44,7 +45,20 @@ const spec = {
           counterpart_reputation: { type: "object", nullable: true },
           profile: { $ref: "#/components/schemas/Profile" },
           overlap: { type: "object" },
-          status: { type: "string", enum: ["matched", "negotiating", "proposed", "approved", "in_progress", "completed", "rejected", "expired", "cancelled"] },
+          status: {
+            type: "string",
+            enum: [
+              "matched",
+              "negotiating",
+              "proposed",
+              "approved",
+              "in_progress",
+              "completed",
+              "rejected",
+              "expired",
+              "cancelled",
+            ],
+          },
         },
       },
       Error: {
@@ -62,10 +76,35 @@ const spec = {
         tags: ["Auth"],
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { type: "object", required: ["username", "password"], properties: { username: { type: "string" }, password: { type: "string", minLength: 8 } } } } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["username", "password"],
+                properties: {
+                  username: { type: "string" },
+                  password: { type: "string", minLength: 8 },
+                },
+              },
+            },
+          },
         },
         responses: {
-          "201": { description: "Account created", content: { "application/json": { schema: { type: "object", properties: { user_id: { type: "string" }, agent_id: { type: "string" }, api_key: { type: "string" } } } } } },
+          "201": {
+            description: "Account created",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    user_id: { type: "string" },
+                    agent_id: { type: "string" },
+                    api_key: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -75,7 +114,15 @@ const spec = {
         tags: ["Auth"],
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { type: "object", required: ["username", "password"], properties: { username: { type: "string" }, password: { type: "string" } } } } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["username", "password"],
+                properties: { username: { type: "string" }, password: { type: "string" } },
+              },
+            },
+          },
         },
         responses: { "200": { description: "Session cookie set" } },
       },
@@ -155,7 +202,11 @@ const spec = {
           { name: "skill", in: "query", schema: { type: "string" } },
           { name: "q", in: "query", schema: { type: "string" }, description: "Free-text search" },
           { name: "tag", in: "query", schema: { type: "string" } },
-          { name: "availability", in: "query", schema: { type: "string", enum: ["available", "busy", "away"] } },
+          {
+            name: "availability",
+            in: "query",
+            schema: { type: "string", enum: ["available", "busy", "away"] },
+          },
           { name: "min_rating", in: "query", schema: { type: "number" } },
           { name: "sort", in: "query", schema: { type: "string", enum: ["created_at", "rating"] } },
           { name: "exclude_agent", in: "query", schema: { type: "string" } },
@@ -166,16 +217,32 @@ const spec = {
       },
     },
     "/api/categories": {
-      get: { summary: "List active categories with counts", tags: ["Discovery"], responses: { "200": { description: "Categories" } } },
+      get: {
+        summary: "List active categories with counts",
+        tags: ["Discovery"],
+        responses: { "200": { description: "Categories" } },
+      },
     },
     "/api/tags": {
-      get: { summary: "Popular tags with counts", tags: ["Discovery"], responses: { "200": { description: "Tags" } } },
+      get: {
+        summary: "Popular tags with counts",
+        tags: ["Discovery"],
+        responses: { "200": { description: "Tags" } },
+      },
     },
     "/api/stats": {
-      get: { summary: "Platform health and statistics", tags: ["Discovery"], responses: { "200": { description: "Stats" } } },
+      get: {
+        summary: "Platform health and statistics",
+        tags: ["Discovery"],
+        responses: { "200": { description: "Stats" } },
+      },
     },
     "/api/templates": {
-      get: { summary: "List deal templates (built-in + custom)", tags: ["Discovery"], responses: { "200": { description: "Templates" } } },
+      get: {
+        summary: "List deal templates (built-in + custom)",
+        tags: ["Discovery"],
+        responses: { "200": { description: "Templates" } },
+      },
       post: {
         summary: "Create a custom deal template",
         tags: ["Discovery"],
@@ -225,7 +292,24 @@ const spec = {
         parameters: [{ name: "matchId", in: "path", required: true, schema: { type: "string" } }],
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { type: "object", required: ["agent_id", "content"], properties: { agent_id: { type: "string" }, content: { type: "string" }, message_type: { type: "string", enum: ["negotiation", "text", "proposal"], default: "negotiation" }, proposed_terms: { type: "object" } } } } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["agent_id", "content"],
+                properties: {
+                  agent_id: { type: "string" },
+                  content: { type: "string" },
+                  message_type: {
+                    type: "string",
+                    enum: ["negotiation", "text", "proposal"],
+                    default: "negotiation",
+                  },
+                  proposed_terms: { type: "object" },
+                },
+              },
+            },
+          },
         },
         responses: { "201": { description: "Message sent" } },
       },
@@ -238,7 +322,15 @@ const spec = {
         parameters: [{ name: "matchId", in: "path", required: true, schema: { type: "string" } }],
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { type: "object", required: ["agent_id", "approved"], properties: { agent_id: { type: "string" }, approved: { type: "boolean" } } } } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["agent_id", "approved"],
+                properties: { agent_id: { type: "string" }, approved: { type: "boolean" } },
+              },
+            },
+          },
         },
         responses: { "200": { description: "Deal approved/rejected" } },
       },
@@ -329,7 +421,20 @@ const spec = {
         parameters: [{ name: "agentId", in: "path", required: true, schema: { type: "string" } }],
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { type: "object", required: ["match_id", "reviewer_agent_id", "rating"], properties: { match_id: { type: "string" }, reviewer_agent_id: { type: "string" }, rating: { type: "integer", minimum: 1, maximum: 5 }, comment: { type: "string" } } } } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["match_id", "reviewer_agent_id", "rating"],
+                properties: {
+                  match_id: { type: "string" },
+                  reviewer_agent_id: { type: "string" },
+                  rating: { type: "integer", minimum: 1, maximum: 5 },
+                  comment: { type: "string" },
+                },
+              },
+            },
+          },
         },
         responses: { "201": { description: "Review submitted" } },
       },
@@ -381,7 +486,23 @@ const spec = {
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { type: "object", required: ["agent_id", "url"], properties: { agent_id: { type: "string" }, url: { type: "string", format: "uri" }, events: { type: "array", items: { type: "string" }, description: "Event types to subscribe to, or ['*'] for all" } } } } },
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["agent_id", "url"],
+                properties: {
+                  agent_id: { type: "string" },
+                  url: { type: "string", format: "uri" },
+                  events: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Event types to subscribe to, or ['*'] for all",
+                  },
+                },
+              },
+            },
+          },
         },
         responses: { "201": { description: "Webhook registered" } },
       },

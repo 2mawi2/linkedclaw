@@ -7,11 +7,13 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
  * Public endpoint - returns an agent's verified track record.
  * Shows completed deals with categories, counterpart info, ratings, and milestones.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ agentId: string }> }
-) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, RATE_LIMITS.READ.prefix);
+export async function GET(req: NextRequest, { params }: { params: Promise<{ agentId: string }> }) {
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    RATE_LIMITS.READ.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const { agentId } = await params;
@@ -36,8 +38,12 @@ export async function GET(
     sql: `SELECT id, category, side FROM profiles WHERE agent_id = ?`,
     args: [agentId],
   });
-  const profiles = profilesResult.rows as unknown as Array<{ id: string; category: string; side: string }>;
-  const profileIds = profiles.map(p => p.id);
+  const profiles = profilesResult.rows as unknown as Array<{
+    id: string;
+    category: string;
+    side: string;
+  }>;
+  const profileIds = profiles.map((p) => p.id);
 
   if (profileIds.length === 0) {
     return NextResponse.json({
@@ -65,9 +71,17 @@ export async function GET(
   });
 
   const deals = dealsResult.rows as unknown as Array<{
-    id: string; profile_a_id: string; profile_b_id: string; status: string; created_at: string;
-    agent_a: string; cat_a: string; side_a: string;
-    agent_b: string; cat_b: string; side_b: string;
+    id: string;
+    profile_a_id: string;
+    profile_b_id: string;
+    status: string;
+    created_at: string;
+    agent_a: string;
+    cat_a: string;
+    side_a: string;
+    agent_b: string;
+    cat_b: string;
+    side_b: string;
   }>;
 
   // Get ratings received by this agent
@@ -78,13 +92,20 @@ export async function GET(
   });
   const ratingsMap = new Map<string, { rating: number; comment: string | null; from: string }>();
   for (const row of ratingsResult.rows as unknown as Array<{
-    match_id: string; rating: number; comment: string | null; reviewer_agent_id: string;
+    match_id: string;
+    rating: number;
+    comment: string | null;
+    reviewer_agent_id: string;
   }>) {
-    ratingsMap.set(row.match_id, { rating: Number(row.rating), comment: row.comment, from: row.reviewer_agent_id });
+    ratingsMap.set(row.match_id, {
+      rating: Number(row.rating),
+      comment: row.comment,
+      from: row.reviewer_agent_id,
+    });
   }
 
   // Get milestone stats per deal
-  const dealIds = deals.map(d => d.id);
+  const dealIds = deals.map((d) => d.id);
   const milestoneStats = new Map<string, { total: number; completed: number }>();
   if (dealIds.length > 0) {
     const dealPlaceholders = dealIds.map(() => "?").join(",");
@@ -98,14 +119,19 @@ export async function GET(
       args: dealIds,
     });
     for (const row of msResult.rows as unknown as Array<{
-      match_id: string; total: number; completed: number;
+      match_id: string;
+      total: number;
+      completed: number;
     }>) {
-      milestoneStats.set(row.match_id, { total: Number(row.total), completed: Number(row.completed) });
+      milestoneStats.set(row.match_id, {
+        total: Number(row.total),
+        completed: Number(row.completed),
+      });
     }
   }
 
   // Build portfolio entries
-  const completedDeals = deals.map(d => {
+  const completedDeals = deals.map((d) => {
     const isAgentA = d.agent_a === agentId;
     const myCategory = isAgentA ? d.cat_a : d.cat_b;
     const mySide = isAgentA ? d.side_a : d.side_b;
@@ -120,7 +146,9 @@ export async function GET(
       status: d.status,
       counterpart_agent_id: counterpartAgent,
       created_at: d.created_at,
-      rating_received: rating ? { rating: rating.rating, comment: rating.comment, from: rating.from } : null,
+      rating_received: rating
+        ? { rating: rating.rating, comment: rating.comment, from: rating.from }
+        : null,
       milestones: milestones ? { total: milestones.total, completed: milestones.completed } : null,
     };
   });
@@ -133,18 +161,24 @@ export async function GET(
     }
   }
 
-  const verifiedCategories = Array.from(categoryCounts.entries()).map(([category, count]) => ({
-    category,
-    completed_deals: count,
-    level: count >= 10 ? "gold" : count >= 3 ? "silver" : "bronze",
-  })).sort((a, b) => b.completed_deals - a.completed_deals);
+  const verifiedCategories = Array.from(categoryCounts.entries())
+    .map(([category, count]) => ({
+      category,
+      completed_deals: count,
+      level: count >= 10 ? "gold" : count >= 3 ? "silver" : "bronze",
+    }))
+    .sort((a, b) => b.completed_deals - a.completed_deals);
 
   // Badges
   const badges: Array<{ id: string; name: string; description: string }> = [];
-  const totalCompleted = completedDeals.filter(d => d.status === "completed").length;
+  const totalCompleted = completedDeals.filter((d) => d.status === "completed").length;
 
   if (totalCompleted >= 1) {
-    badges.push({ id: "first_deal", name: "First Deal", description: "Completed first deal on LinkedClaw" });
+    badges.push({
+      id: "first_deal",
+      name: "First Deal",
+      description: "Completed first deal on LinkedClaw",
+    });
   }
   if (totalCompleted >= 5) {
     badges.push({ id: "prolific", name: "Prolific", description: "Completed 5+ deals" });
@@ -153,25 +187,40 @@ export async function GET(
     badges.push({ id: "veteran", name: "Veteran", description: "Completed 10+ deals" });
   }
   if (verifiedCategories.length >= 3) {
-    badges.push({ id: "multi_category", name: "Multi-Category", description: "Completed deals in 3+ categories" });
+    badges.push({
+      id: "multi_category",
+      name: "Multi-Category",
+      description: "Completed deals in 3+ categories",
+    });
   }
 
   // Rating-based badges
-  const allRatings = completedDeals.filter(d => d.rating_received).map(d => d.rating_received!.rating);
+  const allRatings = completedDeals
+    .filter((d) => d.rating_received)
+    .map((d) => d.rating_received!.rating);
   if (allRatings.length >= 3) {
     const avgRating = allRatings.reduce((s, r) => s + r, 0) / allRatings.length;
     if (avgRating >= 4.0) {
-      badges.push({ id: "highly_rated", name: "Highly Rated", description: "Average rating of 4.0+ with 3+ reviews" });
+      badges.push({
+        id: "highly_rated",
+        name: "Highly Rated",
+        description: "Average rating of 4.0+ with 3+ reviews",
+      });
     }
     if (avgRating >= 4.8) {
-      badges.push({ id: "exceptional", name: "Exceptional", description: "Average rating of 4.8+ with 3+ reviews" });
+      badges.push({
+        id: "exceptional",
+        name: "Exceptional",
+        description: "Average rating of 4.8+ with 3+ reviews",
+      });
     }
   }
 
   // Stats
-  const avgRatingReceived = allRatings.length > 0
-    ? Math.round((allRatings.reduce((s, r) => s + r, 0) / allRatings.length) * 100) / 100
-    : 0;
+  const avgRatingReceived =
+    allRatings.length > 0
+      ? Math.round((allRatings.reduce((s, r) => s + r, 0) / allRatings.length) * 100) / 100
+      : 0;
 
   return NextResponse.json({
     agent_id: agentId,
@@ -180,7 +229,7 @@ export async function GET(
     badges,
     stats: {
       total_completed: totalCompleted,
-      total_in_progress: completedDeals.filter(d => d.status === "in_progress").length,
+      total_in_progress: completedDeals.filter((d) => d.status === "in_progress").length,
       categories_worked: verifiedCategories.length,
       avg_rating_received: avgRatingReceived,
       total_ratings: allRatings.length,

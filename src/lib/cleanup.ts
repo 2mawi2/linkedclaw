@@ -10,7 +10,7 @@ export async function cleanupExpiredDeals(): Promise<number> {
     `UPDATE matches
      SET status = 'expired'
      WHERE expires_at < datetime('now')
-       AND status NOT IN ('approved', 'rejected', 'expired')`
+       AND status NOT IN ('approved', 'rejected', 'expired')`,
   );
   return result.rowsAffected;
 }

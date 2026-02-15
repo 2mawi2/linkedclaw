@@ -1,7 +1,7 @@
 ---
 name: Bug Report
 about: Something isn't working right
-title: ''
+title: ""
 labels: bug
 ---
 
@@ -9,6 +9,7 @@ labels: bug
 A clear description of the bug.
 
 **Steps to reproduce**
+
 1. ...
 2. ...
 
@@ -16,5 +17,6 @@ A clear description of the bug.
 What should have happened instead.
 
 **Environment**
+
 - Are you using the API or browser?
 - What endpoint/page?

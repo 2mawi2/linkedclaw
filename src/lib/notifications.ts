@@ -36,11 +36,24 @@ export async function createNotification(db: Client, notif: CreateNotification):
   try {
     await db.execute({
       sql: "INSERT INTO notifications (agent_id, type, match_id, from_agent_id, summary) VALUES (?, ?, ?, ?, ?)",
-      args: [notif.agent_id, notif.type, notif.match_id ?? null, notif.from_agent_id ?? null, notif.summary],
+      args: [
+        notif.agent_id,
+        notif.type,
+        notif.match_id ?? null,
+        notif.from_agent_id ?? null,
+        notif.summary,
+      ],
     });
 
     // Also fire webhooks (non-blocking)
-    fireWebhooks(db, notif.agent_id, notif.type, notif.match_id, notif.from_agent_id, notif.summary);
+    fireWebhooks(
+      db,
+      notif.agent_id,
+      notif.type,
+      notif.match_id,
+      notif.from_agent_id,
+      notif.summary,
+    );
   } catch {
     // Notification failures should never break the main operation
   }

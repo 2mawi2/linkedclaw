@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.json({
-    tags: result.rows.map(r => ({
+    tags: result.rows.map((r) => ({
       tag: r.tag as string,
       count: r.count as number,
     })),

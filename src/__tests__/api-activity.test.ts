@@ -15,7 +15,9 @@ let restore: () => void;
 let aliceKey: string;
 let bobKey: string;
 
-async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
+async function getApiKey(agentId: string): Promise<string> {
+  return createApiKey(agentId);
+}
 
 beforeEach(async () => {
   _resetRateLimitStore();
@@ -55,8 +57,8 @@ async function createMatchedPair(): Promise<{
         category: "dev",
         params: { skills: ["react", "ts"], rate_min: 50, rate_max: 70 },
       },
-      aliceKey
-    )
+      aliceKey,
+    ),
   );
   const { profile_id: offeringId } = await r1.json();
 
@@ -69,8 +71,8 @@ async function createMatchedPair(): Promise<{
         category: "dev",
         params: { skills: ["react"], rate_min: 40, rate_max: 60 },
       },
-      bobKey
-    )
+      bobKey,
+    ),
   );
   const { profile_id: seekingId } = await r2.json();
 
@@ -88,23 +90,17 @@ describe("GET /api/activity", () => {
   });
 
   it("requires agent_id param", async () => {
-    const res = await activityGET(
-      jsonReq("/api/activity", undefined, aliceKey)
-    );
+    const res = await activityGET(jsonReq("/api/activity", undefined, aliceKey));
     expect(res.status).toBe(400);
   });
 
   it("forbids requesting another agent's activity", async () => {
-    const res = await activityGET(
-      jsonReq("/api/activity?agent_id=bob", undefined, aliceKey)
-    );
+    const res = await activityGET(jsonReq("/api/activity?agent_id=bob", undefined, aliceKey));
     expect(res.status).toBe(403);
   });
 
   it("returns empty events for agent with no profiles", async () => {
-    const res = await activityGET(
-      jsonReq("/api/activity?agent_id=alice", undefined, aliceKey)
-    );
+    const res = await activityGET(jsonReq("/api/activity?agent_id=alice", undefined, aliceKey));
     const data = await res.json();
     expect(res.status).toBe(200);
     expect(data.events).toHaveLength(0);
@@ -113,16 +109,12 @@ describe("GET /api/activity", () => {
   it("returns new_match event when a match is created", async () => {
     await createMatchedPair();
 
-    const res = await activityGET(
-      jsonReq("/api/activity?agent_id=alice", undefined, aliceKey)
-    );
+    const res = await activityGET(jsonReq("/api/activity?agent_id=alice", undefined, aliceKey));
     const data = await res.json();
     expect(res.status).toBe(200);
     expect(data.events.length).toBeGreaterThanOrEqual(1);
 
-    const matchEvent = data.events.find(
-      (e: { type: string }) => e.type === "new_match"
-    );
+    const matchEvent = data.events.find((e: { type: string }) => e.type === "new_match");
     expect(matchEvent).toBeTruthy();
     expect(matchEvent.agent_id).toBe("alice");
     expect(matchEvent.summary).toContain("bob");
@@ -140,19 +132,15 @@ describe("GET /api/activity", () => {
           content: "Hey alice, let's talk",
           message_type: "negotiation",
         },
-        bobKey
+        bobKey,
       ),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
 
-    const res = await activityGET(
-      jsonReq("/api/activity?agent_id=alice", undefined, aliceKey)
-    );
+    const res = await activityGET(jsonReq("/api/activity?agent_id=alice", undefined, aliceKey));
     const data = await res.json();
 
-    const msgEvent = data.events.find(
-      (e: { type: string }) => e.type === "message_received"
-    );
+    const msgEvent = data.events.find((e: { type: string }) => e.type === "message_received");
     expect(msgEvent).toBeTruthy();
     expect(msgEvent.summary).toContain("bob");
   });
@@ -169,19 +157,15 @@ describe("GET /api/activity", () => {
           message_type: "proposal",
           proposed_terms: { rate: 55 },
         },
-        bobKey
+        bobKey,
       ),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
 
-    const res = await activityGET(
-      jsonReq("/api/activity?agent_id=alice", undefined, aliceKey)
-    );
+    const res = await activityGET(jsonReq("/api/activity?agent_id=alice", undefined, aliceKey));
     const data = await res.json();
 
-    const proposalEvent = data.events.find(
-      (e: { type: string }) => e.type === "deal_proposed"
-    );
+    const proposalEvent = data.events.find((e: { type: string }) => e.type === "deal_proposed");
     expect(proposalEvent).toBeTruthy();
     expect(proposalEvent.summary).toContain("bob");
   });
@@ -198,28 +182,20 @@ describe("GET /api/activity", () => {
           message_type: "proposal",
           proposed_terms: { rate: 55 },
         },
-        aliceKey
+        aliceKey,
       ),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
 
     await approvePOST(
-      jsonReq(
-        `/api/deals/${matchId}/approve`,
-        { agent_id: "bob", approved: true },
-        bobKey
-      ),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "bob", approved: true }, bobKey),
+      { params: Promise.resolve({ matchId }) },
     );
 
-    const res = await activityGET(
-      jsonReq("/api/activity?agent_id=alice", undefined, aliceKey)
-    );
+    const res = await activityGET(jsonReq("/api/activity?agent_id=alice", undefined, aliceKey));
     const data = await res.json();
 
-    const approvalEvent = data.events.find(
-      (e: { type: string }) => e.type === "deal_approved"
-    );
+    const approvalEvent = data.events.find((e: { type: string }) => e.type === "deal_approved");
     expect(approvalEvent).toBeTruthy();
     expect(approvalEvent.summary).toContain("bob");
   });
@@ -236,28 +212,20 @@ describe("GET /api/activity", () => {
           message_type: "proposal",
           proposed_terms: { rate: 55 },
         },
-        aliceKey
+        aliceKey,
       ),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
 
     await approvePOST(
-      jsonReq(
-        `/api/deals/${matchId}/approve`,
-        { agent_id: "bob", approved: false },
-        bobKey
-      ),
-      { params: Promise.resolve({ matchId }) }
+      jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "bob", approved: false }, bobKey),
+      { params: Promise.resolve({ matchId }) },
     );
 
-    const res = await activityGET(
-      jsonReq("/api/activity?agent_id=alice", undefined, aliceKey)
-    );
+    const res = await activityGET(jsonReq("/api/activity?agent_id=alice", undefined, aliceKey));
     const data = await res.json();
 
-    const rejectEvent = data.events.find(
-      (e: { type: string }) => e.type === "deal_rejected"
-    );
+    const rejectEvent = data.events.find((e: { type: string }) => e.type === "deal_rejected");
     expect(rejectEvent).toBeTruthy();
     expect(rejectEvent.summary).toContain("bob");
   });
@@ -266,7 +234,7 @@ describe("GET /api/activity", () => {
     await createMatchedPair();
 
     const res = await activityGET(
-      jsonReq("/api/activity?agent_id=alice&limit=1", undefined, aliceKey)
+      jsonReq("/api/activity?agent_id=alice&limit=1", undefined, aliceKey),
     );
     const data = await res.json();
     expect(data.events).toHaveLength(1);
@@ -274,7 +242,7 @@ describe("GET /api/activity", () => {
 
   it("caps limit at 100", async () => {
     const res = await activityGET(
-      jsonReq("/api/activity?agent_id=alice&limit=200", undefined, aliceKey)
+      jsonReq("/api/activity?agent_id=alice&limit=200", undefined, aliceKey),
     );
     expect(res.status).toBe(200);
   });
@@ -284,11 +252,7 @@ describe("GET /api/activity", () => {
 
     const futureDate = "2099-01-01T00:00:00Z";
     const res = await activityGET(
-      jsonReq(
-        `/api/activity?agent_id=alice&since=${futureDate}`,
-        undefined,
-        aliceKey
-      )
+      jsonReq(`/api/activity?agent_id=alice&since=${futureDate}`, undefined, aliceKey),
     );
     const data = await res.json();
     expect(data.events).toHaveLength(0);
@@ -305,14 +269,12 @@ describe("GET /api/activity", () => {
           content: "Hello",
           message_type: "negotiation",
         },
-        bobKey
+        bobKey,
       ),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
 
-    const res = await activityGET(
-      jsonReq("/api/activity?agent_id=alice", undefined, aliceKey)
-    );
+    const res = await activityGET(jsonReq("/api/activity?agent_id=alice", undefined, aliceKey));
     const data = await res.json();
 
     expect(data.events.length).toBeGreaterThanOrEqual(2);

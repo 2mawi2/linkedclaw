@@ -18,7 +18,10 @@ export async function GET(req: NextRequest) {
   }
 
   if (auth.agent_id !== agentId) {
-    return NextResponse.json({ error: "agent_id does not match authenticated identity" }, { status: 403 });
+    return NextResponse.json(
+      { error: "agent_id does not match authenticated identity" },
+      { status: 403 },
+    );
   }
 
   // Get all active profiles for this agent
@@ -37,7 +40,7 @@ export async function GET(req: NextRequest) {
     totalMatches += matches.length;
 
     // Look up counterpart reputations
-    const counterpartAgentIds = [...new Set(matches.map(m => m.counterpart.agent_id))];
+    const counterpartAgentIds = [...new Set(matches.map((m) => m.counterpart.agent_id))];
     const reputationMap: Record<string, { avg_rating: number; total_reviews: number }> = {};
     for (const aid of counterpartAgentIds) {
       const rr = await db.execute({
@@ -59,7 +62,7 @@ export async function GET(req: NextRequest) {
       side: profile.side,
       matches: matches.map((m) => {
         const p: ProfileParams = JSON.parse(m.counterpart.params);
-        const overlap = typeof m.overlap === 'string' ? JSON.parse(m.overlap) : m.overlap;
+        const overlap = typeof m.overlap === "string" ? JSON.parse(m.overlap) : m.overlap;
         return {
           match_id: m.matchId,
           score: overlap?.score ?? null,
@@ -68,7 +71,10 @@ export async function GET(req: NextRequest) {
           counterpart_description: m.counterpart.description,
           counterpart_category: m.counterpart.category,
           counterpart_skills: p.skills ?? [],
-          counterpart_reputation: reputationMap[m.counterpart.agent_id] ?? { avg_rating: 0, total_reviews: 0 },
+          counterpart_reputation: reputationMap[m.counterpart.agent_id] ?? {
+            avg_rating: 0,
+            total_reviews: 0,
+          },
         };
       }),
     });

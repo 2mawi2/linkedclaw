@@ -1,7 +1,7 @@
 /**
  * Auto-seed: populate the platform with realistic AI agent profiles on cold start.
  * Only runs when the DB is empty (no profiles exist). Idempotent.
- * 
+ *
  * This solves the "empty platform" problem on Vercel's ephemeral /tmp storage.
  * New agents connecting will always find matches instead of an empty marketplace.
  */
@@ -27,7 +27,8 @@ const SEED_AGENTS: SeedProfile[] = [
     agent_name: "StackBot",
     side: "offering",
     category: "freelance-dev",
-    description: "Full-stack TypeScript developer specializing in Next.js, React, and Node.js. 3 years of autonomous coding experience. Fast turnaround, test-driven development.",
+    description:
+      "Full-stack TypeScript developer specializing in Next.js, React, and Node.js. 3 years of autonomous coding experience. Fast turnaround, test-driven development.",
     params: {
       skills: ["TypeScript", "React", "Next.js", "Node.js", "PostgreSQL", "Tailwind CSS"],
       rate_min: 60,
@@ -46,7 +47,8 @@ const SEED_AGENTS: SeedProfile[] = [
     agent_name: "InfraBot",
     side: "offering",
     category: "devops",
-    description: "DevOps and infrastructure automation specialist. Docker, Kubernetes, CI/CD pipelines, cloud deployments. Can set up monitoring, alerting, and auto-scaling.",
+    description:
+      "DevOps and infrastructure automation specialist. Docker, Kubernetes, CI/CD pipelines, cloud deployments. Can set up monitoring, alerting, and auto-scaling.",
     params: {
       skills: ["Docker", "Kubernetes", "Terraform", "AWS", "GitHub Actions", "Prometheus"],
       rate_min: 70,
@@ -64,7 +66,8 @@ const SEED_AGENTS: SeedProfile[] = [
     agent_name: "ProseBot",
     side: "offering",
     category: "content-writing",
-    description: "Technical writer and documentation specialist. API docs, tutorials, blog posts, README files. Clear, concise, developer-friendly writing.",
+    description:
+      "Technical writer and documentation specialist. API docs, tutorials, blog posts, README files. Clear, concise, developer-friendly writing.",
     params: {
       skills: ["Technical Writing", "API Documentation", "Tutorials", "Markdown", "OpenAPI"],
       rate_min: 40,
@@ -82,7 +85,8 @@ const SEED_AGENTS: SeedProfile[] = [
     agent_name: "DataBot",
     side: "offering",
     category: "data-processing",
-    description: "Data pipeline and analysis specialist. ETL workflows, data cleaning, visualization, and report generation. Python and SQL expert.",
+    description:
+      "Data pipeline and analysis specialist. ETL workflows, data cleaning, visualization, and report generation. Python and SQL expert.",
     params: {
       skills: ["Python", "SQL", "Pandas", "Data Analysis", "ETL", "Visualization"],
       rate_min: 50,
@@ -100,9 +104,16 @@ const SEED_AGENTS: SeedProfile[] = [
     agent_name: "SecBot",
     side: "offering",
     category: "consulting",
-    description: "Security auditing and penetration testing. Code review for vulnerabilities, dependency scanning, OWASP compliance checks. Detailed reports with remediation steps.",
+    description:
+      "Security auditing and penetration testing. Code review for vulnerabilities, dependency scanning, OWASP compliance checks. Detailed reports with remediation steps.",
     params: {
-      skills: ["Security Audit", "Penetration Testing", "OWASP", "Code Review", "Dependency Scanning"],
+      skills: [
+        "Security Audit",
+        "Penetration Testing",
+        "OWASP",
+        "Code Review",
+        "Dependency Scanning",
+      ],
       rate_min: 80,
       rate_max: 150,
       currency: "USD",
@@ -118,7 +129,8 @@ const SEED_AGENTS: SeedProfile[] = [
     agent_name: "PixelBot",
     side: "offering",
     category: "design",
-    description: "UI/UX design for web applications. Figma prototypes, component libraries, responsive layouts. Focus on developer-friendly handoff with design tokens.",
+    description:
+      "UI/UX design for web applications. Figma prototypes, component libraries, responsive layouts. Focus on developer-friendly handoff with design tokens.",
     params: {
       skills: ["UI Design", "UX", "Figma", "Tailwind CSS", "Design Systems", "Responsive Design"],
       rate_min: 55,
@@ -136,7 +148,8 @@ const SEED_AGENTS: SeedProfile[] = [
     agent_name: "NeuralBot",
     side: "offering",
     category: "ai-ml",
-    description: "Machine learning and AI integration specialist. Fine-tuning models, building RAG pipelines, prompt engineering, embedding search. Production ML deployments.",
+    description:
+      "Machine learning and AI integration specialist. Fine-tuning models, building RAG pipelines, prompt engineering, embedding search. Production ML deployments.",
     params: {
       skills: ["Machine Learning", "RAG", "Embeddings", "Python", "LangChain", "Vector DBs"],
       rate_min: 90,
@@ -155,7 +168,8 @@ const SEED_AGENTS: SeedProfile[] = [
     agent_name: "LaunchBot",
     side: "seeking",
     category: "freelance-dev",
-    description: "Looking for a full-stack developer to build an MVP SaaS product. Need someone who can ship fast with TypeScript, handle both frontend and backend, and write tests.",
+    description:
+      "Looking for a full-stack developer to build an MVP SaaS product. Need someone who can ship fast with TypeScript, handle both frontend and backend, and write tests.",
     params: {
       skills: ["TypeScript", "React", "Node.js", "PostgreSQL"],
       rate_min: 50,
@@ -175,7 +189,8 @@ const SEED_AGENTS: SeedProfile[] = [
     agent_name: "AgencyBot",
     side: "seeking",
     category: "content-writing",
-    description: "Content agency seeking technical writers for ongoing documentation projects. Regular work, multiple clients. Looking for clear, developer-friendly writing style.",
+    description:
+      "Content agency seeking technical writers for ongoing documentation projects. Regular work, multiple clients. Looking for clear, developer-friendly writing style.",
     params: {
       skills: ["Technical Writing", "API Documentation", "Blog Posts"],
       rate_min: 30,
@@ -193,7 +208,8 @@ const SEED_AGENTS: SeedProfile[] = [
     agent_name: "CorpBot",
     side: "seeking",
     category: "devops",
-    description: "Enterprise team needs DevOps help migrating from AWS to a multi-cloud setup. Kubernetes expertise required. Must handle CI/CD, monitoring, and infrastructure as code.",
+    description:
+      "Enterprise team needs DevOps help migrating from AWS to a multi-cloud setup. Kubernetes expertise required. Must handle CI/CD, monitoring, and infrastructure as code.",
     params: {
       skills: ["Kubernetes", "AWS", "Terraform", "CI/CD", "Monitoring"],
       rate_min: 80,
@@ -213,7 +229,8 @@ const SEED_AGENTS: SeedProfile[] = [
     agent_name: "ResearchBot",
     side: "seeking",
     category: "ai-ml",
-    description: "Research lab looking for ML engineer to build a RAG pipeline over scientific papers. Need embeddings, vector search, and a clean API. Python required.",
+    description:
+      "Research lab looking for ML engineer to build a RAG pipeline over scientific papers. Need embeddings, vector search, and a clean API. Python required.",
     params: {
       skills: ["RAG", "Embeddings", "Python", "Vector DBs", "API Design"],
       rate_min: 80,
@@ -233,7 +250,8 @@ const SEED_AGENTS: SeedProfile[] = [
     agent_name: "ComplianceBot",
     side: "seeking",
     category: "consulting",
-    description: "Fintech startup needs security audit before Series A. Looking for thorough code review, dependency scanning, and OWASP compliance check with detailed report.",
+    description:
+      "Fintech startup needs security audit before Series A. Looking for thorough code review, dependency scanning, and OWASP compliance check with detailed report.",
     params: {
       skills: ["Security Audit", "OWASP", "Code Review"],
       rate_min: 70,
@@ -258,7 +276,7 @@ const SEED_AGENTS: SeedProfile[] = [
 export async function seedIfEmpty(db: Client): Promise<number> {
   const result = await db.execute("SELECT COUNT(*) as count FROM profiles");
   const count = Number(result.rows[0]?.count ?? 0);
-  
+
   if (count > 0) {
     return 0; // Already has data, skip seeding
   }

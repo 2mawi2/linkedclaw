@@ -18,7 +18,9 @@ afterEach(() => {
   restore();
 });
 
-async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
+async function getApiKey(agentId: string): Promise<string> {
+  return createApiKey(agentId);
+}
 
 function makeRequest(method: string, body?: unknown, query?: string, apiKey?: string): NextRequest {
   const url = `http://localhost:3000/api/connect${query ? `?${query}` : ""}`;
@@ -74,7 +76,9 @@ describe("POST /api/connect", () => {
     const res1 = await POST(makeRequest("POST", validBody, undefined, key));
     const data1 = await res1.json();
 
-    const res2 = await POST(makeRequest("POST", { ...validBody, description: "Updated" }, undefined, key));
+    const res2 = await POST(
+      makeRequest("POST", { ...validBody, description: "Updated" }, undefined, key),
+    );
     const data2 = await res2.json();
 
     expect(data2.replaced_profile_id).toBe(data1.profile_id);
@@ -105,7 +109,9 @@ describe("POST /api/connect", () => {
 
   it("rejects invalid side", async () => {
     const key = await getApiKey("test-agent");
-    const res = await POST(makeRequest("POST", { ...validBody, side: "freelancer" }, undefined, key));
+    const res = await POST(
+      makeRequest("POST", { ...validBody, side: "freelancer" }, undefined, key),
+    );
     expect(res.status).toBe(400);
     const data = await res.json();
     expect(data.error).toContain("side");
@@ -134,7 +140,7 @@ describe("POST /api/connect", () => {
     const req = new NextRequest("http://localhost:3000/api/connect", {
       method: "POST",
       body: "not json",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
@@ -149,12 +155,19 @@ describe("POST /api/connect", () => {
 describe("DELETE /api/connect", () => {
   it("deactivates a profile by profile_id", async () => {
     const key = await getApiKey("agent-x");
-    const res = await POST(makeRequest("POST", {
-      agent_id: "agent-x",
-      side: "offering",
-      category: "dev",
-      params: { skills: ["react"] },
-    }, undefined, key));
+    const res = await POST(
+      makeRequest(
+        "POST",
+        {
+          agent_id: "agent-x",
+          side: "offering",
+          category: "dev",
+          params: { skills: ["react"] },
+        },
+        undefined,
+        key,
+      ),
+    );
     const { profile_id } = await res.json();
 
     const delRes = await DELETE(makeRequest("DELETE", undefined, `profile_id=${profile_id}`, key));
@@ -171,12 +184,32 @@ describe("DELETE /api/connect", () => {
 
   it("deactivates all profiles for an agent_id", async () => {
     const key = await getApiKey("agent-x");
-    await POST(makeRequest("POST", {
-      agent_id: "agent-x", side: "offering", category: "dev", params: {},
-    }, undefined, key));
-    await POST(makeRequest("POST", {
-      agent_id: "agent-x", side: "seeking", category: "design", params: {},
-    }, undefined, key));
+    await POST(
+      makeRequest(
+        "POST",
+        {
+          agent_id: "agent-x",
+          side: "offering",
+          category: "dev",
+          params: {},
+        },
+        undefined,
+        key,
+      ),
+    );
+    await POST(
+      makeRequest(
+        "POST",
+        {
+          agent_id: "agent-x",
+          side: "seeking",
+          category: "design",
+          params: {},
+        },
+        undefined,
+        key,
+      ),
+    );
 
     const delRes = await DELETE(makeRequest("DELETE", undefined, "agent_id=agent-x", key));
     const data = await delRes.json();

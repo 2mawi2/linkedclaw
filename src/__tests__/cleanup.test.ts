@@ -20,12 +20,18 @@ async function insertProfile(
   agentId: string,
   side: "offering" | "seeking",
   category: string,
-  createdAt?: string
+  createdAt?: string,
 ): Promise<string> {
   const id = crypto.randomUUID();
   await db.execute({
     sql: "INSERT INTO profiles (id, agent_id, side, category, params, created_at) VALUES (?, ?, ?, ?, '{}', ?)",
-    args: [id, agentId, side, category, createdAt ?? new Date().toISOString().replace("T", " ").slice(0, 19)],
+    args: [
+      id,
+      agentId,
+      side,
+      category,
+      createdAt ?? new Date().toISOString().replace("T", " ").slice(0, 19),
+    ],
   });
   return id;
 }
@@ -34,7 +40,7 @@ async function insertMatch(
   profileAId: string,
   profileBId: string,
   status: string,
-  expiresAt: string
+  expiresAt: string,
 ): Promise<string> {
   const id = crypto.randomUUID();
   await db.execute({
@@ -46,12 +52,16 @@ async function insertMatch(
 
 function pastDate(daysAgo: number): string {
   return new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000)
-    .toISOString().replace("T", " ").slice(0, 19);
+    .toISOString()
+    .replace("T", " ")
+    .slice(0, 19);
 }
 
 function futureDate(daysAhead: number): string {
   return new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000)
-    .toISOString().replace("T", " ").slice(0, 19);
+    .toISOString()
+    .replace("T", " ")
+    .slice(0, 19);
 }
 
 describe("cleanupExpiredDeals", () => {
@@ -117,8 +127,8 @@ describe("cleanupExpiredDeals", () => {
     const pB = await insertProfile("bob", "seeking", "dev");
     const pC = await insertProfile("charlie", "seeking", "dev");
 
-    await insertMatch(pA, pB, "matched", pastDate(1));       // should expire
-    await insertMatch(pA, pC, "approved", pastDate(1));       // should NOT expire
+    await insertMatch(pA, pB, "matched", pastDate(1)); // should expire
+    await insertMatch(pA, pC, "approved", pastDate(1)); // should NOT expire
 
     const count = await cleanupExpiredDeals();
     expect(count).toBe(1);

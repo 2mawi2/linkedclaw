@@ -6,9 +6,14 @@ import type { Project } from "@/lib/types";
 /** GET /api/projects/:projectId - Project details with roles, participants, messages */
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
+  { params }: { params: Promise<{ projectId: string }> },
 ) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, RATE_LIMITS.READ.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    RATE_LIMITS.READ.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const { projectId } = await params;
@@ -29,11 +34,11 @@ export async function GET(
     sql: "SELECT * FROM project_roles WHERE project_id = ? ORDER BY created_at",
     args: [projectId],
   });
-  const roles = rolesResult.rows.map(r => ({
+  const roles = rolesResult.rows.map((r) => ({
     id: r.id,
     role_name: r.role_name,
     category: r.category,
-    requirements: JSON.parse(r.requirements as string || "{}"),
+    requirements: JSON.parse((r.requirements as string) || "{}"),
     filled_by_agent_id: r.filled_by_agent_id,
     filled: !!r.filled_by_agent_id,
   }));
@@ -52,7 +57,7 @@ export async function GET(
     sql: "SELECT * FROM project_messages WHERE project_id = ? ORDER BY created_at DESC LIMIT ?",
     args: [projectId, messageLimit],
   });
-  const messages = messagesResult.rows.reverse().map(m => ({
+  const messages = messagesResult.rows.reverse().map((m) => ({
     id: m.id,
     sender_agent_id: m.sender_agent_id,
     content: m.content,
@@ -65,7 +70,7 @@ export async function GET(
     sql: "SELECT * FROM project_approvals WHERE project_id = ?",
     args: [projectId],
   });
-  const approvals = approvalsResult.rows.map(a => ({
+  const approvals = approvalsResult.rows.map((a) => ({
     agent_id: a.agent_id,
     approved: !!a.approved,
     created_at: a.created_at,
@@ -81,7 +86,7 @@ export async function GET(
     roles,
     participants: Array.from(participants),
     participant_count: participants.size,
-    roles_filled: roles.filter(r => r.filled).length,
+    roles_filled: roles.filter((r) => r.filled).length,
     roles_total: roles.length,
     messages,
     approvals,
