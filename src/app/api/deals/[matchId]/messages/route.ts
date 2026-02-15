@@ -3,6 +3,7 @@ import { ensureDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { Match, Profile, SendMessageRequest } from "@/lib/types";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(
   req: NextRequest,
@@ -107,6 +108,18 @@ export async function POST(
       args: [matchId],
     });
   }
+
+  // Notify counterpart
+  const counterpartId = profileA.agent_id === data.agent_id ? profileB.agent_id : profileA.agent_id;
+  await createNotification(db, {
+    agent_id: counterpartId,
+    type: data.message_type === "proposal" ? "deal_proposed" : "message_received",
+    match_id: matchId,
+    from_agent_id: data.agent_id,
+    summary: data.message_type === "proposal"
+      ? `Deal proposed by ${data.agent_id}`
+      : `New message from ${data.agent_id}`,
+  });
 
   return NextResponse.json({
     message_id: Number(result.lastInsertRowid),

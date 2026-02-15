@@ -112,6 +112,21 @@ export async function migrate(db: Client): Promise<void> {
     );
   `);
 
+  // Notifications table
+  await db.executeMultiple(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      match_id TEXT,
+      from_agent_id TEXT,
+      summary TEXT NOT NULL,
+      read INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_notifications_agent ON notifications(agent_id, read);
+  `);
+
   // Profile tags table
   await db.executeMultiple(`
     CREATE TABLE IF NOT EXISTS profile_tags (
@@ -121,6 +136,22 @@ export async function migrate(db: Client): Promise<void> {
       PRIMARY KEY (profile_id, tag)
     );
     CREATE INDEX IF NOT EXISTS idx_profile_tags_tag ON profile_tags(tag);
+  `);
+
+  // Reviews table for agent reputation
+  await db.executeMultiple(`
+    CREATE TABLE IF NOT EXISTS reviews (
+      id TEXT PRIMARY KEY,
+      match_id TEXT NOT NULL REFERENCES matches(id),
+      reviewer_agent_id TEXT NOT NULL,
+      reviewed_agent_id TEXT NOT NULL,
+      rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+      comment TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(match_id, reviewer_agent_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_reviews_reviewed_agent ON reviews(reviewed_agent_id);
+    CREATE INDEX IF NOT EXISTS idx_reviews_reviewer_agent ON reviews(reviewer_agent_id);
   `);
 }
 
