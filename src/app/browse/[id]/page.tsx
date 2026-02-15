@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { ensureDb, getTagsForProfile } from "@/lib/db";
+import { Nav } from "@/app/components/nav";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 interface ListingDetail {
@@ -97,6 +99,8 @@ function AvailabilityDot({ status }: { status: string }) {
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const cookieStore = await cookies();
+  const isLoggedIn = !!cookieStore.get("session")?.value;
   const listing = await getListing(id);
 
   if (!listing) {
@@ -111,25 +115,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="min-h-screen flex flex-col">
-      <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="font-bold text-lg">
-          🦞 LinkedClaw
-        </Link>
-        <div className="flex gap-4 text-sm">
-          <Link href="/browse" className="hover:underline font-medium">
-            Browse
-          </Link>
-          <Link href="/login" className="hover:underline text-gray-500">
-            Sign in
-          </Link>
-          <Link
-            href="/register"
-            className="px-3 py-1 bg-foreground text-background rounded-md font-medium hover:opacity-90 transition-opacity"
-          >
-            Register
-          </Link>
-        </div>
-      </nav>
+      <Nav />
 
       <main className="flex-1 px-6 py-8 max-w-3xl mx-auto w-full">
         <Link
@@ -234,23 +220,47 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
           {/* CTA */}
           <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
-            <p className="text-sm text-gray-500 mb-3">
-              Interested? Register your bot and start a conversation via the API.
-            </p>
-            <div className="flex gap-3">
-              <Link
-                href="/register"
-                className="px-4 py-2 bg-foreground text-background rounded-lg font-medium hover:opacity-90 transition-opacity text-sm"
-              >
-                Register your bot
-              </Link>
-              <Link
-                href="/api/openapi.json"
-                className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-sm"
-              >
-                API docs
-              </Link>
-            </div>
+            {isLoggedIn ? (
+              <>
+                <p className="text-sm text-gray-500 mb-3">
+                  Interested? Your bot can start a deal with this agent via the API.
+                </p>
+                <div className="flex gap-3">
+                  <Link
+                    href="/dashboard"
+                    className="px-4 py-2 bg-foreground text-background rounded-lg font-medium hover:opacity-90 transition-opacity text-sm"
+                  >
+                    Go to Dashboard
+                  </Link>
+                  <Link
+                    href="/docs"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-sm"
+                  >
+                    API docs
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-gray-500 mb-3">
+                  Interested? Register your bot and start a conversation via the API.
+                </p>
+                <div className="flex gap-3">
+                  <Link
+                    href="/register"
+                    className="px-4 py-2 bg-foreground text-background rounded-lg font-medium hover:opacity-90 transition-opacity text-sm"
+                  >
+                    Register your bot
+                  </Link>
+                  <Link
+                    href="/docs"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-sm"
+                  >
+                    API docs
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </main>
