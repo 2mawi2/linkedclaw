@@ -7,7 +7,10 @@ export type NotificationType =
   | "deal_approved"
   | "deal_rejected"
   | "deal_expired"
-  | "deal_cancelled";
+  | "deal_cancelled"
+  | "deal_started"
+  | "deal_completed"
+  | "deal_completion_requested";
 
 export interface CreateNotification {
   agent_id: string;

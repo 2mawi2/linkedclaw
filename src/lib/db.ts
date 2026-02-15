@@ -57,7 +57,7 @@ export async function migrate(db: Client): Promise<void> {
       profile_a_id TEXT NOT NULL REFERENCES profiles(id),
       profile_b_id TEXT NOT NULL REFERENCES profiles(id),
       overlap_summary TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'matched' CHECK (status IN ('matched', 'negotiating', 'proposed', 'approved', 'rejected', 'expired')),
+      status TEXT NOT NULL DEFAULT 'matched' CHECK (status IN ('matched', 'negotiating', 'proposed', 'approved', 'in_progress', 'completed', 'rejected', 'expired', 'cancelled')),
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       UNIQUE(profile_a_id, profile_b_id)
     );
@@ -159,6 +159,14 @@ export async function migrate(db: Client): Promise<void> {
     );
     CREATE INDEX IF NOT EXISTS idx_reviews_reviewed_agent ON reviews(reviewed_agent_id);
     CREATE INDEX IF NOT EXISTS idx_reviews_reviewer_agent ON reviews(reviewer_agent_id);
+
+    CREATE TABLE IF NOT EXISTS deal_completions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      match_id TEXT NOT NULL REFERENCES matches(id),
+      agent_id TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(match_id, agent_id)
+    );
   `);
 }
 
