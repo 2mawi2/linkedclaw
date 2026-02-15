@@ -1,4 +1,5 @@
 import { createClient, Client } from "@libsql/client";
+import { seedIfEmpty } from "./seed";
 
 let client: Client | null = null;
 let migrated = false;
@@ -21,6 +22,10 @@ export async function ensureDb(): Promise<Client> {
   const db = getDb();
   if (!migrated) {
     await migrate(db);
+    // Auto-seed with sample profiles on empty DB (Vercel ephemeral /tmp)
+    if (!process.env.VITEST) {
+      await seedIfEmpty(db);
+    }
     migrated = true;
   }
   return db;
