@@ -248,43 +248,106 @@ export default function DealDetailPage() {
         {/* Chat transcript */}
         <div className="mb-6">
           <h3 className="text-sm font-semibold mb-3">Messages</h3>
-          <div className="border border-gray-200 dark:border-gray-800 rounded-lg max-h-96 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-950">
+          <div className="border border-gray-200 dark:border-gray-800 rounded-lg max-h-[32rem] overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-950">
             {messages.length === 0 && (
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
                 No messages yet. Waiting for agents to start negotiating...
               </p>
             )}
-            {messages.map((msg) => {
+            {messages.map((msg, idx) => {
               const isMe = msg.sender_agent_id === agentId;
+              const isProposal = msg.message_type === "proposal";
+              const isSystem = msg.message_type === "system";
+              const prevMsg = idx > 0 ? messages[idx - 1] : null;
+
+              // Day separator
+              const msgDate = new Date(msg.created_at).toDateString();
+              const prevDate = prevMsg
+                ? new Date(prevMsg.created_at).toDateString()
+                : null;
+              const showDaySep = prevDate !== null && msgDate !== prevDate;
+
+              // Round separator: show before a proposal (if there are messages before it)
+              const showRoundSep = isProposal && idx > 0;
+
               return (
-                <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                      isMe
-                        ? "bg-foreground text-background"
-                        : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
-                    }`}
-                  >
-                    <p
-                      className={`text-xs mb-1 ${isMe ? "opacity-70" : "text-gray-500 dark:text-gray-400"}`}
-                    >
-                      {msg.sender_agent_id}
-                      {msg.message_type !== "negotiation" && (
-                        <span className="ml-1 font-medium">[{msg.message_type}]</span>
-                      )}
-                      <span className="ml-2 opacity-60">
-                        {new Date(msg.created_at).toLocaleString()}
+                <div key={msg.id}>
+                  {showDaySep && (
+                    <div className="flex items-center gap-3 my-4">
+                      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
+                      <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                        {new Date(msg.created_at).toLocaleDateString(undefined, {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </span>
-                    </p>
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
-                    {msg.proposed_terms && (
-                      <pre
-                        className={`mt-2 text-xs p-2 rounded ${isMe ? "bg-black/20" : "bg-gray-100 dark:bg-gray-800"}`}
+                      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
+                    </div>
+                  )}
+
+                  {showRoundSep && !showDaySep && (
+                    <div className="flex items-center gap-3 my-4">
+                      <div className="flex-1 h-px bg-purple-200 dark:bg-purple-800" />
+                      <span className="text-xs text-purple-400 dark:text-purple-500 whitespace-nowrap">
+                        Proposal
+                      </span>
+                      <div className="flex-1 h-px bg-purple-200 dark:bg-purple-800" />
+                    </div>
+                  )}
+
+                  {isSystem ? (
+                    <div className="text-center py-1">
+                      <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-900 px-3 py-1 rounded-full">
+                        {msg.content}
+                      </span>
+                    </div>
+                  ) : isProposal ? (
+                    <div className="mx-auto max-w-[90%] border-2 border-purple-300 dark:border-purple-700 rounded-lg p-3 bg-purple-50 dark:bg-purple-900/10">
+                      <p className="text-xs text-purple-600 dark:text-purple-400 mb-1 flex items-center gap-1">
+                        <span className="font-semibold">{msg.sender_agent_id}</span>
+                        <span className="opacity-60">proposed terms</span>
+                        <span className="ml-auto opacity-60">
+                          {new Date(msg.created_at).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </p>
+                      <p className="text-sm whitespace-pre-wrap mb-2">{msg.content}</p>
+                      {msg.proposed_terms && (
+                        <pre className="text-xs p-2 rounded bg-white dark:bg-gray-900 border border-purple-200 dark:border-purple-800 overflow-x-auto">
+                          {JSON.stringify(msg.proposed_terms, null, 2)}
+                        </pre>
+                      )}
+                    </div>
+                  ) : (
+                    <div className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+                      <div
+                        className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                          isMe
+                            ? "bg-foreground text-background"
+                            : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
+                        }`}
                       >
-                        {JSON.stringify(msg.proposed_terms, null, 2)}
-                      </pre>
-                    )}
-                  </div>
+                        <p
+                          className={`text-xs mb-1 ${isMe ? "opacity-70" : "text-gray-500 dark:text-gray-400"}`}
+                        >
+                          {msg.sender_agent_id}
+                          {msg.message_type !== "negotiation" && (
+                            <span className="ml-1 font-medium">[{msg.message_type}]</span>
+                          )}
+                          <span className="ml-2 opacity-60">
+                            {new Date(msg.created_at).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </p>
+                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
