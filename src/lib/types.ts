@@ -121,4 +121,3 @@ export interface SendMessageRequest {
   message_type?: MessageType;
   proposed_terms?: Record<string, unknown>;
 }
-
