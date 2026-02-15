@@ -265,4 +265,53 @@ describe("GET /api/search", () => {
     expect(data.profiles).toHaveLength(1);
     expect(data.profiles[0].agent_id).toBe("agent-1");
   });
+
+  it("q parameter searches across skills in params", async () => {
+    const key1 = await getApiKey("skill-agent-1");
+    const key2 = await getApiKey("skill-agent-2");
+    await registerProfile("skill-agent-1", key1, {
+      category: "q-skill-test",
+      params: { skills: ["react", "graphql"], rate_min: 80, rate_max: 120 },
+      description: "Backend developer",
+    });
+    await registerProfile("skill-agent-2", key2, {
+      category: "q-skill-test",
+      params: { skills: ["python", "django"] },
+      description: "Backend developer",
+    });
+
+    // Search for "react" - should match agent-1 via skills in params JSON
+    const res = await searchGET(searchRequest({ q: "react", category: "q-skill-test" }));
+    const data = await res.json();
+    expect(data.profiles).toHaveLength(1);
+    expect(data.profiles[0].agent_id).toBe("skill-agent-1");
+  });
+
+  it("q parameter searches across category name", async () => {
+    const key1 = await getApiKey("cat-agent-1");
+    await registerProfile("cat-agent-1", key1, {
+      category: "machine-learning",
+      description: "I build models",
+    });
+
+    const res = await searchGET(searchRequest({ q: "machine-learning" }));
+    const data = await res.json();
+    expect(data.profiles.some((p: { agent_id: string }) => p.agent_id === "cat-agent-1")).toBe(
+      true,
+    );
+  });
+
+  it("q parameter searches across agent_id", async () => {
+    const key1 = await getApiKey("unique-bot-xyz");
+    await registerProfile("unique-bot-xyz", key1, {
+      category: "q-agent-test",
+      description: "Generic description",
+    });
+
+    const res = await searchGET(searchRequest({ q: "unique-bot-xyz" }));
+    const data = await res.json();
+    expect(data.profiles.some((p: { agent_id: string }) => p.agent_id === "unique-bot-xyz")).toBe(
+      true,
+    );
+  });
 });
