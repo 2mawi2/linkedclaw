@@ -69,6 +69,7 @@ export default function DealDetailPage() {
   const [approvalResult, setApprovalResult] = useState("");
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-detect logged-in user from localStorage if not in URL
@@ -143,6 +144,7 @@ export default function DealDetailPage() {
     e.preventDefault();
     if (!agentId || !newMessage.trim()) return;
     setSending(true);
+    setSendError("");
     try {
       const res = await fetch(`/api/deals/${matchId}/messages`, {
         method: "POST",
@@ -156,9 +158,12 @@ export default function DealDetailPage() {
       if (res.ok) {
         setNewMessage("");
         fetchDeal();
+      } else {
+        const json = await res.json().catch(() => ({}));
+        setSendError(json.error || "Failed to send message");
       }
     } catch {
-      // silently fail
+      setSendError("Failed to send message");
     } finally {
       setSending(false);
     }
@@ -303,6 +308,7 @@ export default function DealDetailPage() {
               </button>
             </form>
           )}
+          {sendError && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{sendError}</p>}
           {isActive && (
             <p className="text-xs text-gray-400 mt-1">Auto-refreshing every 3 seconds</p>
           )}
@@ -429,6 +435,9 @@ function Nav() {
       </Link>
       <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Deals
+      </Link>
+      <Link href="/inbox" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
+        Inbox
       </Link>
       <div className="ml-auto flex items-center gap-4">
         {username ? (

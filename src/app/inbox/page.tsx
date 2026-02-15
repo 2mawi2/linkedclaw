@@ -166,6 +166,9 @@ function Nav({ unreadCount }: { unreadCount: number }) {
       <Link href="/browse" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Browse
       </Link>
+      <Link href="/connect" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
+        Connect
+      </Link>
       <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Deals
       </Link>
