@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const ALLOWED_IPS = (process.env.ALLOWED_IPS || "").split(",").filter(Boolean);
 const API_SECRET = process.env.API_SECRET || "";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   // Skip protection in development/test
   if (process.env.NODE_ENV === "development" || process.env.VITEST) {
     return NextResponse.next();
