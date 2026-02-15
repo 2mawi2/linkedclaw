@@ -1,44 +1,46 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { cleanupExpiredDeals, cleanupInactiveProfiles } from "@/lib/cleanup";
-import { createTestDb, _setDb } from "@/lib/db";
-import type Database from "better-sqlite3";
+import { createTestDb, _setDb, migrate } from "@/lib/db";
+import type { Client } from "@libsql/client";
 
-let db: Database.Database;
+let db: Client;
 let restore: () => void;
 
-beforeEach(() => {
+beforeEach(async () => {
   db = createTestDb();
   restore = _setDb(db);
+  await migrate(db);
 });
 
 afterEach(() => {
   restore();
-  db.close();
 });
 
-function insertProfile(
+async function insertProfile(
   agentId: string,
   side: "offering" | "seeking",
   category: string,
   createdAt?: string
-): string {
+): Promise<string> {
   const id = crypto.randomUUID();
-  db.prepare(
-    "INSERT INTO profiles (id, agent_id, side, category, params, created_at) VALUES (?, ?, ?, ?, '{}', ?)"
-  ).run(id, agentId, side, category, createdAt ?? new Date().toISOString().replace("T", " ").slice(0, 19));
+  await db.execute({
+    sql: "INSERT INTO profiles (id, agent_id, side, category, params, created_at) VALUES (?, ?, ?, ?, '{}', ?)",
+    args: [id, agentId, side, category, createdAt ?? new Date().toISOString().replace("T", " ").slice(0, 19)],
+  });
   return id;
 }
 
-function insertMatch(
+async function insertMatch(
   profileAId: string,
   profileBId: string,
   status: string,
   expiresAt: string
-): string {
+): Promise<string> {
   const id = crypto.randomUUID();
-  db.prepare(
-    "INSERT INTO matches (id, profile_a_id, profile_b_id, overlap_summary, status, expires_at) VALUES (?, ?, ?, '{}', ?, ?)"
-  ).run(id, profileAId, profileBId, status, expiresAt);
+  await db.execute({
+    sql: "INSERT INTO matches (id, profile_a_id, profile_b_id, overlap_summary, status, expires_at) VALUES (?, ?, ?, '{}', ?, ?)",
+    args: [id, profileAId, profileBId, status, expiresAt],
+  });
   return id;
 }
 
@@ -53,114 +55,117 @@ function futureDate(daysAhead: number): string {
 }
 
 describe("cleanupExpiredDeals", () => {
-  it("expires matched deals past their expiry date", () => {
-    const pA = insertProfile("alice", "offering", "dev");
-    const pB = insertProfile("bob", "seeking", "dev");
-    insertMatch(pA, pB, "matched", pastDate(1));
+  it("expires matched deals past their expiry date", async () => {
+    const pA = await insertProfile("alice", "offering", "dev");
+    const pB = await insertProfile("bob", "seeking", "dev");
+    await insertMatch(pA, pB, "matched", pastDate(1));
 
-    const count = cleanupExpiredDeals();
+    const count = await cleanupExpiredDeals();
     expect(count).toBe(1);
 
-    const row = db.prepare("SELECT status FROM matches").get() as { status: string };
-    expect(row.status).toBe("expired");
+    const result = await db.execute("SELECT status FROM matches");
+    expect(result.rows[0].status).toBe("expired");
   });
 
-  it("expires negotiating deals past their expiry date", () => {
-    const pA = insertProfile("alice", "offering", "dev");
-    const pB = insertProfile("bob", "seeking", "dev");
-    insertMatch(pA, pB, "negotiating", pastDate(1));
+  it("expires negotiating deals past their expiry date", async () => {
+    const pA = await insertProfile("alice", "offering", "dev");
+    const pB = await insertProfile("bob", "seeking", "dev");
+    await insertMatch(pA, pB, "negotiating", pastDate(1));
 
-    const count = cleanupExpiredDeals();
+    const count = await cleanupExpiredDeals();
     expect(count).toBe(1);
   });
 
-  it("does NOT expire approved deals", () => {
-    const pA = insertProfile("alice", "offering", "dev");
-    const pB = insertProfile("bob", "seeking", "dev");
-    insertMatch(pA, pB, "approved", pastDate(1));
+  it("does NOT expire approved deals", async () => {
+    const pA = await insertProfile("alice", "offering", "dev");
+    const pB = await insertProfile("bob", "seeking", "dev");
+    await insertMatch(pA, pB, "approved", pastDate(1));
 
-    const count = cleanupExpiredDeals();
+    const count = await cleanupExpiredDeals();
     expect(count).toBe(0);
 
-    const row = db.prepare("SELECT status FROM matches").get() as { status: string };
-    expect(row.status).toBe("approved");
+    const result = await db.execute("SELECT status FROM matches");
+    expect(result.rows[0].status).toBe("approved");
   });
 
-  it("does NOT expire rejected deals", () => {
-    const pA = insertProfile("alice", "offering", "dev");
-    const pB = insertProfile("bob", "seeking", "dev");
-    insertMatch(pA, pB, "rejected", pastDate(1));
+  it("does NOT expire rejected deals", async () => {
+    const pA = await insertProfile("alice", "offering", "dev");
+    const pB = await insertProfile("bob", "seeking", "dev");
+    await insertMatch(pA, pB, "rejected", pastDate(1));
 
-    const count = cleanupExpiredDeals();
+    const count = await cleanupExpiredDeals();
     expect(count).toBe(0);
 
-    const row = db.prepare("SELECT status FROM matches").get() as { status: string };
-    expect(row.status).toBe("rejected");
+    const result = await db.execute("SELECT status FROM matches");
+    expect(result.rows[0].status).toBe("rejected");
   });
 
-  it("does NOT expire deals that haven't reached their expiry", () => {
-    const pA = insertProfile("alice", "offering", "dev");
-    const pB = insertProfile("bob", "seeking", "dev");
-    insertMatch(pA, pB, "matched", futureDate(3));
+  it("does NOT expire deals that haven't reached their expiry", async () => {
+    const pA = await insertProfile("alice", "offering", "dev");
+    const pB = await insertProfile("bob", "seeking", "dev");
+    await insertMatch(pA, pB, "matched", futureDate(3));
 
-    const count = cleanupExpiredDeals();
+    const count = await cleanupExpiredDeals();
     expect(count).toBe(0);
 
-    const row = db.prepare("SELECT status FROM matches").get() as { status: string };
-    expect(row.status).toBe("matched");
+    const result = await db.execute("SELECT status FROM matches");
+    expect(result.rows[0].status).toBe("matched");
   });
 
-  it("handles multiple deals correctly", () => {
-    const pA = insertProfile("alice", "offering", "dev");
-    const pB = insertProfile("bob", "seeking", "dev");
-    const pC = insertProfile("charlie", "seeking", "dev");
+  it("handles multiple deals correctly", async () => {
+    const pA = await insertProfile("alice", "offering", "dev");
+    const pB = await insertProfile("bob", "seeking", "dev");
+    const pC = await insertProfile("charlie", "seeking", "dev");
 
-    insertMatch(pA, pB, "matched", pastDate(1));       // should expire
-    insertMatch(pA, pC, "approved", pastDate(1));       // should NOT expire
+    await insertMatch(pA, pB, "matched", pastDate(1));       // should expire
+    await insertMatch(pA, pC, "approved", pastDate(1));       // should NOT expire
 
-    const count = cleanupExpiredDeals();
+    const count = await cleanupExpiredDeals();
     expect(count).toBe(1);
   });
 });
 
 describe("cleanupInactiveProfiles", () => {
-  it("deactivates profiles with no activity past the threshold", () => {
-    insertProfile("alice", "offering", "dev", pastDate(60));
+  it("deactivates profiles with no activity past the threshold", async () => {
+    await insertProfile("alice", "offering", "dev", pastDate(60));
 
-    const count = cleanupInactiveProfiles(30);
+    const count = await cleanupInactiveProfiles(30);
     expect(count).toBe(1);
 
-    const row = db.prepare("SELECT active FROM profiles").get() as { active: number };
-    expect(row.active).toBe(0);
+    const result = await db.execute("SELECT active FROM profiles");
+    expect(result.rows[0].active).toBe(0);
   });
 
-  it("keeps recent profiles active", () => {
-    insertProfile("alice", "offering", "dev"); // created now
+  it("keeps recent profiles active", async () => {
+    await insertProfile("alice", "offering", "dev"); // created now
 
-    const count = cleanupInactiveProfiles(30);
+    const count = await cleanupInactiveProfiles(30);
     expect(count).toBe(0);
 
-    const row = db.prepare("SELECT active FROM profiles").get() as { active: number };
-    expect(row.active).toBe(1);
+    const result = await db.execute("SELECT active FROM profiles");
+    expect(result.rows[0].active).toBe(1);
   });
 
-  it("keeps profiles with recent match activity", () => {
-    const pA = insertProfile("alice", "offering", "dev", pastDate(60));
-    const pB = insertProfile("bob", "seeking", "dev", pastDate(60));
+  it("keeps profiles with recent match activity", async () => {
+    const pA = await insertProfile("alice", "offering", "dev", pastDate(60));
+    const pB = await insertProfile("bob", "seeking", "dev", pastDate(60));
 
     // Recent match activity
-    insertMatch(pA, pB, "matched", futureDate(7));
+    await insertMatch(pA, pB, "matched", futureDate(7));
 
-    const count = cleanupInactiveProfiles(30);
+    const count = await cleanupInactiveProfiles(30);
     // Both profiles have recent match activity
     expect(count).toBe(0);
   });
 
-  it("does not deactivate already-inactive profiles", () => {
-    const id = insertProfile("alice", "offering", "dev", pastDate(60));
-    db.prepare("UPDATE profiles SET active = 0 WHERE id = ?").run(id);
+  it("does not deactivate already-inactive profiles", async () => {
+    const id = await insertProfile("alice", "offering", "dev", pastDate(60));
+    await db.execute({
+      sql: "UPDATE profiles SET active = 0 WHERE id = ?",
+      args: [id],
+    });
 
-    const count = cleanupInactiveProfiles(30);
+    const count = await cleanupInactiveProfiles(30);
     expect(count).toBe(0);
   });
 });

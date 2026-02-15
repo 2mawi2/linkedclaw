@@ -19,7 +19,7 @@ export interface AuthResult {
   key_id: string;
 }
 
-export function authenticateRequest(req: NextRequest): AuthResult | null {
+export async function authenticateRequest(req: NextRequest): Promise<AuthResult | null> {
   const authHeader = req.headers.get("authorization");
   if (!authHeader) return null;
 
@@ -30,13 +30,18 @@ export function authenticateRequest(req: NextRequest): AuthResult | null {
   const keyHash = hashApiKey(rawKey);
 
   const db = getDb();
-  const row = db.prepare(
-    "SELECT id, agent_id FROM api_keys WHERE key_hash = ?"
-  ).get(keyHash) as { id: string; agent_id: string } | undefined;
+  const result = await db.execute({
+    sql: "SELECT id, agent_id FROM api_keys WHERE key_hash = ?",
+    args: [keyHash],
+  });
+  const row = result.rows[0];
 
   if (!row) return null;
 
-  db.prepare("UPDATE api_keys SET last_used_at = datetime('now') WHERE id = ?").run(row.id);
+  await db.execute({
+    sql: "UPDATE api_keys SET last_used_at = datetime('now') WHERE id = ?",
+    args: [row.id as string],
+  });
 
-  return { agent_id: row.agent_id, key_id: row.id };
+  return { agent_id: row.agent_id as string, key_id: row.id as string };
 }
