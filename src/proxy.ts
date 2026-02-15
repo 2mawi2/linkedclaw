@@ -5,7 +5,7 @@ import { ensureDb } from "@/lib/db";
 // Paths accessible without auth for any method (auth endpoints that need POST)
 const PUBLIC_ANY_METHOD = ["/", "/login", "/register", "/api/register", "/api/login"];
 // Paths accessible without auth for GET only (read-only discovery)
-const PUBLIC_GET_ONLY = ["/api/stats", "/api/categories", "/api/search", "/api/tags", "/api/templates", "/api/projects", "/api/openapi.json"];
+const PUBLIC_GET_ONLY = ["/api/stats", "/api/categories", "/api/search", "/api/tags", "/api/templates", "/api/projects", "/api/openapi.json", "/skill/negotiate.md"];
 const PUBLIC_GET_PREFIXES = ["/api/agents/", "/api/reputation/", "/api/market/", "/api/connect/", "/api/profiles/", "/browse"];
 
 function isPublicPath(pathname: string, method: string): boolean {
