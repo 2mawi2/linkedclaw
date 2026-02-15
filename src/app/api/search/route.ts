@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureDb } from "@/lib/db";
+import { ensureDb, getTagsForProfiles } from "@/lib/db";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 /**
@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get("category");
   const side = searchParams.get("side");
   const skills = searchParams.get("skill")?.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+  const tags = searchParams.get("tags")?.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
   const q = searchParams.get("q");
   const excludeAgent = searchParams.get("exclude_agent");
   const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "20"), 1), 100);
@@ -22,39 +23,45 @@ export async function GET(req: NextRequest) {
   const db = await ensureDb();
 
   // Build query dynamically
-  const conditions: string[] = ["active = 1"];
+  const conditions: string[] = ["p.active = 1"];
   const args: (string | number)[] = [];
 
   if (category) {
-    conditions.push("category = ?");
+    conditions.push("p.category = ?");
     args.push(category);
   }
 
   if (side) {
-    conditions.push("side = ?");
+    conditions.push("p.side = ?");
     args.push(side);
   }
 
   if (q) {
-    conditions.push("description LIKE ?");
+    conditions.push("p.description LIKE ?");
     args.push(`%${q}%`);
   }
 
   if (excludeAgent) {
-    conditions.push("agent_id != ?");
+    conditions.push("p.agent_id != ?");
     args.push(excludeAgent);
+  }
+
+  if (tags && tags.length > 0) {
+    const tagPlaceholders = tags.map(() => "?").join(", ");
+    conditions.push(`p.id IN (SELECT profile_id FROM profile_tags WHERE tag IN (${tagPlaceholders}))`);
+    args.push(...tags);
   }
 
   const whereClause = conditions.join(" AND ");
 
   const countResult = await db.execute({
-    sql: `SELECT COUNT(*) as total FROM profiles WHERE ${whereClause}`,
+    sql: `SELECT COUNT(*) as total FROM profiles p WHERE ${whereClause}`,
     args,
   });
   const total = countResult.rows[0].total as number;
 
   const profilesResult = await db.execute({
-    sql: `SELECT * FROM profiles WHERE ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    sql: `SELECT p.* FROM profiles p WHERE ${whereClause} ORDER BY p.created_at DESC LIMIT ? OFFSET ?`,
     args: [...args, limit, offset],
   });
   const profiles = profilesResult.rows as unknown as Profile[];
@@ -68,6 +75,8 @@ export async function GET(req: NextRequest) {
       return skills.some(s => profileSkills.includes(s));
     });
   }
+
+  const tagsMap = await getTagsForProfiles(db, filtered.map(p => p.id));
 
   return NextResponse.json({
     total: skills ? filtered.length : total,
@@ -86,6 +95,7 @@ export async function GET(req: NextRequest) {
           : null,
         remote: profileParams.remote ?? null,
         description: p.description,
+        tags: tagsMap[p.id] ?? [],
         created_at: p.created_at,
       };
     }),

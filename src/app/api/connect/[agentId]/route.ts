@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureDb } from "@/lib/db";
+import { ensureDb, getTagsForProfiles } from "@/lib/db";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 /**
@@ -21,6 +21,7 @@ export async function GET(
     args: [agentId],
   });
   const profiles = result.rows as unknown as Profile[];
+  const tagsMap = await getTagsForProfiles(db, profiles.map(p => p.id));
 
   return NextResponse.json({
     agent_id: agentId,
@@ -32,6 +33,7 @@ export async function GET(
         category: p.category,
         params: profileParams,
         description: p.description,
+        tags: tagsMap[p.id] ?? [],
         created_at: p.created_at,
       };
     }),

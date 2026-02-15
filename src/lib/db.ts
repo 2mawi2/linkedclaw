@@ -111,6 +111,77 @@ export async function migrate(db: Client): Promise<void> {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+
+  // Profile tags table
+  await db.executeMultiple(`
+    CREATE TABLE IF NOT EXISTS profile_tags (
+      profile_id TEXT NOT NULL REFERENCES profiles(id),
+      tag TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (profile_id, tag)
+    );
+    CREATE INDEX IF NOT EXISTS idx_profile_tags_tag ON profile_tags(tag);
+  `);
+}
+
+/** Validate and normalize tags array. Returns normalized tags or error string. */
+export function validateTags(tags: unknown): { valid: true; tags: string[] } | { valid: false; error: string } {
+  if (!Array.isArray(tags)) {
+    return { valid: false, error: "tags must be an array" };
+  }
+  if (tags.length > 10) {
+    return { valid: false, error: "Maximum 10 tags per profile" };
+  }
+  const normalized: string[] = [];
+  for (const tag of tags) {
+    if (typeof tag !== "string") {
+      return { valid: false, error: "Each tag must be a string" };
+    }
+    const t = tag.trim().toLowerCase();
+    if (t.length === 0) continue;
+    if (t.length > 30) {
+      return { valid: false, error: `Tag "${t}" exceeds 30 characters` };
+    }
+    if (!normalized.includes(t)) normalized.push(t);
+  }
+  return { valid: true, tags: normalized };
+}
+
+/** Save tags for a profile (replaces existing tags). */
+export async function saveTags(db: Client, profileId: string, tags: string[]): Promise<void> {
+  await db.execute({ sql: "DELETE FROM profile_tags WHERE profile_id = ?", args: [profileId] });
+  for (const tag of tags) {
+    await db.execute({
+      sql: "INSERT INTO profile_tags (profile_id, tag) VALUES (?, ?)",
+      args: [profileId, tag],
+    });
+  }
+}
+
+/** Get tags for a profile. */
+export async function getTagsForProfile(db: Client, profileId: string): Promise<string[]> {
+  const result = await db.execute({
+    sql: "SELECT tag FROM profile_tags WHERE profile_id = ? ORDER BY tag",
+    args: [profileId],
+  });
+  return result.rows.map(r => r.tag as string);
+}
+
+/** Get tags for multiple profiles at once. */
+export async function getTagsForProfiles(db: Client, profileIds: string[]): Promise<Record<string, string[]>> {
+  if (profileIds.length === 0) return {};
+  const placeholders = profileIds.map(() => "?").join(", ");
+  const result = await db.execute({
+    sql: `SELECT profile_id, tag FROM profile_tags WHERE profile_id IN (${placeholders}) ORDER BY tag`,
+    args: profileIds,
+  });
+  const map: Record<string, string[]> = {};
+  for (const id of profileIds) map[id] = [];
+  for (const row of result.rows) {
+    const pid = row.profile_id as string;
+    if (map[pid]) map[pid].push(row.tag as string);
+  }
+  return map;
 }
 
 /** Initialize the default singleton DB with migrations. */
