@@ -49,7 +49,11 @@ function validateConnectRequest(
     if (hasParamFields) {
       b.params = extracted;
     } else if (!b.params) {
-      return { valid: false, error: "params must be an object (or provide top-level fields like skills, rate_min, rate_max)" };
+      return {
+        valid: false,
+        error:
+          "params must be an object (or provide top-level fields like skills, rate_min, rate_max)",
+      };
     } else {
       return { valid: false, error: "params must be an object" };
     }
