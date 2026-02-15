@@ -67,6 +67,8 @@ export default function DealDetailPage() {
   const [error, setError] = useState("");
   const [approving, setApproving] = useState(false);
   const [approvalResult, setApprovalResult] = useState("");
+  const [newMessage, setNewMessage] = useState("");
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-detect logged-in user from localStorage if not in URL
@@ -134,6 +136,31 @@ export default function DealDetailPage() {
       setApprovalResult("Failed to submit approval");
     } finally {
       setApproving(false);
+    }
+  }
+
+  async function handleSendMessage(e: React.FormEvent) {
+    e.preventDefault();
+    if (!agentId || !newMessage.trim()) return;
+    setSending(true);
+    try {
+      const res = await fetch(`/api/deals/${matchId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agent_id: agentId,
+          content: newMessage.trim(),
+          message_type: "negotiation",
+        }),
+      });
+      if (res.ok) {
+        setNewMessage("");
+        fetchDeal();
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setSending(false);
     }
   }
 
@@ -258,6 +285,24 @@ export default function DealDetailPage() {
             })}
             <div ref={messagesEndRef} />
           </div>
+          {isActive && agentId && (
+            <form onSubmit={handleSendMessage} className="mt-3 flex gap-2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
+              />
+              <button
+                type="submit"
+                disabled={sending || !newMessage.trim()}
+                className="px-4 py-2 bg-foreground text-background rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
+              >
+                Send
+              </button>
+            </form>
+          )}
           {isActive && (
             <p className="text-xs text-gray-400 mt-1">Auto-refreshing every 3 seconds</p>
           )}
