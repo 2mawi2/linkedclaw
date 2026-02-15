@@ -1,269 +1,277 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { findMatches } from "@/lib/matching";
-import { createTestDb, _setDb } from "@/lib/db";
-import type Database from "better-sqlite3";
+import { createTestDb, _setDb, migrate } from "@/lib/db";
+import type { Client } from "@libsql/client";
 
-let db: Database.Database;
+let db: Client;
 let restore: () => void;
 
-beforeEach(() => {
+beforeEach(async () => {
   db = createTestDb();
   restore = _setDb(db);
+  await migrate(db);
 });
 
 afterEach(() => {
   restore();
-  db.close();
 });
 
-function insertProfile(
+async function insertProfile(
   agentId: string,
   side: "offering" | "seeking",
   category: string,
   params: Record<string, unknown>,
   description?: string
-): string {
+): Promise<string> {
   const id = crypto.randomUUID();
-  db.prepare(
-    "INSERT INTO profiles (id, agent_id, side, category, params, description) VALUES (?, ?, ?, ?, ?, ?)"
-  ).run(id, agentId, side, category, JSON.stringify(params), description ?? null);
+  await db.execute({
+    sql: "INSERT INTO profiles (id, agent_id, side, category, params, description) VALUES (?, ?, ?, ?, ?, ?)",
+    args: [id, agentId, side, category, JSON.stringify(params), description ?? null],
+  });
   return id;
 }
 
 describe("findMatches", () => {
-  it("matches offering to seeking in the same category", () => {
-    const offerId = insertProfile("alice", "offering", "frontend-dev", {
+  it("matches offering to seeking in the same category", async () => {
+    const offerId = await insertProfile("alice", "offering", "frontend-dev", {
       skills: ["react", "typescript"],
       rate_min: 50,
       rate_max: 70,
     });
-    insertProfile("bob", "seeking", "frontend-dev", {
+    await insertProfile("bob", "seeking", "frontend-dev", {
       skills: ["react"],
       rate_min: 40,
       rate_max: 60,
     });
 
-    const matches = findMatches(offerId);
+    const matches = await findMatches(offerId);
     expect(matches).toHaveLength(1);
     expect(matches[0].overlap.matching_skills).toContain("react");
     expect(matches[0].overlap.rate_overlap).toEqual({ min: 50, max: 60 });
     expect(matches[0].overlap.score).toBeGreaterThan(0);
   });
 
-  it("does not match profiles on the same side", () => {
-    const id1 = insertProfile("alice", "offering", "frontend-dev", {
+  it("does not match profiles on the same side", async () => {
+    const id1 = await insertProfile("alice", "offering", "frontend-dev", {
       skills: ["react"],
     });
-    insertProfile("bob", "offering", "frontend-dev", {
+    await insertProfile("bob", "offering", "frontend-dev", {
       skills: ["react"],
     });
 
-    const matches = findMatches(id1);
+    const matches = await findMatches(id1);
     expect(matches).toHaveLength(0);
   });
 
-  it("does not match profiles in different categories", () => {
-    const id1 = insertProfile("alice", "offering", "frontend-dev", {
+  it("does not match profiles in different categories", async () => {
+    const id1 = await insertProfile("alice", "offering", "frontend-dev", {
       skills: ["react"],
     });
-    insertProfile("bob", "seeking", "backend-dev", {
+    await insertProfile("bob", "seeking", "backend-dev", {
       skills: ["react"],
     });
 
-    const matches = findMatches(id1);
+    const matches = await findMatches(id1);
     expect(matches).toHaveLength(0);
   });
 
-  it("returns no match when skills don't overlap", () => {
-    const id1 = insertProfile("alice", "offering", "dev", {
+  it("returns no match when skills don't overlap", async () => {
+    const id1 = await insertProfile("alice", "offering", "dev", {
       skills: ["react", "vue"],
     });
-    insertProfile("bob", "seeking", "dev", {
+    await insertProfile("bob", "seeking", "dev", {
       skills: ["python", "rust"],
     });
 
-    const matches = findMatches(id1);
+    const matches = await findMatches(id1);
     expect(matches).toHaveLength(0);
   });
 
-  it("returns no match when rate ranges don't overlap", () => {
-    const id1 = insertProfile("alice", "offering", "dev", {
+  it("returns no match when rate ranges don't overlap", async () => {
+    const id1 = await insertProfile("alice", "offering", "dev", {
       skills: ["react"],
       rate_min: 100,
       rate_max: 150,
     });
-    insertProfile("bob", "seeking", "dev", {
+    await insertProfile("bob", "seeking", "dev", {
       skills: ["react"],
       rate_min: 30,
       rate_max: 50,
     });
 
-    const matches = findMatches(id1);
+    const matches = await findMatches(id1);
     expect(matches).toHaveLength(0);
   });
 
-  it("returns no match when remote preferences are incompatible", () => {
-    const id1 = insertProfile("alice", "offering", "dev", {
+  it("returns no match when remote preferences are incompatible", async () => {
+    const id1 = await insertProfile("alice", "offering", "dev", {
       skills: ["react"],
       remote: "remote",
     });
-    insertProfile("bob", "seeking", "dev", {
+    await insertProfile("bob", "seeking", "dev", {
       skills: ["react"],
       remote: "onsite",
     });
 
-    const matches = findMatches(id1);
+    const matches = await findMatches(id1);
     expect(matches).toHaveLength(0);
   });
 
-  it("matches when one side is hybrid", () => {
-    const id1 = insertProfile("alice", "offering", "dev", {
+  it("matches when one side is hybrid", async () => {
+    const id1 = await insertProfile("alice", "offering", "dev", {
       skills: ["react"],
       remote: "remote",
     });
-    insertProfile("bob", "seeking", "dev", {
+    await insertProfile("bob", "seeking", "dev", {
       skills: ["react"],
       remote: "hybrid",
     });
 
-    const matches = findMatches(id1);
+    const matches = await findMatches(id1);
     expect(matches).toHaveLength(1);
     expect(matches[0].overlap.remote_compatible).toBe(true);
   });
 
-  it("matches without rate params (optional)", () => {
-    const id1 = insertProfile("alice", "offering", "dev", {
+  it("matches without rate params (optional)", async () => {
+    const id1 = await insertProfile("alice", "offering", "dev", {
       skills: ["react"],
     });
-    insertProfile("bob", "seeking", "dev", {
+    await insertProfile("bob", "seeking", "dev", {
       skills: ["react"],
     });
 
-    const matches = findMatches(id1);
+    const matches = await findMatches(id1);
     expect(matches).toHaveLength(1);
     expect(matches[0].overlap.rate_overlap).toBeNull();
   });
 
-  it("creates a match record in the database", () => {
-    const id1 = insertProfile("alice", "offering", "dev", {
+  it("creates a match record in the database", async () => {
+    const id1 = await insertProfile("alice", "offering", "dev", {
       skills: ["react"],
     });
-    insertProfile("bob", "seeking", "dev", {
+    await insertProfile("bob", "seeking", "dev", {
       skills: ["react"],
     });
 
-    const matches = findMatches(id1);
+    const matches = await findMatches(id1);
     expect(matches).toHaveLength(1);
 
-    const matchRow = db.prepare("SELECT * FROM matches WHERE id = ?").get(matches[0].matchId) as Record<string, unknown>;
+    const result = await db.execute({
+      sql: "SELECT * FROM matches WHERE id = ?",
+      args: [matches[0].matchId],
+    });
+    const matchRow = result.rows[0];
     expect(matchRow).toBeTruthy();
     expect(matchRow.status).toBe("matched");
   });
 
-  it("reuses existing match on subsequent calls", () => {
-    const id1 = insertProfile("alice", "offering", "dev", {
+  it("reuses existing match on subsequent calls", async () => {
+    const id1 = await insertProfile("alice", "offering", "dev", {
       skills: ["react"],
     });
-    insertProfile("bob", "seeking", "dev", {
+    await insertProfile("bob", "seeking", "dev", {
       skills: ["react"],
     });
 
-    const first = findMatches(id1);
-    const second = findMatches(id1);
+    const first = await findMatches(id1);
+    const second = await findMatches(id1);
     expect(first[0].matchId).toBe(second[0].matchId);
 
-    const matchCount = (db.prepare("SELECT COUNT(*) as c FROM matches").get() as { c: number }).c;
-    expect(matchCount).toBe(1);
+    const countResult = await db.execute("SELECT COUNT(*) as c FROM matches");
+    expect(Number(countResult.rows[0].c)).toBe(1);
   });
 
-  it("does not match inactive profiles", () => {
-    const id1 = insertProfile("alice", "offering", "dev", {
+  it("does not match inactive profiles", async () => {
+    const id1 = await insertProfile("alice", "offering", "dev", {
       skills: ["react"],
     });
-    const id2 = insertProfile("bob", "seeking", "dev", {
+    const id2 = await insertProfile("bob", "seeking", "dev", {
       skills: ["react"],
     });
-    db.prepare("UPDATE profiles SET active = 0 WHERE id = ?").run(id2);
+    await db.execute({
+      sql: "UPDATE profiles SET active = 0 WHERE id = ?",
+      args: [id2],
+    });
 
-    const matches = findMatches(id1);
+    const matches = await findMatches(id1);
     expect(matches).toHaveLength(0);
   });
 
-  it("sorts matches by score descending", () => {
-    const id1 = insertProfile("alice", "offering", "dev", {
+  it("sorts matches by score descending", async () => {
+    const id1 = await insertProfile("alice", "offering", "dev", {
       skills: ["react", "typescript", "node"],
       rate_min: 50,
       rate_max: 70,
     });
     // Good match: 2 skills overlap + rate overlap
-    insertProfile("bob", "seeking", "dev", {
+    await insertProfile("bob", "seeking", "dev", {
       skills: ["react", "typescript"],
       rate_min: 50,
       rate_max: 65,
     });
     // Weaker match: 1 skill overlap + rate overlap
-    insertProfile("charlie", "seeking", "dev", {
+    await insertProfile("charlie", "seeking", "dev", {
       skills: ["react", "python"],
       rate_min: 50,
       rate_max: 65,
     });
 
-    const matches = findMatches(id1);
+    const matches = await findMatches(id1);
     expect(matches).toHaveLength(2);
     expect(matches[0].overlap.score).toBeGreaterThanOrEqual(matches[1].overlap.score);
     expect(matches[0].counterpart.agent_id).toBe("bob");
   });
 
-  it("returns empty for non-existent profile", () => {
-    const matches = findMatches("nonexistent-id");
+  it("returns empty for non-existent profile", async () => {
+    const matches = await findMatches("nonexistent-id");
     expect(matches).toHaveLength(0);
   });
 
-  it("matches profiles without skills or rate params (category-only)", () => {
-    const id1 = insertProfile("alice", "offering", "consulting", {});
-    insertProfile("bob", "seeking", "consulting", {});
+  it("matches profiles without skills or rate params (category-only)", async () => {
+    const id1 = await insertProfile("alice", "offering", "consulting", {});
+    await insertProfile("bob", "seeking", "consulting", {});
 
-    const matches = findMatches(id1);
+    const matches = await findMatches(id1);
     expect(matches).toHaveLength(1);
     expect(matches[0].overlap.score).toBeGreaterThan(0);
   });
 
-  it("works symmetrically from seeking side", () => {
-    const offerId = insertProfile("alice", "offering", "dev", { skills: ["react"] });
-    const seekId = insertProfile("bob", "seeking", "dev", { skills: ["react"] });
+  it("works symmetrically from seeking side", async () => {
+    const offerId = await insertProfile("alice", "offering", "dev", { skills: ["react"] });
+    const seekId = await insertProfile("bob", "seeking", "dev", { skills: ["react"] });
 
-    const fromOffering = findMatches(offerId);
-    const fromSeeking = findMatches(seekId);
+    const fromOffering = await findMatches(offerId);
+    const fromSeeking = await findMatches(seekId);
 
     expect(fromOffering).toHaveLength(1);
     expect(fromSeeking).toHaveLength(1);
     expect(fromOffering[0].matchId).toBe(fromSeeking[0].matchId);
   });
 
-  it("handles multiple candidates and returns all valid matches", () => {
-    const id1 = insertProfile("alice", "offering", "dev", {
+  it("handles multiple candidates and returns all valid matches", async () => {
+    const id1 = await insertProfile("alice", "offering", "dev", {
       skills: ["react", "node"],
       rate_min: 40,
       rate_max: 80,
     });
-    insertProfile("bob", "seeking", "dev", {
+    await insertProfile("bob", "seeking", "dev", {
       skills: ["react"],
       rate_min: 50,
       rate_max: 70,
     });
-    insertProfile("charlie", "seeking", "dev", {
+    await insertProfile("charlie", "seeking", "dev", {
       skills: ["node"],
       rate_min: 40,
       rate_max: 60,
     });
     // No match - different category
-    insertProfile("dave", "seeking", "design", {
+    await insertProfile("dave", "seeking", "design", {
       skills: ["react"],
       rate_min: 50,
       rate_max: 70,
     });
 
-    const matches = findMatches(id1);
+    const matches = await findMatches(id1);
     expect(matches).toHaveLength(2);
     const agents = matches.map(m => m.counterpart.agent_id).sort();
     expect(agents).toEqual(["bob", "charlie"]);

@@ -4,14 +4,6 @@ import type { Profile, ProfileParams } from "@/lib/types";
 
 /**
  * GET /api/search - Search and discover active profiles
- * 
- * Query params:
- *   category - filter by category (exact match)
- *   side - filter by side ('offering' or 'seeking')
- *   skill - filter by skill (comma-separated, matches any)
- *   q - free-text search in description
- *   limit - max results (default 20, max 100)
- *   offset - pagination offset (default 0)
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -31,37 +23,41 @@ export async function GET(req: NextRequest) {
 
   // Build query dynamically
   const conditions: string[] = ["active = 1"];
-  const params: unknown[] = [];
+  const args: (string | number)[] = [];
 
   if (category) {
     conditions.push("category = ?");
-    params.push(category);
+    args.push(category);
   }
 
   if (side) {
     conditions.push("side = ?");
-    params.push(side);
+    args.push(side);
   }
 
   if (q) {
     conditions.push("description LIKE ?");
-    params.push(`%${q}%`);
+    args.push(`%${q}%`);
   }
 
   if (excludeAgent) {
     conditions.push("agent_id != ?");
-    params.push(excludeAgent);
+    args.push(excludeAgent);
   }
 
   const whereClause = conditions.join(" AND ");
 
-  const countResult = db.prepare(
-    `SELECT COUNT(*) as total FROM profiles WHERE ${whereClause}`
-  ).get(...params) as { total: number };
+  const countResult = await db.execute({
+    sql: `SELECT COUNT(*) as total FROM profiles WHERE ${whereClause}`,
+    args,
+  });
+  const total = countResult.rows[0].total as number;
 
-  const profiles = db.prepare(
-    `SELECT * FROM profiles WHERE ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`
-  ).all(...params, limit, offset) as Profile[];
+  const profilesResult = await db.execute({
+    sql: `SELECT * FROM profiles WHERE ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    args: [...args, limit, offset],
+  });
+  const profiles = profilesResult.rows as unknown as Profile[];
 
   // Filter by skills in-memory (since params is JSON)
   let filtered = profiles;
@@ -74,7 +70,7 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    total: skills ? filtered.length : countResult.total,
+    total: skills ? filtered.length : total,
     limit,
     offset,
     profiles: filtered.map(p => {

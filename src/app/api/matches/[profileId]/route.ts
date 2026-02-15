@@ -14,12 +14,16 @@ export async function GET(
   }
 
   const db = getDb();
-  const profile = db.prepare("SELECT * FROM profiles WHERE id = ? AND active = 1").get(profileId) as Profile | undefined;
+  const profileResult = await db.execute({
+    sql: "SELECT * FROM profiles WHERE id = ? AND active = 1",
+    args: [profileId],
+  });
+  const profile = profileResult.rows[0] as unknown as Profile | undefined;
   if (!profile) {
     return NextResponse.json({ error: "Profile not found or inactive" }, { status: 404 });
   }
 
-  const matches = findMatches(profileId);
+  const matches = await findMatches(profileId);
 
   return NextResponse.json({
     matches: matches.map(m => {

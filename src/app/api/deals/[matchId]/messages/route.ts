@@ -11,7 +11,7 @@ export async function POST(
   const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
   if (rateLimited) return rateLimited;
 
-  const auth = authenticateRequest(req);
+  const auth = await authenticateRequest(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -58,7 +58,11 @@ export async function POST(
   };
 
   const db = getDb();
-  const match = db.prepare("SELECT * FROM matches WHERE id = ?").get(matchId) as Match | undefined;
+  const matchResult = await db.execute({
+    sql: "SELECT * FROM matches WHERE id = ?",
+    args: [matchId],
+  });
+  const match = matchResult.rows[0] as unknown as Match | undefined;
 
   if (!match) {
     return NextResponse.json({ error: "Deal not found" }, { status: 404 });
@@ -69,27 +73,43 @@ export async function POST(
   }
 
   // Verify the agent is part of this deal
-  const profileA = db.prepare("SELECT * FROM profiles WHERE id = ?").get(match.profile_a_id) as Profile;
-  const profileB = db.prepare("SELECT * FROM profiles WHERE id = ?").get(match.profile_b_id) as Profile;
+  const profileAResult = await db.execute({
+    sql: "SELECT * FROM profiles WHERE id = ?",
+    args: [match.profile_a_id],
+  });
+  const profileA = profileAResult.rows[0] as unknown as Profile;
+
+  const profileBResult = await db.execute({
+    sql: "SELECT * FROM profiles WHERE id = ?",
+    args: [match.profile_b_id],
+  });
+  const profileB = profileBResult.rows[0] as unknown as Profile;
 
   if (profileA.agent_id !== data.agent_id && profileB.agent_id !== data.agent_id) {
     return NextResponse.json({ error: "agent_id is not part of this deal" }, { status: 403 });
   }
 
   // Insert message
-  const result = db.prepare(
-    "INSERT INTO messages (match_id, sender_agent_id, content, message_type, proposed_terms) VALUES (?, ?, ?, ?, ?)"
-  ).run(matchId, data.agent_id, data.content, data.message_type ?? "negotiation", data.proposed_terms ? JSON.stringify(data.proposed_terms) : null);
+  const result = await db.execute({
+    sql: "INSERT INTO messages (match_id, sender_agent_id, content, message_type, proposed_terms) VALUES (?, ?, ?, ?, ?)",
+    args: [matchId, data.agent_id, data.content, data.message_type ?? "negotiation", data.proposed_terms ? JSON.stringify(data.proposed_terms) : null],
+  });
 
   // Update match status
   if (data.message_type === "proposal") {
-    db.prepare("UPDATE matches SET status = 'proposed' WHERE id = ?").run(matchId);
+    await db.execute({
+      sql: "UPDATE matches SET status = 'proposed' WHERE id = ?",
+      args: [matchId],
+    });
   } else if (match.status === "matched") {
-    db.prepare("UPDATE matches SET status = 'negotiating' WHERE id = ?").run(matchId);
+    await db.execute({
+      sql: "UPDATE matches SET status = 'negotiating' WHERE id = ?",
+      args: [matchId],
+    });
   }
 
   return NextResponse.json({
-    message_id: result.lastInsertRowid,
+    message_id: Number(result.lastInsertRowid),
     status: data.message_type === "proposal" ? "proposed" : (match.status === "matched" ? "negotiating" : match.status),
   });
 }

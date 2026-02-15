@@ -15,9 +15,11 @@ export async function GET(
   const { profileId } = await params;
   const db = getDb();
 
-  const profile = db.prepare(
-    "SELECT * FROM profiles WHERE id = ?"
-  ).get(profileId) as Profile | undefined;
+  const result = await db.execute({
+    sql: "SELECT * FROM profiles WHERE id = ?",
+    args: [profileId],
+  });
+  const profile = result.rows[0] as unknown as Profile | undefined;
 
   if (!profile) {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
@@ -43,7 +45,7 @@ export async function PATCH(
   const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
   if (rateLimited) return rateLimited;
 
-  const auth = authenticateRequest(req);
+  const auth = await authenticateRequest(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -72,9 +74,11 @@ export async function PATCH(
   }
 
   const db = getDb();
-  const profile = db.prepare(
-    "SELECT * FROM profiles WHERE id = ? AND active = 1"
-  ).get(profileId) as Profile | undefined;
+  const profileResult = await db.execute({
+    sql: "SELECT * FROM profiles WHERE id = ? AND active = 1",
+    args: [profileId],
+  });
+  const profile = profileResult.rows[0] as unknown as Profile | undefined;
 
   if (!profile) {
     return NextResponse.json({ error: "Profile not found or inactive" }, { status: 404 });
@@ -86,7 +90,7 @@ export async function PATCH(
 
   // Merge params if provided
   const updates: string[] = [];
-  const values: unknown[] = [];
+  const values: (string | null)[] = [];
 
   if (b.params && typeof b.params === "object" && !Array.isArray(b.params)) {
     const existingParams: ProfileParams = JSON.parse(profile.params);
@@ -100,7 +104,7 @@ export async function PATCH(
       return NextResponse.json({ error: "description must be a string or null" }, { status: 400 });
     }
     updates.push("description = ?");
-    values.push(b.description);
+    values.push(b.description as string | null);
   }
 
   if (updates.length === 0) {
@@ -108,10 +112,17 @@ export async function PATCH(
   }
 
   values.push(profileId);
-  db.prepare(`UPDATE profiles SET ${updates.join(", ")} WHERE id = ?`).run(...values);
+  await db.execute({
+    sql: `UPDATE profiles SET ${updates.join(", ")} WHERE id = ?`,
+    args: values,
+  });
 
   // Return updated profile
-  const updated = db.prepare("SELECT * FROM profiles WHERE id = ?").get(profileId) as Profile;
+  const updatedResult = await db.execute({
+    sql: "SELECT * FROM profiles WHERE id = ?",
+    args: [profileId],
+  });
+  const updated = updatedResult.rows[0] as unknown as Profile;
   const updatedParams: ProfileParams = JSON.parse(updated.params);
 
   return NextResponse.json({
