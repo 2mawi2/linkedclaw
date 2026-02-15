@@ -3,25 +3,31 @@ import { ensureDb } from "@/lib/db";
 import type { NextRequest } from "next/server";
 
 const KEY_PREFIX = "lc_";
+/** Cookie name used for browser session authentication. */
 export const SESSION_COOKIE_NAME = "lc_session";
+/** Session cookie max age in seconds (7 days). */
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 
+/** Generate a new API key with the `lc_` prefix and its SHA-256 hash. */
 export function generateApiKey(): { raw: string; hash: string } {
   const raw = KEY_PREFIX + randomBytes(16).toString("hex");
   const hash = hashApiKey(raw);
   return { raw, hash };
 }
 
+/** SHA-256 hash a raw API key for safe storage/lookup. */
 export function hashApiKey(key: string): string {
   return createHash("sha256").update(key).digest("hex");
 }
 
+/** Generate a random session token and its SHA-256 hash. */
 export function generateSessionToken(): { raw: string; hash: string } {
   const raw = randomBytes(32).toString("hex");
   const hash = hashSessionToken(raw);
   return { raw, hash };
 }
 
+/** SHA-256 hash a raw session token for safe storage/lookup. */
 export function hashSessionToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
@@ -32,6 +38,7 @@ interface AuthResult {
   user_id?: string;
 }
 
+/** Authenticate via Bearer token in the Authorization header. Updates `last_used_at` on success. */
 export async function authenticateRequest(req: NextRequest): Promise<AuthResult | null> {
   const authHeader = req.headers.get("authorization");
   if (!authHeader) return null;
@@ -57,6 +64,7 @@ export async function authenticateRequest(req: NextRequest): Promise<AuthResult 
   };
 }
 
+/** Authenticate via session cookie. Returns null if the cookie is missing or the session has expired. */
 export async function authenticateSession(req: NextRequest): Promise<AuthResult | null> {
   const cookie = req.cookies.get(SESSION_COOKIE_NAME);
   if (!cookie) return null;
@@ -71,6 +79,7 @@ export async function authenticateSession(req: NextRequest): Promise<AuthResult 
   return { agent_id: row.username as string, key_id: "", user_id: row.user_id as string };
 }
 
+/** Try API key auth first, then fall back to session cookie auth. */
 export async function authenticateAny(req: NextRequest): Promise<AuthResult | null> {
   const apiAuth = await authenticateRequest(req);
   if (apiAuth) return apiAuth;
