@@ -68,18 +68,11 @@ async function incrementFailure(
   currentCount: number,
 ): Promise<void> {
   const newCount = currentCount + 1;
-  if (newCount >= MAX_FAILURES) {
-    // Auto-disable after too many failures
-    await db.execute({
-      sql: "UPDATE webhooks SET failure_count = ?, active = 0, last_triggered_at = datetime('now') WHERE id = ?",
-      args: [newCount, webhookId],
-    });
-  } else {
-    await db.execute({
-      sql: "UPDATE webhooks SET failure_count = ?, last_triggered_at = datetime('now') WHERE id = ?",
-      args: [newCount, webhookId],
-    });
-  }
+  const disable = newCount >= MAX_FAILURES;
+  await db.execute({
+    sql: `UPDATE webhooks SET failure_count = ?, active = CASE WHEN ? THEN 0 ELSE active END, last_triggered_at = datetime('now') WHERE id = ?`,
+    args: [newCount, disable ? 1 : 0, webhookId],
+  });
 }
 
 /** Fire webhooks for an agent's notification. Non-blocking. */
