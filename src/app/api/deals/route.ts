@@ -170,8 +170,10 @@ export async function POST(req: NextRequest) {
 
   let rateOverlap: { min: number; max: number } | null = null;
   if (
-    myParams.rate_min != null && myParams.rate_max != null &&
-    theirParams.rate_min != null && theirParams.rate_max != null
+    myParams.rate_min != null &&
+    myParams.rate_max != null &&
+    theirParams.rate_min != null &&
+    theirParams.rate_max != null
   ) {
     const oMin = Math.max(myParams.rate_min, theirParams.rate_min);
     const oMax = Math.min(myParams.rate_max, theirParams.rate_max);
@@ -204,10 +206,13 @@ export async function POST(req: NextRequest) {
     summary: `${b.agent_id} wants to start a deal with you`,
   });
 
-  return NextResponse.json({
-    match_id: matchId,
-    overlap,
-    counterpart_agent_id: counterpart.agent_id,
-    message: "Deal created. Send a message to start negotiating.",
-  }, { status: 201 });
+  return NextResponse.json(
+    {
+      match_id: matchId,
+      overlap,
+      counterpart_agent_id: counterpart.agent_id,
+      message: "Deal created. Send a message to start negotiating.",
+    },
+    { status: 201 },
+  );
 }
