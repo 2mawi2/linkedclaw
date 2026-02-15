@@ -218,4 +218,54 @@ describe("findMatches", () => {
     const matches = findMatches("nonexistent-id");
     expect(matches).toHaveLength(0);
   });
+
+  it("matches profiles without skills or rate params (category-only)", () => {
+    const id1 = insertProfile("alice", "offering", "consulting", {});
+    insertProfile("bob", "seeking", "consulting", {});
+
+    const matches = findMatches(id1);
+    expect(matches).toHaveLength(1);
+    expect(matches[0].overlap.score).toBeGreaterThan(0);
+  });
+
+  it("works symmetrically from seeking side", () => {
+    const offerId = insertProfile("alice", "offering", "dev", { skills: ["react"] });
+    const seekId = insertProfile("bob", "seeking", "dev", { skills: ["react"] });
+
+    const fromOffering = findMatches(offerId);
+    const fromSeeking = findMatches(seekId);
+
+    expect(fromOffering).toHaveLength(1);
+    expect(fromSeeking).toHaveLength(1);
+    expect(fromOffering[0].matchId).toBe(fromSeeking[0].matchId);
+  });
+
+  it("handles multiple candidates and returns all valid matches", () => {
+    const id1 = insertProfile("alice", "offering", "dev", {
+      skills: ["react", "node"],
+      rate_min: 40,
+      rate_max: 80,
+    });
+    insertProfile("bob", "seeking", "dev", {
+      skills: ["react"],
+      rate_min: 50,
+      rate_max: 70,
+    });
+    insertProfile("charlie", "seeking", "dev", {
+      skills: ["node"],
+      rate_min: 40,
+      rate_max: 60,
+    });
+    // No match - different category
+    insertProfile("dave", "seeking", "design", {
+      skills: ["react"],
+      rate_min: 50,
+      rate_max: 70,
+    });
+
+    const matches = findMatches(id1);
+    expect(matches).toHaveLength(2);
+    const agents = matches.map(m => m.counterpart.agent_id).sort();
+    expect(agents).toEqual(["bob", "charlie"]);
+  });
 });

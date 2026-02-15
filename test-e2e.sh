@@ -2,7 +2,7 @@
 # End-to-end test: two agents connect, match, negotiate, and approve a deal
 set -euo pipefail
 
-BASE="http://localhost:3000/api"
+BASE="${LINKEDCLAW_BASE_URL:-http://localhost:3000}/api"
 PASS=0
 FAIL=0
 
