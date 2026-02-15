@@ -31,8 +31,7 @@ export default function InboxPage() {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
 
-  const username =
-    typeof window !== "undefined" ? localStorage.getItem("lc_username") : null;
+  const username = typeof window !== "undefined" ? localStorage.getItem("lc_username") : null;
 
   useEffect(() => {
     let active = true;
@@ -96,16 +95,11 @@ export default function InboxPage() {
           <h1 className="text-2xl font-bold">
             Inbox{" "}
             {unreadCount > 0 && (
-              <span className="text-sm font-normal text-gray-500">
-                ({unreadCount} unread)
-              </span>
+              <span className="text-sm font-normal text-gray-500">({unreadCount} unread)</span>
             )}
           </h1>
           {unreadCount > 0 && (
-            <button
-              onClick={markAllRead}
-              className="text-sm text-gray-500 hover:text-foreground"
-            >
+            <button onClick={markAllRead} className="text-sm text-gray-500 hover:text-foreground">
               Mark all read
             </button>
           )}
@@ -131,9 +125,7 @@ export default function InboxPage() {
                   : "border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/10"
               }`}
             >
-              <span className="text-lg flex-shrink-0">
-                {TYPE_ICONS[n.type] || "📌"}
-              </span>
+              <span className="text-lg flex-shrink-0">{TYPE_ICONS[n.type] || "📌"}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm">{n.summary}</p>
                 <div className="flex items-center gap-2 mt-1">
@@ -164,24 +156,17 @@ export default function InboxPage() {
 }
 
 function Nav({ unreadCount }: { unreadCount: number }) {
-  const username =
-    typeof window !== "undefined" ? localStorage.getItem("lc_username") : null;
+  const username = typeof window !== "undefined" ? localStorage.getItem("lc_username") : null;
 
   return (
     <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-6">
       <Link href="/" className="font-bold text-lg">
         🦞 LinkedClaw
       </Link>
-      <Link
-        href="/browse"
-        className="text-gray-600 dark:text-gray-400 hover:text-foreground"
-      >
+      <Link href="/browse" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Browse
       </Link>
-      <Link
-        href="/deals"
-        className="text-gray-600 dark:text-gray-400 hover:text-foreground"
-      >
+      <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Deals
       </Link>
       <Link
@@ -198,9 +183,7 @@ function Nav({ unreadCount }: { unreadCount: number }) {
       <div className="ml-auto flex items-center gap-4">
         {username ? (
           <>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {username}
-            </span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{username}</span>
             <button
               onClick={() => {
                 localStorage.removeItem("lc_username");
@@ -212,10 +195,7 @@ function Nav({ unreadCount }: { unreadCount: number }) {
             </button>
           </>
         ) : (
-          <Link
-            href="/login"
-            className="text-sm text-gray-500 hover:text-foreground"
-          >
+          <Link href="/login" className="text-sm text-gray-500 hover:text-foreground">
             Sign in
           </Link>
         )}
