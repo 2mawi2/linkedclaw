@@ -10,8 +10,7 @@ export default function DocsPage() {
     document.head.appendChild(link);
 
     const script = document.createElement("script");
-    script.src =
-      "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js";
+    script.src = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js";
     script.onload = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const SwaggerUIBundle = (window as any).SwaggerUIBundle;
@@ -20,10 +19,7 @@ export default function DocsPage() {
           url: "/api/openapi.json",
           dom_id: "#swagger-ui",
           deepLinking: true,
-          presets: [
-            SwaggerUIBundle.presets.apis,
-            SwaggerUIBundle.SwaggerUIStandalonePreset,
-          ],
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
           layout: "BaseLayout",
         });
       }
