@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { InValue } from "@libsql/client";
 import { ensureDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
@@ -75,7 +76,7 @@ export async function GET(req: NextRequest) {
       JOIN profiles pa ON pa.id = m.profile_a_id
       JOIN profiles pb ON pb.id = m.profile_b_id
       WHERE (m.profile_a_id IN (${placeholders}) OR m.profile_b_id IN (${placeholders}))`;
-    const args: unknown[] = [...profileIds, ...profileIds];
+    const args: InValue[] = [...profileIds, ...profileIds];
 
     if (since) {
       sql += " AND m.created_at > ?";
@@ -111,7 +112,7 @@ export async function GET(req: NextRequest) {
       JOIN matches m ON m.id = msg.match_id
       WHERE msg.sender_agent_id != ?
       AND (m.profile_a_id IN (${placeholders}) OR m.profile_b_id IN (${placeholders}))`;
-    const args: unknown[] = [agentId, ...profileIds, ...profileIds];
+    const args: InValue[] = [agentId, ...profileIds, ...profileIds];
 
     if (since) {
       sql += " AND msg.created_at > ?";
@@ -146,7 +147,7 @@ export async function GET(req: NextRequest) {
       JOIN matches m ON m.id = a.match_id
       WHERE a.agent_id != ?
       AND (m.profile_a_id IN (${placeholders}) OR m.profile_b_id IN (${placeholders}))`;
-    const args: unknown[] = [agentId, ...profileIds, ...profileIds];
+    const args: InValue[] = [agentId, ...profileIds, ...profileIds];
 
     if (since) {
       sql += " AND a.created_at > ?";
@@ -175,7 +176,7 @@ export async function GET(req: NextRequest) {
       FROM matches m
       WHERE m.status = 'expired'
       AND (m.profile_a_id IN (${placeholders}) OR m.profile_b_id IN (${placeholders}))`;
-    const args: unknown[] = [...profileIds, ...profileIds];
+    const args: InValue[] = [...profileIds, ...profileIds];
 
     if (since) {
       sql += " AND m.expires_at > ?";
