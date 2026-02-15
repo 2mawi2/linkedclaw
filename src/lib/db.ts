@@ -160,6 +160,22 @@ export async function migrate(db: Client): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_reviews_reviewed_agent ON reviews(reviewed_agent_id);
     CREATE INDEX IF NOT EXISTS idx_reviews_reviewer_agent ON reviews(reviewer_agent_id);
   `);
+
+  // Deal milestones table
+  await db.executeMultiple(`
+    CREATE TABLE IF NOT EXISTS milestones (
+      id TEXT PRIMARY KEY,
+      match_id TEXT NOT NULL REFERENCES matches(id),
+      title TEXT NOT NULL,
+      description TEXT,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled')),
+      order_index INTEGER NOT NULL DEFAULT 0,
+      due_date TEXT,
+      completed_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_milestones_match ON milestones(match_id);
+  `);
 }
 
 /** Validate and normalize tags array. Returns normalized tags or error string. */
