@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useSyncExternalStore } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 
 interface ProfileInfo {
@@ -325,11 +325,17 @@ export default function DealDetailPage() {
   );
 }
 
+function getStoredUsername(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("lc_username");
+}
+
 function Nav() {
-  const [username, setUsername] = useState<string | null>(null);
-  useEffect(() => {
-    setUsername(localStorage.getItem("lc_username"));
-  }, []);
+  const username = useSyncExternalStore(
+    (cb) => { window.addEventListener("storage", cb); return () => window.removeEventListener("storage", cb); },
+    getStoredUsername,
+    () => null,
+  );
 
   return (
     <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-6">
