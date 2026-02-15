@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb, validateTags, saveTags } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { findMatches } from "@/lib/matching";
 import type { ConnectRequest, Side } from "@/lib/types";
 
 const VALID_SIDES: Side[] = ["offering", "seeking"];
@@ -146,8 +147,18 @@ export async function POST(req: NextRequest) {
     await saveTags(db, id, tags);
   }
 
+  // Auto-match: find compatible profiles and create matches
+  let matchCount = 0;
+  try {
+    const matches = await findMatches(id);
+    matchCount = matches.length;
+  } catch {
+    // Non-fatal: profile was created successfully even if matching fails
+  }
+
   return NextResponse.json({
     profile_id: id,
+    matches_found: matchCount,
     ...(existing ? { replaced_profile_id: existing.id } : {}),
   });
 }
