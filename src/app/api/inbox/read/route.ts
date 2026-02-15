@@ -68,7 +68,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ marked_read: result.rowsAffected });
   } else {
     return NextResponse.json(
-      { error: "notification_id must be a number, or notification_ids must be an array of numbers" },
+      {
+        error: "notification_id must be a number, or notification_ids must be an array of numbers",
+      },
       { status: 400 },
     );
   }
