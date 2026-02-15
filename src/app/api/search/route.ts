@@ -13,6 +13,8 @@ export async function GET(req: NextRequest) {
   const tags = searchParams.get("tags")?.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
   const q = searchParams.get("q");
   const excludeAgent = searchParams.get("exclude_agent");
+  const minRating = searchParams.get("min_rating") ? parseFloat(searchParams.get("min_rating")!) : null;
+  const sortBy = searchParams.get("sort"); // "rating" or default (created_at)
   const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "20"), 1), 100);
   const offset = Math.max(parseInt(searchParams.get("offset") ?? "0"), 0);
 
@@ -52,17 +54,38 @@ export async function GET(req: NextRequest) {
     args.push(...tags);
   }
 
+  if (minRating !== null && (isNaN(minRating) || minRating < 0 || minRating > 5)) {
+    return NextResponse.json({ error: "min_rating must be a number between 0 and 5" }, { status: 400 });
+  }
+
   const whereClause = conditions.join(" AND ");
 
+  // Build reputation subquery for min_rating filter and sort
+  const repSubquery = `LEFT JOIN (
+    SELECT reviewed_agent_id, AVG(rating * 1.0) as avg_rating, COUNT(*) as total_reviews
+    FROM reviews GROUP BY reviewed_agent_id
+  ) rep ON rep.reviewed_agent_id = p.agent_id`;
+
+  let havingClause = "";
+  const havingArgs: (string | number)[] = [];
+  if (minRating !== null) {
+    havingClause = `AND COALESCE(rep.avg_rating, 0) >= ?`;
+    havingArgs.push(minRating);
+  }
+
+  const orderClause = sortBy === "rating"
+    ? "ORDER BY COALESCE(rep.avg_rating, 0) DESC, rep.total_reviews DESC"
+    : "ORDER BY p.created_at DESC";
+
   const countResult = await db.execute({
-    sql: `SELECT COUNT(*) as total FROM profiles p WHERE ${whereClause}`,
-    args,
+    sql: `SELECT COUNT(*) as total FROM profiles p ${repSubquery} WHERE ${whereClause} ${havingClause}`,
+    args: [...args, ...havingArgs],
   });
   const total = countResult.rows[0].total as number;
 
   const profilesResult = await db.execute({
-    sql: `SELECT p.* FROM profiles p WHERE ${whereClause} ORDER BY p.created_at DESC LIMIT ? OFFSET ?`,
-    args: [...args, limit, offset],
+    sql: `SELECT p.*, COALESCE(rep.avg_rating, 0) as agent_avg_rating, COALESCE(rep.total_reviews, 0) as agent_total_reviews FROM profiles p ${repSubquery} WHERE ${whereClause} ${havingClause} ${orderClause} LIMIT ? OFFSET ?`,
+    args: [...args, ...havingArgs, limit, offset],
   });
   const profiles = profilesResult.rows as unknown as Profile[];
 
@@ -84,6 +107,7 @@ export async function GET(req: NextRequest) {
     offset,
     profiles: filtered.map(p => {
       const profileParams: ProfileParams = JSON.parse(p.params);
+      const pr = p as Profile & { agent_avg_rating?: number; agent_total_reviews?: number };
       return {
         id: p.id,
         agent_id: p.agent_id,
@@ -96,6 +120,10 @@ export async function GET(req: NextRequest) {
         remote: profileParams.remote ?? null,
         description: p.description,
         tags: tagsMap[p.id] ?? [],
+        reputation: {
+          avg_rating: Math.round(Number(pr.agent_avg_rating ?? 0) * 100) / 100,
+          total_reviews: Number(pr.agent_total_reviews ?? 0),
+        },
         created_at: p.created_at,
       };
     }),
