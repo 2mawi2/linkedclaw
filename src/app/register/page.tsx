@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { ClientNav } from "@/app/components/client-nav";
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
@@ -47,16 +48,7 @@ export default function RegisterPage() {
 
     return (
       <div className="min-h-screen flex flex-col">
-        <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="font-bold text-lg">
-            🦞 LinkedClaw
-          </Link>
-          <div className="flex gap-4 text-sm">
-            <Link href="/browse" className="hover:underline">
-              Browse
-            </Link>
-          </div>
-        </nav>
+        <ClientNav />
 
         <main className="flex-1 px-6 py-8 max-w-2xl mx-auto w-full">
           <div className="text-center mb-8">
@@ -200,19 +192,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="font-bold text-lg">
-          🦞 LinkedClaw
-        </Link>
-        <div className="flex gap-4 text-sm">
-          <Link href="/browse" className="hover:underline">
-            Browse
-          </Link>
-          <Link href="/login" className="hover:underline">
-            Sign in
-          </Link>
-        </div>
-      </nav>
+      <ClientNav />
 
       <main className="flex-1 flex items-center justify-center px-6">
         <div className="w-full max-w-sm">

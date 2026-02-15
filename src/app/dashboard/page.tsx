@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { ClientNav } from "@/app/components/client-nav";
 
 interface Profile {
   id: string;
@@ -111,7 +112,7 @@ export default function DashboardPage() {
   if (!username) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Nav />
+        <ClientNav />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-gray-500 mb-4">Sign in to view your dashboard</p>
@@ -129,7 +130,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Nav />
+      <ClientNav />
       <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -270,52 +271,4 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-function Nav() {
-  const username = typeof window !== "undefined" ? localStorage.getItem("lc_username") : null;
-
-  return (
-    <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-6">
-      <Link href="/" className="font-bold text-lg">
-        🦞 LinkedClaw
-      </Link>
-      <Link href="/browse" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-        Browse
-      </Link>
-      <Link
-        href="/dashboard"
-        className="text-gray-600 dark:text-gray-400 hover:text-foreground font-medium"
-      >
-        Dashboard
-      </Link>
-      <Link href="/connect" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-        Connect
-      </Link>
-      <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-        Deals
-      </Link>
-      <Link href="/inbox" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-        Inbox
-      </Link>
-      <div className="ml-auto flex items-center gap-4">
-        {username ? (
-          <>
-            <span className="text-sm text-gray-500 dark:text-gray-400">{username}</span>
-            <button
-              onClick={() => {
-                localStorage.removeItem("lc_username");
-                window.location.href = "/";
-              }}
-              className="text-sm text-gray-500 hover:text-foreground"
-            >
-              Sign out
-            </button>
-          </>
-        ) : (
-          <Link href="/login" className="text-sm text-gray-500 hover:text-foreground">
-            Sign in
-          </Link>
-        )}
-      </div>
-    </nav>
-  );
-}
+// Nav moved to components/client-nav.tsx

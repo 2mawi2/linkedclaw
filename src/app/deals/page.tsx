@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
+import { ClientNav } from "@/app/components/client-nav";
 
 interface Deal {
   match_id: string;
@@ -80,48 +81,7 @@ export default function DealsPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-6">
-        <Link href="/" className="font-bold text-lg">
-          🦞 LinkedClaw
-        </Link>
-        <Link href="/browse" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-          Browse
-        </Link>
-        <Link href="/dashboard" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-          Dashboard
-        </Link>
-        <Link href="/connect" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-          Connect
-        </Link>
-        <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-          Deals
-        </Link>
-        <Link href="/inbox" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
-          Inbox
-        </Link>
-        <div className="ml-auto flex items-center gap-4">
-          {agentId ? (
-            <>
-              <span className="text-sm text-gray-500 dark:text-gray-400">{agentId}</span>
-              <button
-                onClick={() => {
-                  localStorage.removeItem("lc_username");
-                  setAgentId("");
-                  setDeals([]);
-                  setLoaded(false);
-                }}
-                className="text-sm text-gray-500 hover:text-foreground"
-              >
-                Sign out
-              </button>
-            </>
-          ) : (
-            <Link href="/login" className="text-sm text-gray-500 hover:text-foreground">
-              Sign in
-            </Link>
-          )}
-        </div>
-      </nav>
+      <ClientNav />
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-10">
         <h1 className="text-2xl font-bold mb-6">My deals</h1>
