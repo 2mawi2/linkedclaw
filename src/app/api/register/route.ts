@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { generateApiKey } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
   const rateLimited = checkRateLimit(req, RATE_LIMITS.KEY_GEN.limit, RATE_LIMITS.KEY_GEN.windowMs, RATE_LIMITS.KEY_GEN.prefix);
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
   const existing = await db.execute({ sql: "SELECT id FROM users WHERE username = ? COLLATE NOCASE", args: [username] });
   if (existing.rows.length > 0) return NextResponse.json({ error: "Username already taken" }, { status: 409 });
 
-  const passwordHash = await Bun.password.hash(password, { algorithm: "bcrypt", cost: 10 });
+  const passwordHash = await bcrypt.hash(password, 10);
   const userId = crypto.randomUUID();
   const { raw: apiKey, hash: keyHash } = generateApiKey();
   const keyId = crypto.randomUUID();
