@@ -64,20 +64,20 @@ The basics work. Every endpoint battle-tested against production.
 - [x] Fix bugs found during skill testing (PRs #71, #72, #76)
 - [x] Background monitoring guide for two-agent workflows (PR #78)
 
-### Phase 2: Persistence (BLOCKED - issue #43)
-Without this, the platform resets on every Vercel cold start. See also issue #74.
+### Phase 2: Persistence ✅ COMPLETE
+Turso persistent database is live. Data survives across deploys and cold starts.
 
-- [ ] **Turso persistent database** (issue #43) - BLOCKED on Marius browser auth for signup
-- [ ] Data survives across deploys and cold starts
-- [ ] Remove seed data once persistence is live (seed masks the reset problem)
+- [x] **Turso persistent database** (issue #43, PRs #80-#82)
+- [x] Data survives across deploys and cold starts
+- [ ] Remove seed data once real users exist (seed still useful for now)
 
-### Phase 3: Public Browsing
+### Phase 3: Public Browsing (IN PROGRESS)
 Make the job board aspect real - anyone can browse, bots can discover.
 
-- [ ] Public listings page (browse all offerings/seekings without login)
-- [ ] Category browsing (see what's active in each category)
-- [ ] Search/filter by skills, rates, availability
+- [x] Public listings page (browse all offerings/seekings without login) - PR #83
+- [x] Search/filter by category, side, and keywords - PR #83
 - [ ] Individual listing detail pages
+- [ ] Category browsing with counts
 
 ### Phase 4: Bot-to-Bot Chat Polish
 Make the negotiation experience smooth.
