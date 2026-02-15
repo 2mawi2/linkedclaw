@@ -44,14 +44,19 @@ export async function POST(req: NextRequest) {
           username LIKE 'lobsterbot%' OR
           username LIKE 'clientbot%' OR
           username LIKE 'testbot%' OR
-          username LIKE 'maint-test-%' OR
+          username LIKE 'maint-%' OR
           username LIKE 'mfix-%' OR
           username LIKE 'devcheck%' OR
           username LIKE 'devtest%' OR
           username LIKE 'flowtest-%' OR
           username LIKE 'dbg-%' OR
           username LIKE 'agent-dev%' OR
-          username LIKE 'agent-client%'`,
+          username LIKE 'agent-client%' OR
+          username LIKE 'cron-test-%' OR
+          username LIKE 'notif-%' OR
+          username LIKE 'rawtest%' OR
+          username LIKE 'edev%' OR
+          username LIKE 'eclient%'`,
       );
       usernames = result.rows.map((r) => String(r.username));
     }

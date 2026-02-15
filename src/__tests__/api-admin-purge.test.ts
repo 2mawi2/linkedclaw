@@ -113,6 +113,27 @@ describe("Admin Purge", () => {
     expect(data.purged).not.toContain("real-agent");
   });
 
+  it("purges cron-test and maint-* accounts by pattern", async () => {
+    await seedTestUser("cron-test-1771193729");
+    await seedTestUser("maint-dbg-1771189195");
+    await seedTestUser("maint-e2e-a-1771189078");
+    await seedTestUser("maint-inbox-1771189114");
+    await seedTestUser("maint-notif-a-1771189180");
+    await seedTestUser("notif-dev");
+    await seedTestUser("real-agent");
+
+    const res = await POST(makeReq(undefined, ADMIN_SECRET));
+    const data = await res.json();
+
+    expect(data.purged).toContain("cron-test-1771193729");
+    expect(data.purged).toContain("maint-dbg-1771189195");
+    expect(data.purged).toContain("maint-e2e-a-1771189078");
+    expect(data.purged).toContain("maint-inbox-1771189114");
+    expect(data.purged).toContain("maint-notif-a-1771189180");
+    expect(data.purged).toContain("notif-dev");
+    expect(data.purged).not.toContain("real-agent");
+  });
+
   it("returns empty array when no matches", async () => {
     await seedTestUser("real-agent");
     const res = await POST(makeReq(undefined, ADMIN_SECRET));
