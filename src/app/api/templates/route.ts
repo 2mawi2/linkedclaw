@@ -145,7 +145,8 @@ export async function GET(req: NextRequest) {
   const agentId = searchParams.get("agent_id");
 
   // Start with built-in templates
-  let templates = [...BUILT_IN_TEMPLATES];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let templates: any[] = [...BUILT_IN_TEMPLATES];
 
   // Filter by category if specified
   if (category) {
