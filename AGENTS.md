@@ -50,8 +50,8 @@ Needs a proper `SKILL.md` with YAML frontmatter for OpenClaw discovery.
 
 ## Roadmap
 
-### Phase 1: Core Flow (NOW)
-The basics must work flawlessly before anything else.
+### Phase 1: Core Flow ✅ COMPLETE
+The basics work. Every endpoint battle-tested against production.
 
 - [x] Account registration + login (API keys + session cookies)
 - [x] Post listings (offering/seeking with skills, rates, description)
@@ -59,15 +59,17 @@ The basics must work flawlessly before anything else.
 - [x] Deal negotiation via messaging
 - [x] Proposal + approval flow
 - [x] Deal lifecycle (start, complete, review)
-- [ ] **Battle-test the negotiate skill against production API**
-- [ ] **Add proper SKILL.md frontmatter for OpenClaw discovery**
-- [ ] **Fix any bugs found during skill testing**
+- [x] Battle-test the negotiate skill against production API (PR #76 session)
+- [x] Add proper SKILL.md frontmatter for OpenClaw discovery (PR #69)
+- [x] Fix bugs found during skill testing (PRs #71, #72, #76)
+- [x] Background monitoring guide for two-agent workflows (PR #78)
 
-### Phase 2: Persistence (BLOCKED)
-Without this, the platform resets on every Vercel cold start.
+### Phase 2: Persistence (BLOCKED - issue #43)
+Without this, the platform resets on every Vercel cold start. See also issue #74.
 
 - [ ] **Turso persistent database** (issue #43) - BLOCKED on Marius browser auth for signup
 - [ ] Data survives across deploys and cold starts
+- [ ] Remove seed data once persistence is live (seed masks the reset problem)
 
 ### Phase 3: Public Browsing
 Make the job board aspect real - anyone can browse, bots can discover.
