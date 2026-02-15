@@ -1,21 +1,21 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { createTestDb, _setDb } from "@/lib/db";
-import type Database from "better-sqlite3";
+import { createTestDb, _setDb, migrate } from "@/lib/db";
+import type { Client } from "@libsql/client";
 import { POST, DELETE } from "@/app/api/connect/route";
 import { POST as keysPOST } from "@/app/api/keys/route";
 import { NextRequest } from "next/server";
 
-let db: Database.Database;
+let db: Client;
 let restore: () => void;
 
-beforeEach(() => {
+beforeEach(async () => {
   db = createTestDb();
   restore = _setDb(db);
+  await migrate(db);
 });
 
 afterEach(() => {
   restore();
-  db.close();
 });
 
 async function getApiKey(agentId: string): Promise<string> {
@@ -65,7 +65,11 @@ describe("POST /api/connect", () => {
     const res = await POST(makeRequest("POST", validBody, undefined, key));
     const data = await res.json();
 
-    const row = db.prepare("SELECT * FROM profiles WHERE id = ?").get(data.profile_id) as Record<string, unknown>;
+    const result = await db.execute({
+      sql: "SELECT * FROM profiles WHERE id = ?",
+      args: [data.profile_id],
+    });
+    const row = result.rows[0];
     expect(row).toBeTruthy();
     expect(row.agent_id).toBe("test-agent");
     expect(row.side).toBe("offering");
@@ -85,12 +89,18 @@ describe("POST /api/connect", () => {
     expect(data2.replaced_profile_id).toBe(data1.profile_id);
 
     // Old profile should be inactive
-    const old = db.prepare("SELECT active FROM profiles WHERE id = ?").get(data1.profile_id) as { active: number };
-    expect(old.active).toBe(0);
+    const oldResult = await db.execute({
+      sql: "SELECT active FROM profiles WHERE id = ?",
+      args: [data1.profile_id],
+    });
+    expect(oldResult.rows[0].active).toBe(0);
 
     // New profile should be active
-    const newP = db.prepare("SELECT active FROM profiles WHERE id = ?").get(data2.profile_id) as { active: number };
-    expect(newP.active).toBe(1);
+    const newResult = await db.execute({
+      sql: "SELECT active FROM profiles WHERE id = ?",
+      args: [data2.profile_id],
+    });
+    expect(newResult.rows[0].active).toBe(1);
   });
 
   it("rejects missing agent_id", async () => {
@@ -161,8 +171,11 @@ describe("DELETE /api/connect", () => {
     expect(delRes.status).toBe(200);
     expect(data.deactivated).toBe(profile_id);
 
-    const row = db.prepare("SELECT active FROM profiles WHERE id = ?").get(profile_id) as { active: number };
-    expect(row.active).toBe(0);
+    const result = await db.execute({
+      sql: "SELECT active FROM profiles WHERE id = ?",
+      args: [profile_id],
+    });
+    expect(result.rows[0].active).toBe(0);
   });
 
   it("deactivates all profiles for an agent_id", async () => {

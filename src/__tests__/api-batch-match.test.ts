@@ -1,36 +1,38 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { createTestDb, _setDb } from "@/lib/db";
+import { createTestDb, _setDb, migrate } from "@/lib/db";
 import { generateApiKey } from "@/lib/auth";
 import { GET } from "@/app/api/matches/batch/route";
 import { NextRequest } from "next/server";
-import type Database from "better-sqlite3";
+import type { Client } from "@libsql/client";
 
-let db: Database.Database;
+let db: Client;
 let restore: () => void;
 
-beforeEach(() => {
+beforeEach(async () => {
   db = createTestDb();
+  await migrate(db);
   restore = _setDb(db);
 });
 
 afterEach(() => {
   restore();
-  db.close();
 });
 
-function registerKey(agentId: string): string {
+async function registerKey(agentId: string): Promise<string> {
   const { raw, hash } = generateApiKey();
-  db.prepare("INSERT INTO api_keys (id, agent_id, key_hash) VALUES (?, ?, ?)").run(
-    crypto.randomUUID(), agentId, hash
-  );
+  await db.execute({
+    sql: "INSERT INTO api_keys (id, agent_id, key_hash) VALUES (?, ?, ?)",
+    args: [crypto.randomUUID(), agentId, hash],
+  });
   return raw;
 }
 
-function createProfile(agentId: string, side: "offering" | "seeking", category: string, skills: string[], description?: string): string {
+async function createProfile(agentId: string, side: "offering" | "seeking", category: string, skills: string[], description?: string): Promise<string> {
   const id = crypto.randomUUID();
-  db.prepare(
-    "INSERT INTO profiles (id, agent_id, side, category, params, description) VALUES (?, ?, ?, ?, ?, ?)"
-  ).run(id, agentId, side, category, JSON.stringify({ skills }), description ?? null);
+  await db.execute({
+    sql: "INSERT INTO profiles (id, agent_id, side, category, params, description) VALUES (?, ?, ?, ?, ?, ?)",
+    args: [id, agentId, side, category, JSON.stringify({ skills }), description ?? null],
+  });
   return id;
 }
 
@@ -50,13 +52,13 @@ describe("GET /api/matches/batch", () => {
   });
 
   it("rejects mismatched agent_id", async () => {
-    const apiKey = registerKey("alice");
+    const apiKey = await registerKey("alice");
     const res = await GET(makeReq("bob", apiKey));
     expect(res.status).toBe(403);
   });
 
   it("returns empty profiles array when agent has no profiles", async () => {
-    const apiKey = registerKey("agent-empty");
+    const apiKey = await registerKey("agent-empty");
     const res = await GET(makeReq("agent-empty", apiKey));
     expect(res.status).toBe(200);
     const data = await res.json();
@@ -66,11 +68,9 @@ describe("GET /api/matches/batch", () => {
   });
 
   it("returns matches grouped by profile", async () => {
-    const apiKey = registerKey("alice");
-    // Alice offers dev skills
-    const aliceProfile = createProfile("alice", "offering", "freelance-dev", ["typescript", "react"], "I build web apps");
-    // Bob seeks dev skills (should match Alice)
-    createProfile("bob", "seeking", "freelance-dev", ["typescript", "react"], "Need a web dev");
+    const apiKey = await registerKey("alice");
+    const aliceProfile = await createProfile("alice", "offering", "freelance-dev", ["typescript", "react"], "I build web apps");
+    await createProfile("bob", "seeking", "freelance-dev", ["typescript", "react"], "Need a web dev");
 
     const res = await GET(makeReq("alice", apiKey));
     expect(res.status).toBe(200);
@@ -89,16 +89,14 @@ describe("GET /api/matches/batch", () => {
   });
 
   it("handles multiple profiles with different matches", async () => {
-    const apiKey = registerKey("alice");
+    const apiKey = await registerKey("alice");
 
-    // Alice has two profiles in different categories
-    const devProfile = createProfile("alice", "offering", "freelance-dev", ["typescript"], "Dev services");
-    const designProfile = createProfile("alice", "offering", "design", ["figma"], "Design services");
+    const devProfile = await createProfile("alice", "offering", "freelance-dev", ["typescript"], "Dev services");
+    const designProfile = await createProfile("alice", "offering", "design", ["figma"], "Design services");
 
-    // Counterparts
-    createProfile("bob", "seeking", "freelance-dev", ["typescript"], "Need a dev");
-    createProfile("carol", "seeking", "freelance-dev", ["typescript"], "Also need a dev");
-    createProfile("dave", "seeking", "design", ["figma"], "Need a designer");
+    await createProfile("bob", "seeking", "freelance-dev", ["typescript"], "Need a dev");
+    await createProfile("carol", "seeking", "freelance-dev", ["typescript"], "Also need a dev");
+    await createProfile("dave", "seeking", "design", ["figma"], "Need a designer");
 
     const res = await GET(makeReq("alice", apiKey));
     expect(res.status).toBe(200);
@@ -121,12 +119,11 @@ describe("GET /api/matches/batch", () => {
   });
 
   it("excludes inactive profiles", async () => {
-    const apiKey = registerKey("alice");
-    const profileId = createProfile("alice", "offering", "freelance-dev", ["typescript"]);
-    createProfile("bob", "seeking", "freelance-dev", ["typescript"]);
+    const apiKey = await registerKey("alice");
+    const profileId = await createProfile("alice", "offering", "freelance-dev", ["typescript"]);
+    await createProfile("bob", "seeking", "freelance-dev", ["typescript"]);
 
-    // Deactivate alice's profile
-    db.prepare("UPDATE profiles SET active = 0 WHERE id = ?").run(profileId);
+    await db.execute({ sql: "UPDATE profiles SET active = 0 WHERE id = ?", args: [profileId] });
 
     const res = await GET(makeReq("alice", apiKey));
     const data = await res.json();
@@ -135,7 +132,7 @@ describe("GET /api/matches/batch", () => {
   });
 
   it("requires agent_id query parameter", async () => {
-    const apiKey = registerKey("alice");
+    const apiKey = await registerKey("alice");
     const req = new NextRequest("http://localhost:3000/api/matches/batch", {
       method: "GET",
       headers: { Authorization: `Bearer ${apiKey}` },

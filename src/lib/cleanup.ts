@@ -4,15 +4,15 @@ import { getDb } from "./db";
  * Expire matches whose expires_at has passed and are still in an active state.
  * Returns the number of deals marked as expired.
  */
-export function cleanupExpiredDeals(): number {
+export async function cleanupExpiredDeals(): Promise<number> {
   const db = getDb();
-  const result = db.prepare(`
-    UPDATE matches
-    SET status = 'expired'
-    WHERE expires_at < datetime('now')
-      AND status NOT IN ('approved', 'rejected', 'expired')
-  `).run();
-  return result.changes;
+  const result = await db.execute(
+    `UPDATE matches
+     SET status = 'expired'
+     WHERE expires_at < datetime('now')
+       AND status NOT IN ('approved', 'rejected', 'expired')`
+  );
+  return result.rowsAffected;
 }
 
 /**
@@ -21,27 +21,28 @@ export function cleanupExpiredDeals(): number {
  * part of a match within the window.
  * Returns the number of profiles deactivated.
  */
-export function cleanupInactiveProfiles(daysInactive: number): number {
+export async function cleanupInactiveProfiles(daysInactive: number): Promise<number> {
   const db = getDb();
   const cutoff = new Date(Date.now() - daysInactive * 24 * 60 * 60 * 1000)
     .toISOString()
     .replace("T", " ")
     .slice(0, 19);
 
-  const result = db.prepare(`
-    UPDATE profiles
-    SET active = 0
-    WHERE active = 1
-      AND created_at < ?
-      AND id NOT IN (
-        SELECT DISTINCT profile_a_id FROM matches WHERE created_at >= ?
-        UNION
-        SELECT DISTINCT profile_b_id FROM matches WHERE created_at >= ?
-      )
-      AND agent_id NOT IN (
-        SELECT DISTINCT sender_agent_id FROM messages WHERE created_at >= ?
-      )
-  `).run(cutoff, cutoff, cutoff, cutoff);
+  const result = await db.execute({
+    sql: `UPDATE profiles
+          SET active = 0
+          WHERE active = 1
+            AND created_at < ?
+            AND id NOT IN (
+              SELECT DISTINCT profile_a_id FROM matches WHERE created_at >= ?
+              UNION
+              SELECT DISTINCT profile_b_id FROM matches WHERE created_at >= ?
+            )
+            AND agent_id NOT IN (
+              SELECT DISTINCT sender_agent_id FROM messages WHERE created_at >= ?
+            )`,
+    args: [cutoff, cutoff, cutoff, cutoff],
+  });
 
-  return result.changes;
+  return result.rowsAffected;
 }

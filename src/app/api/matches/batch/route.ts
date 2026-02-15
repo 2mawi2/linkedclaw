@@ -6,7 +6,7 @@ import type { Profile, ProfileParams } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
   // Auth check
-  const auth = authenticateRequest(req);
+  const auth = await authenticateRequest(req);
   if (!auth) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
@@ -23,16 +23,20 @@ export async function GET(req: NextRequest) {
 
   // Get all active profiles for this agent
   const db = getDb();
-  const profiles = db.prepare(
-    "SELECT * FROM profiles WHERE agent_id = ? AND active = 1"
-  ).all(agentId) as Profile[];
+  const profilesResult = await db.execute({
+    sql: "SELECT * FROM profiles WHERE agent_id = ? AND active = 1",
+    args: [agentId],
+  });
+  const profiles = profilesResult.rows as unknown as Profile[];
 
   let totalMatches = 0;
-  const profileResults = profiles.map((profile) => {
-    const matches = findMatches(profile.id);
+  const profileResults = [];
+
+  for (const profile of profiles) {
+    const matches = await findMatches(profile.id);
     totalMatches += matches.length;
 
-    return {
+    profileResults.push({
       profile_id: profile.id,
       category: profile.category,
       side: profile.side,
@@ -46,8 +50,8 @@ export async function GET(req: NextRequest) {
           counterpart_skills: p.skills ?? [],
         };
       }),
-    };
-  });
+    });
+  }
 
   return NextResponse.json({
     agent_id: agentId,

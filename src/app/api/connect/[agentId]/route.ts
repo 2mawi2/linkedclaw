@@ -4,8 +4,6 @@ import type { Profile, ProfileParams } from "@/lib/types";
 
 /**
  * GET /api/connect/:agentId - Get all profiles for an agent
- * 
- * Returns all active profiles belonging to the specified agent.
  */
 export async function GET(
   _req: NextRequest,
@@ -18,9 +16,11 @@ export async function GET(
   }
 
   const db = getDb();
-  const profiles = db.prepare(
-    "SELECT * FROM profiles WHERE agent_id = ? AND active = 1 ORDER BY created_at DESC"
-  ).all(agentId) as Profile[];
+  const result = await db.execute({
+    sql: "SELECT * FROM profiles WHERE agent_id = ? AND active = 1 ORDER BY created_at DESC",
+    args: [agentId],
+  });
+  const profiles = result.rows as unknown as Profile[];
 
   return NextResponse.json({
     agent_id: agentId,

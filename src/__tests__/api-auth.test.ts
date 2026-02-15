@@ -1,22 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { createTestDb, _setDb } from "@/lib/db";
+import { createTestDb, _setDb, migrate } from "@/lib/db";
 import { generateApiKey, hashApiKey, authenticateRequest } from "@/lib/auth";
 import { POST as keysPOST } from "@/app/api/keys/route";
 import { POST as connectPOST } from "@/app/api/connect/route";
 import { NextRequest } from "next/server";
-import type Database from "better-sqlite3";
+import type { Client } from "@libsql/client";
 
-let db: Database.Database;
+let db: Client;
 let restore: () => void;
 
-beforeEach(() => {
+beforeEach(async () => {
   db = createTestDb();
   restore = _setDb(db);
+  await migrate(db);
 });
 
 afterEach(() => {
   restore();
-  db.close();
 });
 
 function jsonReq(url: string, body?: unknown, apiKey?: string): NextRequest {
@@ -56,7 +56,11 @@ describe("POST /api/keys", () => {
   it("stores hashed key in database", async () => {
     const res = await keysPOST(jsonReq("/api/keys", { agent_id: "test-agent" }));
     const data = await res.json();
-    const row = db.prepare("SELECT * FROM api_keys WHERE key_hash = ?").get(hashApiKey(data.api_key)) as Record<string, unknown>;
+    const result = await db.execute({
+      sql: "SELECT * FROM api_keys WHERE key_hash = ?",
+      args: [hashApiKey(data.api_key)],
+    });
+    const row = result.rows[0];
     expect(row).toBeTruthy();
     expect(row.agent_id).toBe("test-agent");
   });
@@ -70,28 +74,34 @@ describe("POST /api/keys", () => {
 describe("authenticateRequest", () => {
   it("returns agent_id for valid key", async () => {
     const apiKey = await getApiKey("alice");
-    const auth = authenticateRequest(jsonReq("/test", undefined, apiKey));
+    const auth = await authenticateRequest(jsonReq("/test", undefined, apiKey));
     expect(auth).not.toBeNull();
     expect(auth!.agent_id).toBe("alice");
   });
 
-  it("returns null for missing header", () => {
+  it("returns null for missing header", async () => {
     const req = new NextRequest("http://localhost:3000/test");
-    expect(authenticateRequest(req)).toBeNull();
+    expect(await authenticateRequest(req)).toBeNull();
   });
 
-  it("returns null for invalid key", () => {
-    expect(authenticateRequest(jsonReq("/test", undefined, "lc_bad"))).toBeNull();
+  it("returns null for invalid key", async () => {
+    expect(await authenticateRequest(jsonReq("/test", undefined, "lc_bad"))).toBeNull();
   });
 
   it("updates last_used_at", async () => {
     const apiKey = await getApiKey("agent");
     const keyHash = hashApiKey(apiKey);
-    const before = db.prepare("SELECT last_used_at FROM api_keys WHERE key_hash = ?").get(keyHash) as { last_used_at: string | null };
-    expect(before.last_used_at).toBeNull();
-    authenticateRequest(jsonReq("/test", undefined, apiKey));
-    const after = db.prepare("SELECT last_used_at FROM api_keys WHERE key_hash = ?").get(keyHash) as { last_used_at: string | null };
-    expect(after.last_used_at).not.toBeNull();
+    const beforeResult = await db.execute({
+      sql: "SELECT last_used_at FROM api_keys WHERE key_hash = ?",
+      args: [keyHash],
+    });
+    expect(beforeResult.rows[0].last_used_at).toBeNull();
+    await authenticateRequest(jsonReq("/test", undefined, apiKey));
+    const afterResult = await db.execute({
+      sql: "SELECT last_used_at FROM api_keys WHERE key_hash = ?",
+      args: [keyHash],
+    });
+    expect(afterResult.rows[0].last_used_at).not.toBeNull();
   });
 });
 
