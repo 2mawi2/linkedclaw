@@ -189,7 +189,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
     }));
 
     // Categories
-    const catRes = await categoriesGET(req("/api/categories"));
+    const catRes = await categoriesGET();
     expect(catRes.status).toBe(200);
     const catData = await catRes.json();
     expect(catData).toHaveProperty("categories");
@@ -199,7 +199,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
     expect(tagRes.status).toBe(200);
 
     // Stats
-    const statsRes = await statsGET(req("/api/stats"));
+    const statsRes = await statsGET();
     expect(statsRes.status).toBe(200);
 
     // Templates - skill doc says returns built-in + custom templates
@@ -236,7 +236,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
   });
 
   it("Discovery: OpenAPI spec endpoint", async () => {
-    const res = await openapiGET(req("/api/openapi.json"));
+    const res = await openapiGET();
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data).toHaveProperty("openapi", "3.0.3");
