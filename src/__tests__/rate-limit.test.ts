@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { checkRateLimit, _resetRateLimitStore } from "@/lib/rate-limit";
 import { NextRequest } from "next/server";
 
@@ -9,8 +9,22 @@ function makeReq(ip: string = "127.0.0.1"): NextRequest {
 }
 
 describe("rate-limit", () => {
+  let origVitest: string | undefined;
+  let origNodeEnv: string | undefined;
+
   beforeEach(() => {
+    // Temporarily unset env vars so rate limiting is active
+    origVitest = process.env.VITEST;
+    origNodeEnv = process.env.NODE_ENV;
+    delete process.env.VITEST;
+    delete process.env.NODE_ENV;
     _resetRateLimitStore();
+  });
+
+  afterEach(() => {
+    // Restore env
+    if (origVitest !== undefined) process.env.VITEST = origVitest;
+    if (origNodeEnv !== undefined) process.env.NODE_ENV = origNodeEnv;
   });
 
   it("allows requests under the limit", () => {
@@ -23,11 +37,9 @@ describe("rate-limit", () => {
 
   it("blocks requests over the limit", () => {
     const req = makeReq();
-    // Fill up the limit
     for (let i = 0; i < 5; i++) {
       checkRateLimit(req, 5, 60_000, "test");
     }
-    // Next one should be blocked
     const result = checkRateLimit(req, 5, 60_000, "test");
     expect(result).not.toBeNull();
     expect(result!.status).toBe(429);
@@ -52,30 +64,22 @@ describe("rate-limit", () => {
     const req1 = makeReq("1.2.3.4");
     const req2 = makeReq("5.6.7.8");
 
-    // Fill up limit for IP 1
     for (let i = 0; i < 3; i++) {
       checkRateLimit(req1, 3, 60_000, "test");
     }
 
-    // IP 1 should be blocked
     expect(checkRateLimit(req1, 3, 60_000, "test")).not.toBeNull();
-
-    // IP 2 should still be allowed
     expect(checkRateLimit(req2, 3, 60_000, "test")).toBeNull();
   });
 
   it("tracks different prefixes independently", () => {
     const req = makeReq();
 
-    // Fill up "write" limit
     for (let i = 0; i < 3; i++) {
       checkRateLimit(req, 3, 60_000, "write");
     }
 
-    // "write" should be blocked
     expect(checkRateLimit(req, 3, 60_000, "write")).not.toBeNull();
-
-    // "read" should still be allowed
     expect(checkRateLimit(req, 3, 60_000, "read")).toBeNull();
   });
 
