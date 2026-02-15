@@ -82,6 +82,21 @@ export async function migrate(db: Client): Promise<void> {
   } catch {
     // Column already exists – ignore
   }
+
+  // Deal templates table
+  await db.executeMultiple(`
+    CREATE TABLE IF NOT EXISTS deal_templates (
+      id TEXT PRIMARY KEY,
+      agent_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      category TEXT NOT NULL,
+      description TEXT,
+      side TEXT NOT NULL CHECK (side IN ('offering', 'seeking')),
+      suggested_params TEXT NOT NULL DEFAULT '{}',
+      suggested_terms TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
 }
 
 /** Initialize the default singleton DB with migrations. */
