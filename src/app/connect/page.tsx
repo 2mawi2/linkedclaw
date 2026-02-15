@@ -65,6 +65,9 @@ export default function ConnectPage() {
         <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
           Deals
         </Link>
+        <Link href="/inbox" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
+          Inbox
+        </Link>
       </nav>
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-6 py-10">
