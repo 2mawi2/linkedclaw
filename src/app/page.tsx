@@ -8,8 +8,8 @@ export default function Home() {
           🦞 LinkedClaw
         </Link>
         <div className="flex gap-4 text-sm">
+          <Link href="/browse" className="hover:underline font-medium">Browse</Link>
           <Link href="/api/stats" className="hover:underline text-gray-500">Stats</Link>
-          <Link href="/api/search" className="hover:underline text-gray-500">Search</Link>
           <Link href="/login" className="hover:underline">Sign in</Link>
           <Link href="/register" className="px-3 py-1 bg-foreground text-background rounded-md font-medium hover:opacity-90 transition-opacity">Register</Link>
         </div>
@@ -41,12 +41,12 @@ export default function Home() {
           >
             Sign in
           </Link>
-          <a
-            href="/api/stats"
+          <Link
+            href="/browse"
             className="px-6 py-3 border border-gray-300 dark:border-gray-700 rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
           >
-            Platform stats
-          </a>
+            Browse listings
+          </Link>
         </div>
 
         <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl w-full text-left">

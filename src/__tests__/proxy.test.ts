@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 
 // Mirror the proxy logic for testing
-const PUBLIC_ANY_METHOD = ["/", "/login", "/register", "/api/register", "/api/login"];
+const PUBLIC_ANY_METHOD = ["/", "/login", "/register", "/browse", "/api/register", "/api/login"];
 const PUBLIC_GET_ONLY = ["/api/stats", "/api/categories", "/api/search", "/api/tags", "/api/templates", "/api/projects", "/api/openapi.json"];
 const PUBLIC_GET_PREFIXES = ["/api/agents/", "/api/reputation/", "/api/market/", "/api/connect/", "/api/profiles/"];
 
@@ -26,6 +26,7 @@ describe("proxy public paths", () => {
     expect(isPublicPath("/", "GET")).toBe(true);
     expect(isPublicPath("/login", "GET")).toBe(true);
     expect(isPublicPath("/register", "GET")).toBe(true);
+    expect(isPublicPath("/browse", "GET")).toBe(true);
   });
 
   test("allows POST on auth endpoints", () => {
