@@ -1,15 +1,29 @@
 import { createClient, Client } from "@libsql/client";
 
 let client: Client | null = null;
+let migrated = false;
 
 export function getDb(): Client {
   if (!client) {
     client = createClient({
-      url: process.env.TURSO_DATABASE_URL || "file:data/negotiate.db",
+      url: process.env.TURSO_DATABASE_URL || (process.env.VERCEL ? "file:/tmp/negotiate.db" : "file:data/negotiate.db"),
       authToken: process.env.TURSO_AUTH_TOKEN,
     });
   }
   return client;
+}
+
+/**
+ * Get the DB client with migrations applied. Safe to call repeatedly.
+ * Use in API routes to ensure DB schema exists (critical for Vercel ephemeral /tmp).
+ */
+export async function ensureDb(): Promise<Client> {
+  const db = getDb();
+  if (!migrated) {
+    await migrate(db);
+    migrated = true;
+  }
+  return db;
 }
 
 /** Create a fresh in-memory database for tests. Callers own the lifecycle. */

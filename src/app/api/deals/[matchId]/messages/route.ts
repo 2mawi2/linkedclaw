@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { Match, Profile, SendMessageRequest } from "@/lib/types";
@@ -57,7 +57,7 @@ export async function POST(
     proposed_terms: b.proposed_terms as Record<string, unknown> | undefined,
   };
 
-  const db = getDb();
+  const db = await ensureDb();
   const matchResult = await db.execute({
     sql: "SELECT * FROM matches WHERE id = ?",
     args: [matchId],

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
@@ -154,7 +154,7 @@ export async function GET(req: NextRequest) {
 
   // Fetch custom templates if agent_id provided
   if (agentId) {
-    const db = getDb();
+    const db = await ensureDb();
     const result = await db.execute({
       sql: `SELECT id, name, category, description, side, suggested_params, suggested_terms, created_at
             FROM deal_templates WHERE agent_id = ? ${category ? "AND category = ?" : ""}
@@ -216,7 +216,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "side must be 'offering' or 'seeking'" }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await ensureDb();
   const id = `tpl_${crypto.randomUUID().slice(0, 8)}`;
 
   await db.execute({
