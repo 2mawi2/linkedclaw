@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "crypto";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import type { NextRequest } from "next/server";
 
 const KEY_PREFIX = "lc_";
@@ -29,7 +29,7 @@ export async function authenticateRequest(req: NextRequest): Promise<AuthResult 
   const rawKey = match[1];
   const keyHash = hashApiKey(rawKey);
 
-  const db = getDb();
+  const db = await ensureDb();
   const result = await db.execute({
     sql: "SELECT id, agent_id FROM api_keys WHERE key_hash = ?",
     args: [keyHash],

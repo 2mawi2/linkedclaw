@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { ConnectRequest, Side } from "@/lib/types";
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
   if (data.agent_id !== auth.agent_id) {
     return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
   }
-  const db = getDb();
+  const db = await ensureDb();
 
   // Deactivate previous profiles from the same agent with the same side+category
   const existingResult = await db.execute({
@@ -101,7 +101,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Provide profile_id or agent_id query parameter" }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await ensureDb();
 
   if (profileId) {
     const profileResult = await db.execute({

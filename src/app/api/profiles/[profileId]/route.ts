@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { Profile, ProfileParams } from "@/lib/types";
@@ -13,7 +13,7 @@ export async function GET(
   { params }: { params: Promise<{ profileId: string }> }
 ) {
   const { profileId } = await params;
-  const db = getDb();
+  const db = await ensureDb();
 
   const result = await db.execute({
     sql: "SELECT * FROM profiles WHERE id = ?",
@@ -73,7 +73,7 @@ export async function PATCH(
     return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
   }
 
-  const db = getDb();
+  const db = await ensureDb();
   const profileResult = await db.execute({
     sql: "SELECT * FROM profiles WHERE id = ? AND active = 1",
     args: [profileId],

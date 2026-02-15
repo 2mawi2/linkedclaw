@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 /**
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "side must be 'offering' or 'seeking'" }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await ensureDb();
 
   // Build query dynamically
   const conditions: string[] = ["active = 1"];

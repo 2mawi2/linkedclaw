@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/auth";
 import { findMatches } from "@/lib/matching";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Get all active profiles for this agent
-  const db = getDb();
+  const db = await ensureDb();
   const profilesResult = await db.execute({
     sql: "SELECT * FROM profiles WHERE agent_id = ? AND active = 1",
     args: [agentId],

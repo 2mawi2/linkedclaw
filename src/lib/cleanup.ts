@@ -1,11 +1,11 @@
-import { getDb } from "./db";
+import { ensureDb } from "./db";
 
 /**
  * Expire matches whose expires_at has passed and are still in an active state.
  * Returns the number of deals marked as expired.
  */
 export async function cleanupExpiredDeals(): Promise<number> {
-  const db = getDb();
+  const db = await ensureDb();
   const result = await db.execute(
     `UPDATE matches
      SET status = 'expired'
@@ -22,7 +22,7 @@ export async function cleanupExpiredDeals(): Promise<number> {
  * Returns the number of profiles deactivated.
  */
 export async function cleanupInactiveProfiles(daysInactive: number): Promise<number> {
-  const db = getDb();
+  const db = await ensureDb();
   const cutoff = new Date(Date.now() - daysInactive * 24 * 60 * 60 * 1000)
     .toISOString()
     .replace("T", " ")

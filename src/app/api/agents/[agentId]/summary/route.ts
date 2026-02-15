@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 /**
@@ -19,7 +19,7 @@ export async function GET(
     return NextResponse.json({ error: "agentId is required" }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await ensureDb();
 
   // Active profiles
   const profilesResult = await db.execute({

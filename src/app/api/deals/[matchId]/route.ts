@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import type { Match, Message, Approval, Profile } from "@/lib/types";
 
 export async function GET(
@@ -8,7 +8,7 @@ export async function GET(
 ) {
   const { matchId } = await params;
 
-  const db = getDb();
+  const db = await ensureDb();
   const matchResult = await db.execute({
     sql: "SELECT * FROM matches WHERE id = ?",
     args: [matchId],

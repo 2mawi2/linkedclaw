@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 
 /**
  * GET /api/stats - Platform statistics and health check
  */
 export async function GET() {
-  const db = getDb();
+  const db = await ensureDb();
 
   const profileStatsResult = await db.execute(`
     SELECT 

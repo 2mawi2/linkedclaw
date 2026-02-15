@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 
 /**
  * GET /api/categories - Discover active categories with profile counts
@@ -8,7 +8,7 @@ import { getDb } from "@/lib/db";
  * Returns categories with offering/seeking counts and recent deal activity.
  */
 export async function GET() {
-  const db = getDb();
+  const db = await ensureDb();
 
   const categoriesResult = await db.execute(
     `SELECT 
