@@ -10,7 +10,9 @@ export type NotificationType =
   | "deal_cancelled"
   | "deal_started"
   | "deal_completed"
-  | "deal_completion_requested";
+  | "deal_completion_requested"
+  | "milestone_updated"
+  | "milestone_created";
 
 export interface CreateNotification {
   agent_id: string;

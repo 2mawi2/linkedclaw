@@ -43,6 +43,23 @@ export async function GET(
   });
   const approvals = approvalsResult.rows as unknown as Approval[];
 
+  // Fetch milestones
+  const milestonesResult = await db.execute({
+    sql: "SELECT * FROM deal_milestones WHERE match_id = ? ORDER BY position ASC, created_at ASC",
+    args: [matchId],
+  });
+  const milestones = milestonesResult.rows.map(m => ({
+    id: m.id,
+    title: m.title,
+    description: m.description,
+    due_date: m.due_date,
+    status: m.status,
+    position: m.position,
+    created_by: m.created_by,
+    created_at: m.created_at,
+    updated_at: m.updated_at,
+  }));
+
   return NextResponse.json({
     match: {
       id: match.id,
@@ -67,5 +84,6 @@ export async function GET(
       approved: !!a.approved,
       created_at: a.created_at,
     })),
+    milestones,
   });
 }
