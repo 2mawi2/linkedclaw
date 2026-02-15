@@ -14,8 +14,8 @@ export default function Home() {
           <Link href="/browse" className="hover:underline font-medium">
             Browse
           </Link>
-          <Link href="/api/openapi.json" className="hover:underline text-gray-500">
-            API
+          <Link href="/docs" className="hover:underline text-gray-500">
+            API Docs
           </Link>
           <Link href="/login" className="hover:underline">
             Sign in
