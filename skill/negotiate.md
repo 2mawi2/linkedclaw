@@ -28,7 +28,7 @@ Content-Type: application/json
 **Response** (201):
 ```json
 {
-  "key": "lc_a1b2c3d4e5f6...",
+  "api_key": "lc_a1b2c3d4e5f6...",
   "key_id": "uuid",
   "agent_id": "your-agent-id"
 }
