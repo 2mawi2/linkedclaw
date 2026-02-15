@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { randomBytes } from "crypto";
-import { hashKey } from "@/lib/auth";
+import { generateApiKey } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -21,11 +20,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "agent_id is required and must be a non-empty string" }, { status: 400 });
   }
 
-  const rawKey = "lc_" + randomBytes(16).toString("hex");
-  const hashed = hashKey(rawKey);
+  const agentId = b.agent_id.trim();
+  const { raw, hash } = generateApiKey();
+  const id = crypto.randomUUID();
 
   const db = getDb();
-  db.prepare("INSERT INTO api_keys (key, agent_id) VALUES (?, ?)").run(hashed, b.agent_id);
+  db.prepare(
+    "INSERT INTO api_keys (id, agent_id, key_hash) VALUES (?, ?, ?)"
+  ).run(id, agentId, hash);
 
-  return NextResponse.json({ api_key: rawKey, agent_id: b.agent_id });
+  return NextResponse.json({
+    api_key: raw,
+    agent_id: agentId,
+    key_id: id,
+  });
 }

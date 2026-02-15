@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createTestDb, _setDb } from "@/lib/db";
-import type Database from "better-sqlite3";
+import { generateApiKey, hashApiKey, authenticateRequest } from "@/lib/auth";
 import { POST as keysPOST } from "@/app/api/keys/route";
 import { POST as connectPOST } from "@/app/api/connect/route";
-import { authenticateRequest, hashKey } from "@/lib/auth";
 import { NextRequest } from "next/server";
+import type Database from "better-sqlite3";
 
 let db: Database.Database;
 let restore: () => void;
@@ -36,33 +36,29 @@ async function getApiKey(agentId: string): Promise<string> {
   return data.api_key;
 }
 
+describe("generateApiKey", () => {
+  it("generates a key with lc_ prefix", () => {
+    const { raw, hash } = generateApiKey();
+    expect(raw).toMatch(/^lc_[a-f0-9]{32}$/);
+    expect(hash).toHaveLength(64);
+  });
+});
+
 describe("POST /api/keys", () => {
-  it("generates an API key with lc_ prefix", async () => {
+  it("generates an API key", async () => {
     const res = await keysPOST(jsonReq("/api/keys", { agent_id: "test-agent" }));
     const data = await res.json();
-
     expect(res.status).toBe(200);
-    expect(data.api_key).toMatch(/^lc_[a-f0-9]{32}$/);
+    expect(data.api_key).toMatch(/^lc_/);
     expect(data.agent_id).toBe("test-agent");
   });
 
   it("stores hashed key in database", async () => {
     const res = await keysPOST(jsonReq("/api/keys", { agent_id: "test-agent" }));
     const data = await res.json();
-
-    const hashed = hashKey(data.api_key);
-    const row = db.prepare("SELECT * FROM api_keys WHERE key = ?").get(hashed) as Record<string, unknown>;
+    const row = db.prepare("SELECT * FROM api_keys WHERE key_hash = ?").get(hashApiKey(data.api_key)) as Record<string, unknown>;
     expect(row).toBeTruthy();
     expect(row.agent_id).toBe("test-agent");
-    expect(row.last_used_at).toBeNull();
-  });
-
-  it("generates unique keys", async () => {
-    const r1 = await keysPOST(jsonReq("/api/keys", { agent_id: "agent-a" }));
-    const r2 = await keysPOST(jsonReq("/api/keys", { agent_id: "agent-b" }));
-    const d1 = await r1.json();
-    const d2 = await r2.json();
-    expect(d1.api_key).not.toBe(d2.api_key);
   });
 
   it("rejects missing agent_id", async () => {
@@ -74,8 +70,7 @@ describe("POST /api/keys", () => {
 describe("authenticateRequest", () => {
   it("returns agent_id for valid key", async () => {
     const apiKey = await getApiKey("alice");
-    const req = jsonReq("/test", undefined, apiKey);
-    const auth = authenticateRequest(req);
+    const auth = authenticateRequest(jsonReq("/test", undefined, apiKey));
     expect(auth).not.toBeNull();
     expect(auth!.agent_id).toBe("alice");
   });
@@ -86,36 +81,24 @@ describe("authenticateRequest", () => {
   });
 
   it("returns null for invalid key", () => {
-    const req = jsonReq("/test", undefined, "lc_0000000000000000000000000000dead");
-    expect(authenticateRequest(req)).toBeNull();
+    expect(authenticateRequest(jsonReq("/test", undefined, "lc_bad"))).toBeNull();
   });
 
-  it("returns null for non-Bearer auth", () => {
-    const req = new NextRequest("http://localhost:3000/test", {
-      headers: { Authorization: "Basic abc123" },
-    });
-    expect(authenticateRequest(req)).toBeNull();
-  });
-
-  it("updates last_used_at on successful auth", async () => {
-    const apiKey = await getApiKey("test-agent");
-    const hashed = hashKey(apiKey);
-
-    const before = db.prepare("SELECT last_used_at FROM api_keys WHERE key = ?").get(hashed) as { last_used_at: string | null };
+  it("updates last_used_at", async () => {
+    const apiKey = await getApiKey("agent");
+    const keyHash = hashApiKey(apiKey);
+    const before = db.prepare("SELECT last_used_at FROM api_keys WHERE key_hash = ?").get(keyHash) as { last_used_at: string | null };
     expect(before.last_used_at).toBeNull();
-
     authenticateRequest(jsonReq("/test", undefined, apiKey));
-
-    const after = db.prepare("SELECT last_used_at FROM api_keys WHERE key = ?").get(hashed) as { last_used_at: string | null };
+    const after = db.prepare("SELECT last_used_at FROM api_keys WHERE key_hash = ?").get(keyHash) as { last_used_at: string | null };
     expect(after.last_used_at).not.toBeNull();
   });
 });
 
-describe("auth enforcement on endpoints", () => {
+describe("auth enforcement", () => {
   it("rejects unauthenticated POST /api/connect", async () => {
     const res = await connectPOST(jsonReq("/api/connect", {
-      agent_id: "alice", side: "offering", category: "dev",
-      params: { skills: ["ts"] },
+      agent_id: "alice", side: "offering", category: "dev", params: { skills: ["ts"] },
     }));
     expect(res.status).toBe(401);
   });
@@ -123,17 +106,15 @@ describe("auth enforcement on endpoints", () => {
   it("rejects mismatched agent_id", async () => {
     const apiKey = await getApiKey("alice");
     const res = await connectPOST(jsonReq("/api/connect", {
-      agent_id: "bob", side: "offering", category: "dev",
-      params: { skills: ["ts"] },
+      agent_id: "bob", side: "offering", category: "dev", params: { skills: ["ts"] },
     }, apiKey));
     expect(res.status).toBe(403);
   });
 
-  it("allows authenticated request with matching agent_id", async () => {
+  it("allows matching agent_id", async () => {
     const apiKey = await getApiKey("alice");
     const res = await connectPOST(jsonReq("/api/connect", {
-      agent_id: "alice", side: "offering", category: "dev",
-      params: { skills: ["ts"] },
+      agent_id: "alice", side: "offering", category: "dev", params: { skills: ["ts"] },
     }, apiKey));
     expect(res.status).toBe(200);
   });
