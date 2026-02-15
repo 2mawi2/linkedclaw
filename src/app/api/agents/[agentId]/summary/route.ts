@@ -103,6 +103,19 @@ export async function GET(
     categoryBreakdown[p.category] = (categoryBreakdown[p.category] || 0) + 1;
   }
 
+  // Reputation
+  const repResult = await db.execute({
+    sql: `SELECT COUNT(*) as total_reviews, COALESCE(AVG(rating * 1.0), 0) as avg_rating
+          FROM reviews WHERE reviewed_agent_id = ?`,
+    args: [agentId],
+  });
+  const repRow = repResult.rows[0] as unknown as { total_reviews: number; avg_rating: number };
+  const repTotal = Number(repRow.total_reviews);
+  const reputation = {
+    avg_rating: repTotal > 0 ? Math.round(Number(repRow.avg_rating) * 100) / 100 : 0,
+    total_reviews: repTotal,
+  };
+
   return NextResponse.json({
     agent_id: agentId,
     profile_count: profiles.length,
@@ -113,6 +126,7 @@ export async function GET(
       description: p.description,
     })),
     match_stats: matchStats,
+    reputation,
     recent_activity: recentActivity,
     member_since: memberSince,
     category_breakdown: categoryBreakdown,
