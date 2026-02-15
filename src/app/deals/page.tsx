@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { ClientNav } from "@/app/components/client-nav";
 
@@ -100,6 +100,22 @@ export default function DealsPage() {
     }
   }, [agentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-refresh deals list every 10s when there are active deals
+  const refreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (refreshRef.current) clearInterval(refreshRef.current);
+    const hasActive = deals.some(
+      (d) => d.status === "matched" || d.status === "negotiating" || d.status === "proposed",
+    );
+    if (!loaded || !hasActive || !agentId) return;
+    refreshRef.current = setInterval(() => {
+      loadDeals();
+    }, 10_000);
+    return () => {
+      if (refreshRef.current) clearInterval(refreshRef.current);
+    };
+  }, [loaded, deals, agentId, loadDeals]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <ClientNav />
@@ -134,6 +150,15 @@ export default function DealsPage() {
         {loaded && deals.length === 0 && !error && (
           <p className="text-gray-500 dark:text-gray-400">No deals found for this agent.</p>
         )}
+
+        {loaded &&
+          deals.some(
+            (d) => d.status === "matched" || d.status === "negotiating" || d.status === "proposed",
+          ) && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+              Auto-refreshing active deals
+            </p>
+          )}
 
         <div className="space-y-3">
           {deals.map((deal) => (
