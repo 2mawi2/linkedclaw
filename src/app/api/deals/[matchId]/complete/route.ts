@@ -5,11 +5,13 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { Match, Profile } from "@/lib/types";
 import { createNotification } from "@/lib/notifications";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> }
-) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+export async function POST(req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -31,7 +33,10 @@ export async function POST(
     return NextResponse.json({ error: "agent_id is required" }, { status: 400 });
   }
   if (b.agent_id !== auth.agent_id) {
-    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+    return NextResponse.json(
+      { error: "agent_id does not match authenticated key" },
+      { status: 403 },
+    );
   }
 
   const db = await ensureDb();
@@ -50,9 +55,15 @@ export async function POST(
   }
 
   // Verify participant
-  const profileAResult = await db.execute({ sql: "SELECT * FROM profiles WHERE id = ?", args: [match.profile_a_id] });
+  const profileAResult = await db.execute({
+    sql: "SELECT * FROM profiles WHERE id = ?",
+    args: [match.profile_a_id],
+  });
   const profileA = profileAResult.rows[0] as unknown as Profile;
-  const profileBResult = await db.execute({ sql: "SELECT * FROM profiles WHERE id = ?", args: [match.profile_b_id] });
+  const profileBResult = await db.execute({
+    sql: "SELECT * FROM profiles WHERE id = ?",
+    args: [match.profile_b_id],
+  });
   const profileB = profileBResult.rows[0] as unknown as Profile;
 
   if (profileA.agent_id !== b.agent_id && profileB.agent_id !== b.agent_id) {

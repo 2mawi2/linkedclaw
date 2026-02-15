@@ -8,7 +8,9 @@ import { NextRequest } from "next/server";
 let db: Client;
 let restore: () => void;
 
-async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
+async function getApiKey(agentId: string): Promise<string> {
+  return createApiKey(agentId);
+}
 
 beforeEach(async () => {
   db = createTestDb();
@@ -43,7 +45,9 @@ describe("GET /api/templates", () => {
     const res = await templatesGET(req);
     const data = await res.json();
     expect(data.templates.length).toBeGreaterThanOrEqual(1);
-    expect(data.templates.every((t: { category: string }) => t.category === "consulting")).toBe(true);
+    expect(data.templates.every((t: { category: string }) => t.category === "consulting")).toBe(
+      true,
+    );
   });
 
   it("returns empty for unknown category", async () => {
@@ -68,7 +72,7 @@ describe("GET /api/templates", () => {
       }),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${key}`,
+        Authorization: `Bearer ${key}`,
       },
     });
     await templatesPOST(createReq);
@@ -99,7 +103,7 @@ describe("POST /api/templates", () => {
       }),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${key}`,
+        Authorization: `Bearer ${key}`,
       },
     });
     const res = await templatesPOST(req);
@@ -129,7 +133,7 @@ describe("POST /api/templates", () => {
       body: JSON.stringify({ category: "test", side: "offering" }),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${key}`,
+        Authorization: `Bearer ${key}`,
       },
     });
     const res = await templatesPOST(req);
@@ -145,7 +149,7 @@ describe("POST /api/templates", () => {
       body: JSON.stringify({ name: "Test", category: "test", side: "invalid" }),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${key}`,
+        Authorization: `Bearer ${key}`,
       },
     });
     const res = await templatesPOST(req);

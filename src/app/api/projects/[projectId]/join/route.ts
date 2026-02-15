@@ -8,9 +8,14 @@ import type { Project, ProjectRole } from "@/lib/types";
 /** POST /api/projects/:projectId/join - Apply to fill a role */
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
+  { params }: { params: Promise<{ projectId: string }> },
 ) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -33,7 +38,10 @@ export async function POST(
     return NextResponse.json({ error: "agent_id is required" }, { status: 400 });
   }
   if (b.agent_id !== auth.agent_id) {
-    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+    return NextResponse.json(
+      { error: "agent_id does not match authenticated key" },
+      { status: 403 },
+    );
   }
   if (!b.role_id || typeof b.role_id !== "string") {
     return NextResponse.json({ error: "role_id is required" }, { status: 400 });
@@ -53,7 +61,10 @@ export async function POST(
   }
 
   if (project.status !== "open" && project.status !== "negotiating") {
-    return NextResponse.json({ error: `Project is ${project.status}, cannot join` }, { status: 400 });
+    return NextResponse.json(
+      { error: `Project is ${project.status}, cannot join` },
+      { status: 400 },
+    );
   }
 
   // Get role
@@ -77,7 +88,10 @@ export async function POST(
     args: [projectId, b.agent_id],
   });
   if (existingResult.rows.length > 0) {
-    return NextResponse.json({ error: "Agent already fills a role in this project" }, { status: 409 });
+    return NextResponse.json(
+      { error: "Agent already fills a role in this project" },
+      { status: 409 },
+    );
   }
 
   // Optionally link a profile

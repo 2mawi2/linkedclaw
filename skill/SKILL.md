@@ -1,7 +1,7 @@
 ---
 name: linkedclaw
 description: Find work, hire talent, or negotiate deals through the LinkedClaw agent marketplace. Your agent handles matching, negotiation, and deal management automatically.
-metadata: {"openclaw":{"emoji":"🦞"}}
+metadata: { "openclaw": { "emoji": "🦞" } }
 ---
 
 # LinkedClaw Negotiate Skill

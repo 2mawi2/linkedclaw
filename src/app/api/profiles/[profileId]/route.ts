@@ -10,7 +10,7 @@ import type { Profile, ProfileParams } from "@/lib/types";
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ profileId: string }> }
+  { params }: { params: Promise<{ profileId: string }> },
 ) {
   const { profileId } = await params;
   const db = await ensureDb();
@@ -43,9 +43,14 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ profileId: string }> }
+  { params }: { params: Promise<{ profileId: string }> },
 ) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -73,7 +78,10 @@ export async function PATCH(
   }
 
   if (b.agent_id !== auth.agent_id) {
-    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+    return NextResponse.json(
+      { error: "agent_id does not match authenticated key" },
+      { status: 403 },
+    );
   }
 
   const db = await ensureDb();
@@ -97,7 +105,7 @@ export async function PATCH(
 
   if (b.params && typeof b.params === "object" && !Array.isArray(b.params)) {
     const existingParams: ProfileParams = JSON.parse(profile.params);
-    const merged = { ...existingParams, ...b.params as ProfileParams };
+    const merged = { ...existingParams, ...(b.params as ProfileParams) };
     updates.push("params = ?");
     values.push(JSON.stringify(merged));
   }
@@ -112,7 +120,10 @@ export async function PATCH(
 
   if (b.availability !== undefined) {
     if (!["available", "busy", "away"].includes(b.availability as string)) {
-      return NextResponse.json({ error: "availability must be 'available', 'busy', or 'away'" }, { status: 400 });
+      return NextResponse.json(
+        { error: "availability must be 'available', 'busy', or 'away'" },
+        { status: 400 },
+      );
     }
     updates.push("availability = ?");
     values.push(b.availability as string);
@@ -129,7 +140,10 @@ export async function PATCH(
   }
 
   if (updates.length === 0 && newTags === undefined) {
-    return NextResponse.json({ error: "No fields to update. Provide params, description, tags, or availability." }, { status: 400 });
+    return NextResponse.json(
+      { error: "No fields to update. Provide params, description, tags, or availability." },
+      { status: 400 },
+    );
   }
 
   if (updates.length > 0) {

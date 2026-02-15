@@ -4,11 +4,13 @@ import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 /** DELETE /api/webhooks/:id - Remove a webhook */
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -41,11 +43,13 @@ export async function DELETE(
 }
 
 /** PATCH /api/webhooks/:id - Update a webhook (reactivate, change URL/events) */
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);

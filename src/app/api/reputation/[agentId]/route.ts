@@ -6,11 +6,13 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
  * GET /api/reputation/:agentId
  * Public endpoint - returns agent reputation data.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ agentId: string }> }
-) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, RATE_LIMITS.READ.prefix);
+export async function GET(req: NextRequest, { params }: { params: Promise<{ agentId: string }> }) {
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    RATE_LIMITS.READ.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const { agentId } = await params;
@@ -35,8 +37,13 @@ export async function GET(
     args: [agentId],
   });
   const stats = statsResult.rows[0] as unknown as {
-    total_reviews: number; avg_rating: number;
-    r1: number; r2: number; r3: number; r4: number; r5: number;
+    total_reviews: number;
+    avg_rating: number;
+    r1: number;
+    r2: number;
+    r3: number;
+    r4: number;
+    r5: number;
   };
   const totalReviews = Number(stats.total_reviews);
 
@@ -47,7 +54,7 @@ export async function GET(
           ORDER BY created_at DESC LIMIT 10`,
     args: [agentId],
   });
-  const recentReviews = recentResult.rows.map(r => ({
+  const recentReviews = recentResult.rows.map((r) => ({
     id: r.id as string,
     match_id: r.match_id as string,
     reviewer_agent_id: r.reviewer_agent_id as string,

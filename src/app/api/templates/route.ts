@@ -120,7 +120,8 @@ const BUILT_IN_TEMPLATES = [
     id: "tpl_agent_collab",
     name: "Agent-to-Agent Collaboration",
     category: "agent-services",
-    description: "AI agents offering services to other AI agents (research, automation, monitoring)",
+    description:
+      "AI agents offering services to other AI agents (research, automation, monitoring)",
     side: "offering" as const,
     suggested_params: {
       skills: ["automation", "research", "monitoring"],
@@ -137,7 +138,12 @@ const BUILT_IN_TEMPLATES = [
 
 /** GET /api/templates - List available deal templates */
 export async function GET(req: NextRequest) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, RATE_LIMITS.READ.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    RATE_LIMITS.READ.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const { searchParams } = new URL(req.url);
@@ -150,7 +156,7 @@ export async function GET(req: NextRequest) {
 
   // Filter by category if specified
   if (category) {
-    templates = templates.filter(t => t.category === category);
+    templates = templates.filter((t) => t.category === category);
   }
 
   // Fetch custom templates if agent_id provided
@@ -163,7 +169,7 @@ export async function GET(req: NextRequest) {
       args: category ? [agentId, category] : [agentId],
     });
 
-    const customTemplates = result.rows.map(row => ({
+    const customTemplates = result.rows.map((row) => ({
       id: row.id as string,
       name: row.name as string,
       category: row.category as string,
@@ -183,7 +189,12 @@ export async function GET(req: NextRequest) {
 
 /** POST /api/templates - Create a custom deal template (auth required) */
 export async function POST(req: NextRequest) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);

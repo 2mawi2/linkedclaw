@@ -42,7 +42,10 @@ import { POST as approvePOST } from "@/app/api/deals/[matchId]/approve/route";
 import { POST as startPOST } from "@/app/api/deals/[matchId]/start/route";
 import { POST as completePOST } from "@/app/api/deals/[matchId]/complete/route";
 import { POST as cancelPOST } from "@/app/api/deals/[matchId]/cancel/route";
-import { POST as milestonesPOST, GET as milestonesGET } from "@/app/api/deals/[matchId]/milestones/route";
+import {
+  POST as milestonesPOST,
+  GET as milestonesGET,
+} from "@/app/api/deals/[matchId]/milestones/route";
 import { PATCH as milestonePATCH } from "@/app/api/deals/[matchId]/milestones/[milestoneId]/route";
 import { GET as inboxGET } from "@/app/api/inbox/route";
 import { POST as inboxReadPOST } from "@/app/api/inbox/read/route";
@@ -68,7 +71,10 @@ afterEach(() => {
 });
 
 // Helper to make requests matching how the skill doc shows them
-function req(url: string, opts?: { method?: string; body?: unknown; apiKey?: string }): NextRequest {
+function req(
+  url: string,
+  opts?: { method?: string; body?: unknown; apiKey?: string },
+): NextRequest {
   const headers: Record<string, string> = {};
   if (opts?.body) headers["Content-Type"] = "application/json";
   if (opts?.apiKey) headers["Authorization"] = `Bearer ${opts.apiKey}`;
@@ -86,7 +92,9 @@ function params(r: NextRequest): Record<string, string> {
   return result;
 }
 
-async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
+async function getApiKey(agentId: string): Promise<string> {
+  return createApiKey(agentId);
+}
 
 describe("Skill Doc Integration: Full Agent Lifecycle", () => {
   let aliceKey: string;
@@ -117,27 +125,29 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
 
   it("Phase 2: Profile registration matches skill doc format", async () => {
     // Register as shown in skill doc
-    const res = await connectPOST(req("/api/connect", {
-      apiKey: aliceKey,
-      body: {
-        agent_id: "alice-agent",
-        side: "offering",
-        category: "freelance-dev",
-        params: {
-          skills: ["React", "TypeScript", "Node.js"],
-          rate_min: 80,
-          rate_max: 120,
-          currency: "EUR",
-          availability: "from March 2026",
-          hours_min: 20,
-          hours_max: 40,
-          duration_min_weeks: 4,
-          duration_max_weeks: 26,
-          remote: "remote",
+    const res = await connectPOST(
+      req("/api/connect", {
+        apiKey: aliceKey,
+        body: {
+          agent_id: "alice-agent",
+          side: "offering",
+          category: "freelance-dev",
+          params: {
+            skills: ["React", "TypeScript", "Node.js"],
+            rate_min: 80,
+            rate_max: 120,
+            currency: "EUR",
+            availability: "from March 2026",
+            hours_min: 20,
+            hours_max: 40,
+            duration_min_weeks: 4,
+            duration_max_weeks: 26,
+            remote: "remote",
+          },
+          description: "Senior React dev with 8 years experience",
         },
-        description: "Senior React dev with 8 years experience",
-      },
-    }));
+      }),
+    );
     expect(res.status).toBe(200);
     const data = await res.json();
 
@@ -148,17 +158,33 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
 
   it("Phase 2: Re-registration returns replaced_profile_id", async () => {
     // First registration
-    const res1 = await connectPOST(req("/api/connect", {
-      apiKey: aliceKey,
-      body: { agent_id: "alice-agent", side: "offering", category: "freelance-dev", params: { skills: ["React"] }, description: "v1" },
-    }));
+    const res1 = await connectPOST(
+      req("/api/connect", {
+        apiKey: aliceKey,
+        body: {
+          agent_id: "alice-agent",
+          side: "offering",
+          category: "freelance-dev",
+          params: { skills: ["React"] },
+          description: "v1",
+        },
+      }),
+    );
     const data1 = await res1.json();
 
     // Re-register same agent/side/category
-    const res2 = await connectPOST(req("/api/connect", {
-      apiKey: aliceKey,
-      body: { agent_id: "alice-agent", side: "offering", category: "freelance-dev", params: { skills: ["React", "Vue"] }, description: "v2" },
-    }));
+    const res2 = await connectPOST(
+      req("/api/connect", {
+        apiKey: aliceKey,
+        body: {
+          agent_id: "alice-agent",
+          side: "offering",
+          category: "freelance-dev",
+          params: { skills: ["React", "Vue"] },
+          description: "v2",
+        },
+      }),
+    );
     const data2 = await res2.json();
 
     // Skill doc promises: { profile_id, replaced_profile_id }
@@ -168,10 +194,18 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
 
   it("Discovery: search response includes reputation field", async () => {
     // Register a profile first
-    await connectPOST(req("/api/connect", {
-      apiKey: aliceKey,
-      body: { agent_id: "alice-agent", side: "offering", category: "ai-dev", params: { skills: ["TypeScript"] }, description: "AI dev" },
-    }));
+    await connectPOST(
+      req("/api/connect", {
+        apiKey: aliceKey,
+        body: {
+          agent_id: "alice-agent",
+          side: "offering",
+          category: "ai-dev",
+          params: { skills: ["TypeScript"] },
+          description: "AI dev",
+        },
+      }),
+    );
 
     const r = req("/api/search?category=ai-dev");
     const res = await searchGET(r);
@@ -186,10 +220,18 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
 
   it("Discovery: categories, tags, stats, templates, market rates", async () => {
     // Register profiles to populate data
-    await connectPOST(req("/api/connect", {
-      apiKey: aliceKey,
-      body: { agent_id: "alice-agent", side: "offering", category: "freelance-dev", params: { skills: ["React"], rate_min: 80, rate_max: 120 }, description: "Dev" },
-    }));
+    await connectPOST(
+      req("/api/connect", {
+        apiKey: aliceKey,
+        body: {
+          agent_id: "alice-agent",
+          side: "offering",
+          category: "freelance-dev",
+          params: { skills: ["React"], rate_min: 80, rate_max: 120 },
+          description: "Dev",
+        },
+      }),
+    );
 
     // Categories
     const catRes = await categoriesGET();
@@ -214,7 +256,9 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
 
     // Market rates - skill doc says: rate_median, rate_p10, rate_p90, currency, etc.
     const mktReq = req("/api/market/freelance-dev");
-    const mktRes = await marketGET(mktReq, { params: Promise.resolve({ category: "freelance-dev" }) });
+    const mktRes = await marketGET(mktReq, {
+      params: Promise.resolve({ category: "freelance-dev" }),
+    });
     expect(mktRes.status).toBe(200);
     const mktData = await mktRes.json();
     expect(mktData).toHaveProperty("category", "freelance-dev");
@@ -222,10 +266,18 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
   });
 
   it("Discovery: agent summary matches skill doc format", async () => {
-    await connectPOST(req("/api/connect", {
-      apiKey: aliceKey,
-      body: { agent_id: "alice-agent", side: "offering", category: "dev", params: { skills: ["Go"] }, description: "Go dev" },
-    }));
+    await connectPOST(
+      req("/api/connect", {
+        apiKey: aliceKey,
+        body: {
+          agent_id: "alice-agent",
+          side: "offering",
+          category: "dev",
+          params: { skills: ["Go"] },
+          description: "Go dev",
+        },
+      }),
+    );
 
     const r = req("/api/agents/alice-agent/summary");
     const res = await agentSummaryGET(r, { params: Promise.resolve({ agentId: "alice-agent" }) });
@@ -248,36 +300,49 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
 
   it("Full lifecycle: register -> match -> negotiate -> propose -> approve -> start -> milestones -> complete -> review", async () => {
     // === Phase 2: Register both agents ===
-    const aliceRes = await connectPOST(req("/api/connect", {
-      apiKey: aliceKey,
-      body: {
-        agent_id: "alice-agent",
-        side: "offering",
-        category: "freelance-dev",
-        params: { skills: ["React", "TypeScript"], rate_min: 80, rate_max: 120, remote: "remote" },
-        description: "Senior React dev",
-      },
-    }));
+    const aliceRes = await connectPOST(
+      req("/api/connect", {
+        apiKey: aliceKey,
+        body: {
+          agent_id: "alice-agent",
+          side: "offering",
+          category: "freelance-dev",
+          params: {
+            skills: ["React", "TypeScript"],
+            rate_min: 80,
+            rate_max: 120,
+            remote: "remote",
+          },
+          description: "Senior React dev",
+        },
+      }),
+    );
     const aliceProfile = (await aliceRes.json()).profile_id;
 
-    const bobRes = await connectPOST(req("/api/connect", {
-      apiKey: bobKey,
-      body: {
-        agent_id: "bob-agent",
-        side: "seeking",
-        category: "freelance-dev",
-        params: { skills: ["React", "TypeScript", "GraphQL"], rate_min: 80, rate_max: 110, remote: "remote" },
-        description: "E-commerce platform rebuild in Next.js",
-      },
-    }));
+    const bobRes = await connectPOST(
+      req("/api/connect", {
+        apiKey: bobKey,
+        body: {
+          agent_id: "bob-agent",
+          side: "seeking",
+          category: "freelance-dev",
+          params: {
+            skills: ["React", "TypeScript", "GraphQL"],
+            rate_min: 80,
+            rate_max: 110,
+            remote: "remote",
+          },
+          description: "E-commerce platform rebuild in Next.js",
+        },
+      }),
+    );
     const bobProfile = (await bobRes.json()).profile_id;
 
     // === Phase 3: Find matches ===
     // Skill doc format: { matches: [{ match_id, overlap: { matching_skills, rate_overlap, remote_compatible, score }, counterpart_agent_id, counterpart_description, ... }] }
-    const matchRes = await matchesGET(
-      req(`/api/matches/${aliceProfile}`),
-      { params: Promise.resolve({ profileId: aliceProfile }) }
-    );
+    const matchRes = await matchesGET(req(`/api/matches/${aliceProfile}`), {
+      params: Promise.resolve({ profileId: aliceProfile }),
+    });
     expect(matchRes.status).toBe(200);
     const matchData = await matchRes.json();
     expect(matchData).toHaveProperty("matches");
@@ -301,7 +366,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
 
     // === Batch match check (skill doc: { agent_id, profiles: [{ profile_id, matches }], total_matches }) ===
     const batchRes = await batchMatchesGET(
-      req(`/api/matches/batch?agent_id=alice-agent`, { apiKey: aliceKey })
+      req(`/api/matches/batch?agent_id=alice-agent`, { apiKey: aliceKey }),
     );
     expect(batchRes.status).toBe(200);
     const batchData = await batchRes.json();
@@ -315,7 +380,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
 
     // === Check inbox for match notification ===
     const inboxRes = await inboxGET(
-      req(`/api/inbox?agent_id=alice-agent&unread_only=true`, { apiKey: aliceKey })
+      req(`/api/inbox?agent_id=alice-agent&unread_only=true`, { apiKey: aliceKey }),
     );
     expect(inboxRes.status).toBe(200);
     const inboxData = await inboxRes.json();
@@ -324,10 +389,9 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
 
     // === Phase 4: Get deal context ===
     // Skill doc format: { match: { id, status, overlap, profiles: { a, b } }, messages, approvals }
-    const dealRes = await dealDetailGET(
-      req(`/api/deals/${matchId}`),
-      { params: Promise.resolve({ matchId }) }
-    );
+    const dealRes = await dealDetailGET(req(`/api/deals/${matchId}`), {
+      params: Promise.resolve({ matchId }),
+    });
     expect(dealRes.status).toBe(200);
     const dealData = await dealRes.json();
     expect(dealData).toHaveProperty("match");
@@ -356,11 +420,12 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
         apiKey: aliceKey,
         body: {
           agent_id: "alice-agent",
-          content: "Hi! I see we have a strong overlap on React and TypeScript. My rate is EUR 100-120/hr. What does the timeline look like?",
+          content:
+            "Hi! I see we have a strong overlap on React and TypeScript. My rate is EUR 100-120/hr. What does the timeline look like?",
           message_type: "negotiation",
         },
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(msg1Res.status).toBe(200);
     const msg1Data = await msg1Res.json();
@@ -374,19 +439,19 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
         apiKey: bobKey,
         body: {
           agent_id: "bob-agent",
-          content: "12-week engagement, starting mid-March. Budget EUR 85-100/hr. Can you do 30+ hours/week?",
+          content:
+            "12-week engagement, starting mid-March. Budget EUR 85-100/hr. Can you do 30+ hours/week?",
           message_type: "text", // alias for negotiation
         },
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(msg2Res.status).toBe(200);
 
     // Read messages - verify skill doc format
-    const dealAfterMsgs = await dealDetailGET(
-      req(`/api/deals/${matchId}`),
-      { params: Promise.resolve({ matchId }) }
-    );
+    const dealAfterMsgs = await dealDetailGET(req(`/api/deals/${matchId}`), {
+      params: Promise.resolve({ matchId }),
+    });
     const msgsData = await dealAfterMsgs.json();
     expect(msgsData.messages.length).toBe(2);
 
@@ -416,7 +481,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
           },
         },
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(proposalRes.status).toBe(200);
     const proposalData = await proposalRes.json();
@@ -424,7 +489,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
 
     // === List all deals (skill doc: GET /api/deals?agent_id=xxx) ===
     const dealsListRes = await dealsGET(
-      req(`/api/deals?agent_id=alice-agent`, { apiKey: aliceKey })
+      req(`/api/deals?agent_id=alice-agent`, { apiKey: aliceKey }),
     );
     expect(dealsListRes.status).toBe(200);
     const dealsList = await dealsListRes.json();
@@ -443,7 +508,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
         apiKey: aliceKey,
         body: { agent_id: "alice-agent", approved: true },
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(aliceApproveRes.status).toBe(200);
     const aliceApproveData = await aliceApproveRes.json();
@@ -456,7 +521,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
         apiKey: bobKey,
         body: { agent_id: "bob-agent", approved: true },
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(bobApproveRes.status).toBe(200);
     const bobApproveData = await bobApproveRes.json();
@@ -472,7 +537,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
         apiKey: aliceKey,
         body: { agent_id: "alice-agent" },
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(startRes.status).toBe(200);
     const startData = await startRes.json();
@@ -482,9 +547,13 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
     const postApprovalMsg = await messagesPOST(
       req(`/api/deals/${matchId}/messages`, {
         apiKey: aliceKey,
-        body: { agent_id: "alice-agent", content: "Let's set up a kickoff meeting", message_type: "text" },
+        body: {
+          agent_id: "alice-agent",
+          content: "Let's set up a kickoff meeting",
+          message_type: "text",
+        },
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(postApprovalMsg.status).toBe(200);
 
@@ -501,7 +570,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
           ],
         },
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect([200, 201]).toContain(milestoneRes.status);
     const milestoneData = await milestoneRes.json();
@@ -511,7 +580,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
     // List milestones with progress
     const msListRes = await milestonesGET(
       req(`/api/deals/${matchId}/milestones`, { apiKey: aliceKey }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(msListRes.status).toBe(200);
     const msList = await msListRes.json();
@@ -526,7 +595,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
         apiKey: aliceKey,
         body: { agent_id: "alice-agent", status: "completed" },
       }),
-      { params: Promise.resolve({ matchId, milestoneId: String(msId) }) }
+      { params: Promise.resolve({ matchId, milestoneId: String(msId) }) },
     );
     expect(msUpdateRes.status).toBe(200);
 
@@ -536,7 +605,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
         apiKey: aliceKey,
         body: { agent_id: "alice-agent" },
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(completeAlice.status).toBe(200);
     const completeAliceData = await completeAlice.json();
@@ -547,7 +616,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
         apiKey: bobKey,
         body: { agent_id: "bob-agent" },
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(completeBob.status).toBe(200);
     const completeBobData = await completeBob.json();
@@ -564,7 +633,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
           comment: "Excellent collaboration, delivered on time",
         },
       }),
-      { params: Promise.resolve({ agentId: "bob-agent" }) }
+      { params: Promise.resolve({ agentId: "bob-agent" }) },
     );
     expect([200, 201]).toContain(reviewRes.status);
 
@@ -574,14 +643,13 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
         apiKey: bobKey,
         body: { match_id: matchId, rating: 4, comment: "Great developer" },
       }),
-      { params: Promise.resolve({ agentId: "alice-agent" }) }
+      { params: Promise.resolve({ agentId: "alice-agent" }) },
     );
 
     // === Check reputation (skill doc format) ===
-    const repRes = await reputationGET(
-      req(`/api/reputation/alice-agent`),
-      { params: Promise.resolve({ agentId: "alice-agent" }) }
-    );
+    const repRes = await reputationGET(req(`/api/reputation/alice-agent`), {
+      params: Promise.resolve({ agentId: "alice-agent" }),
+    });
     expect(repRes.status).toBe(200);
     const repData = await repRes.json();
     expect(repData).toHaveProperty("agent_id", "alice-agent");
@@ -591,17 +659,16 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
     expect(repData).toHaveProperty("recent_reviews");
 
     // === Portfolio endpoint ===
-    const portfolioRes = await portfolioGET(
-      req(`/api/agents/alice-agent/portfolio`),
-      { params: Promise.resolve({ agentId: "alice-agent" }) }
-    );
+    const portfolioRes = await portfolioGET(req(`/api/agents/alice-agent/portfolio`), {
+      params: Promise.resolve({ agentId: "alice-agent" }),
+    });
     expect(portfolioRes.status).toBe(200);
     const portfolioData = await portfolioRes.json();
     expect(portfolioData).toHaveProperty("agent_id", "alice-agent");
 
     // === Activity feed ===
     const actRes = await activityGET(
-      req(`/api/activity?agent_id=alice-agent`, { apiKey: aliceKey })
+      req(`/api/activity?agent_id=alice-agent`, { apiKey: aliceKey }),
     );
     expect(actRes.status).toBe(200);
     const actData = await actRes.json();
@@ -614,21 +681,36 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
     const carolKey = await getApiKey("carol-agent");
     const daveKey = await getApiKey("dave-agent");
 
-    await connectPOST(req("/api/connect", {
-      apiKey: carolKey,
-      body: { agent_id: "carol-agent", side: "offering", category: "design", params: { skills: ["Figma"] }, description: "Designer" },
-    }));
-    const daveRes = await connectPOST(req("/api/connect", {
-      apiKey: daveKey,
-      body: { agent_id: "dave-agent", side: "seeking", category: "design", params: { skills: ["Figma"] }, description: "Need design work" },
-    }));
+    await connectPOST(
+      req("/api/connect", {
+        apiKey: carolKey,
+        body: {
+          agent_id: "carol-agent",
+          side: "offering",
+          category: "design",
+          params: { skills: ["Figma"] },
+          description: "Designer",
+        },
+      }),
+    );
+    const daveRes = await connectPOST(
+      req("/api/connect", {
+        apiKey: daveKey,
+        body: {
+          agent_id: "dave-agent",
+          side: "seeking",
+          category: "design",
+          params: { skills: ["Figma"] },
+          description: "Need design work",
+        },
+      }),
+    );
     const daveProfile = (await daveRes.json()).profile_id;
 
     // Find match
-    const matchRes = await matchesGET(
-      req(`/api/matches/${daveProfile}`),
-      { params: Promise.resolve({ profileId: daveProfile }) }
-    );
+    const matchRes = await matchesGET(req(`/api/matches/${daveProfile}`), {
+      params: Promise.resolve({ profileId: daveProfile }),
+    });
     const matchId = (await matchRes.json()).matches[0].match_id;
 
     // Cancel - skill doc: { status: "cancelled", message: "...", counterpart_agent_id: "..." }
@@ -637,7 +719,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
         apiKey: carolKey,
         body: { agent_id: "carol-agent", reason: "Found a better match" },
       }),
-      { params: Promise.resolve({ matchId }) }
+      { params: Promise.resolve({ matchId }) },
     );
     expect(cancelRes.status).toBe(200);
     const cancelData = await cancelRes.json();
@@ -656,7 +738,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
           url: "https://my-agent.example.com/webhook",
           events: ["new_match", "message_received", "deal_approved"],
         },
-      })
+      }),
     );
     expect(regRes.status).toBe(200);
     const regData = await regRes.json();
@@ -669,7 +751,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
 
     // List webhooks
     const listRes = await webhooksGET(
-      req(`/api/webhooks?agent_id=alice-agent`, { apiKey: aliceKey })
+      req(`/api/webhooks?agent_id=alice-agent`, { apiKey: aliceKey }),
     );
     expect(listRes.status).toBe(200);
     const listData = await listRes.json();
@@ -684,30 +766,41 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
         apiKey: aliceKey,
         body: { agent_id: "alice-agent", url: "https://new-url.example.com/hook" },
       }),
-      { params: Promise.resolve({ id: whId }) }
+      { params: Promise.resolve({ id: whId }) },
     );
     expect(patchRes.status).toBe(200);
 
     // Delete webhook
     const delRes = await webhookDELETE(
-      req(`/api/webhooks/${whId}`, { method: "DELETE", apiKey: aliceKey, body: { agent_id: "alice-agent" } }),
-      { params: Promise.resolve({ id: whId }) }
+      req(`/api/webhooks/${whId}`, {
+        method: "DELETE",
+        apiKey: aliceKey,
+        body: { agent_id: "alice-agent" },
+      }),
+      { params: Promise.resolve({ id: whId }) },
     );
     expect(delRes.status).toBe(200);
   });
 
   it("Profile view/update and availability matches skill doc", async () => {
-    const res = await connectPOST(req("/api/connect", {
-      apiKey: aliceKey,
-      body: { agent_id: "alice-agent", side: "offering", category: "consulting", params: { skills: ["Strategy"] }, description: "Consultant" },
-    }));
+    const res = await connectPOST(
+      req("/api/connect", {
+        apiKey: aliceKey,
+        body: {
+          agent_id: "alice-agent",
+          side: "offering",
+          category: "consulting",
+          params: { skills: ["Strategy"] },
+          description: "Consultant",
+        },
+      }),
+    );
     const profileId = (await res.json()).profile_id;
 
     // View profile (public GET) - returns flat profile object (no wrapper)
-    const viewRes = await profileGET(
-      req(`/api/profiles/${profileId}`),
-      { params: Promise.resolve({ profileId }) }
-    );
+    const viewRes = await profileGET(req(`/api/profiles/${profileId}`), {
+      params: Promise.resolve({ profileId }),
+    });
     expect(viewRes.status).toBe(200);
     const viewData = await viewRes.json();
     expect(viewData).toHaveProperty("id", profileId);
@@ -720,35 +813,41 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
         apiKey: aliceKey,
         body: { agent_id: "alice-agent", availability: "busy" },
       }),
-      { params: Promise.resolve({ profileId }) }
+      { params: Promise.resolve({ profileId }) },
     );
     expect(patchRes.status).toBe(200);
 
     // Verify it changed
-    const viewRes2 = await profileGET(
-      req(`/api/profiles/${profileId}`),
-      { params: Promise.resolve({ profileId }) }
-    );
+    const viewRes2 = await profileGET(req(`/api/profiles/${profileId}`), {
+      params: Promise.resolve({ profileId }),
+    });
     const viewData2 = await viewRes2.json();
     expect(viewData2.availability).toBe("busy");
 
     // View agent's profiles
-    const agentProfilesRes = await connectAgentGET(
-      req(`/api/connect/alice-agent`),
-      { params: Promise.resolve({ agentId: "alice-agent" }) }
-    );
+    const agentProfilesRes = await connectAgentGET(req(`/api/connect/alice-agent`), {
+      params: Promise.resolve({ agentId: "alice-agent" }),
+    });
     expect(agentProfilesRes.status).toBe(200);
   });
 
   it("Deactivate profiles matches skill doc", async () => {
-    await connectPOST(req("/api/connect", {
-      apiKey: aliceKey,
-      body: { agent_id: "alice-agent", side: "offering", category: "data", params: { skills: ["Python"] }, description: "Data eng" },
-    }));
+    await connectPOST(
+      req("/api/connect", {
+        apiKey: aliceKey,
+        body: {
+          agent_id: "alice-agent",
+          side: "offering",
+          category: "data",
+          params: { skills: ["Python"] },
+          description: "Data eng",
+        },
+      }),
+    );
 
     // Deactivate all profiles - skill doc: DELETE /api/connect?agent_id=xxx
     const delRes = await connectDELETE(
-      req(`/api/connect?agent_id=alice-agent`, { method: "DELETE", apiKey: aliceKey })
+      req(`/api/connect?agent_id=alice-agent`, { method: "DELETE", apiKey: aliceKey }),
     );
     expect(delRes.status).toBe(200);
   });
@@ -759,7 +858,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
       req("/api/inbox/read", {
         apiKey: aliceKey,
         body: { agent_id: "alice-agent" }, // mark all as read
-      })
+      }),
     );
     expect(readRes.status).toBe(200);
   });
@@ -776,7 +875,7 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
           description: "Fast code review engagement",
           suggested_terms: { rate: 50, duration_weeks: 1 },
         },
-      })
+      }),
     );
     expect([200, 201]).toContain(res.status);
     const data = await res.json();

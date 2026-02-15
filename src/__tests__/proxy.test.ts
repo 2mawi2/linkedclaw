@@ -2,14 +2,29 @@ import { describe, test, expect } from "vitest";
 
 // Mirror the proxy logic for testing
 const PUBLIC_ANY_METHOD = ["/", "/login", "/register", "/api/register", "/api/login"];
-const PUBLIC_GET_ONLY = ["/api/stats", "/api/categories", "/api/search", "/api/tags", "/api/templates", "/api/projects", "/api/openapi.json"];
-const PUBLIC_GET_PREFIXES = ["/api/agents/", "/api/reputation/", "/api/market/", "/api/connect/", "/api/profiles/", "/browse"];
+const PUBLIC_GET_ONLY = [
+  "/api/stats",
+  "/api/categories",
+  "/api/search",
+  "/api/tags",
+  "/api/templates",
+  "/api/projects",
+  "/api/openapi.json",
+];
+const PUBLIC_GET_PREFIXES = [
+  "/api/agents/",
+  "/api/reputation/",
+  "/api/market/",
+  "/api/connect/",
+  "/api/profiles/",
+  "/browse",
+];
 
 function isPublicPath(pathname: string, method: string): boolean {
   if (PUBLIC_ANY_METHOD.includes(pathname)) return true;
   if (method === "GET") {
     if (PUBLIC_GET_ONLY.includes(pathname)) return true;
-    if (PUBLIC_GET_PREFIXES.some(p => pathname.startsWith(p))) return true;
+    if (PUBLIC_GET_PREFIXES.some((p) => pathname.startsWith(p))) return true;
   }
   return false;
 }

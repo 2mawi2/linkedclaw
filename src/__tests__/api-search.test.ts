@@ -21,9 +21,15 @@ afterEach(() => {
   restore();
 });
 
-async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
+async function getApiKey(agentId: string): Promise<string> {
+  return createApiKey(agentId);
+}
 
-async function registerProfile(agentId: string, apiKey: string, overrides: Record<string, unknown> = {}) {
+async function registerProfile(
+  agentId: string,
+  apiKey: string,
+  overrides: Record<string, unknown> = {},
+) {
   const body = {
     agent_id: agentId,
     side: "offering",
@@ -35,7 +41,7 @@ async function registerProfile(agentId: string, apiKey: string, overrides: Recor
   const req = new NextRequest("http://localhost:3000/api/connect", {
     method: "POST",
     body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
   });
   const res = await connectPOST(req);
   return res.json();
@@ -62,7 +68,10 @@ describe("GET /api/search", () => {
     const key1 = await getApiKey("agent-1");
     const key2 = await getApiKey("agent-2");
     await registerProfile("agent-1", key1, { category: "test-search-all" });
-    await registerProfile("agent-2", key2, { category: "test-search-all", params: { skills: ["docker"] } });
+    await registerProfile("agent-2", key2, {
+      category: "test-search-all",
+      params: { skills: ["docker"] },
+    });
 
     const res = await searchGET(searchRequest({ category: "test-search-all" }));
     const data = await res.json();
@@ -100,11 +109,19 @@ describe("GET /api/search", () => {
 
   it("filters by skill", async () => {
     const key1 = await getApiKey("agent-1");
-    await registerProfile("agent-1", key1, { category: "test-skill-filter", params: { skills: ["uniqueskill123"] } });
+    await registerProfile("agent-1", key1, {
+      category: "test-skill-filter",
+      params: { skills: ["uniqueskill123"] },
+    });
     const key2 = await getApiKey("agent-2");
-    await registerProfile("agent-2", key2, { category: "test-skill-filter", params: { skills: ["python", "django"] } });
+    await registerProfile("agent-2", key2, {
+      category: "test-skill-filter",
+      params: { skills: ["python", "django"] },
+    });
 
-    const res = await searchGET(searchRequest({ skill: "uniqueskill123", category: "test-skill-filter" }));
+    const res = await searchGET(
+      searchRequest({ skill: "uniqueskill123", category: "test-skill-filter" }),
+    );
     const data = await res.json();
     expect(data.profiles).toHaveLength(1);
     expect(data.profiles[0].agent_id).toBe("agent-1");
@@ -112,7 +129,9 @@ describe("GET /api/search", () => {
 
   it("filters by free-text query", async () => {
     const key1 = await getApiKey("agent-1");
-    await registerProfile("agent-1", key1, { description: "Expert in quantum teleportation devices" });
+    await registerProfile("agent-1", key1, {
+      description: "Expert in quantum teleportation devices",
+    });
 
     const res = await searchGET(searchRequest({ q: "quantum teleportation" }));
     const data = await res.json();
@@ -126,7 +145,9 @@ describe("GET /api/search", () => {
     await registerProfile("agent-1", key1, { category: "test-exclude" });
     await registerProfile("agent-2", key2, { category: "test-exclude" });
 
-    const res = await searchGET(searchRequest({ exclude_agent: "agent-1", category: "test-exclude" }));
+    const res = await searchGET(
+      searchRequest({ exclude_agent: "agent-1", category: "test-exclude" }),
+    );
     const data = await res.json();
     expect(data.total).toBe(1);
     expect(data.profiles[0].agent_id).toBe("agent-2");
@@ -142,21 +163,27 @@ describe("GET /api/search", () => {
     const patchReq = new NextRequest(`http://localhost:3000/api/profiles/${p1.profile_id}`, {
       method: "PATCH",
       body: JSON.stringify({ agent_id: "agent-1", availability: "busy" }),
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key1}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key1}` },
     });
-    const patchRes = await profilePATCH(patchReq, { params: Promise.resolve({ profileId: p1.profile_id }) });
+    const patchRes = await profilePATCH(patchReq, {
+      params: Promise.resolve({ profileId: p1.profile_id }),
+    });
     expect(patchRes.status).toBe(200);
     const patchData = await patchRes.json();
     expect(patchData.availability).toBe("busy");
 
     // Busy filter in test-avail should find only agent-1
-    const busyRes = await searchGET(searchRequest({ availability: "busy", category: "test-avail" }));
+    const busyRes = await searchGET(
+      searchRequest({ availability: "busy", category: "test-avail" }),
+    );
     const busyData = await busyRes.json();
     expect(busyData.total).toBe(1);
     expect(busyData.profiles[0].agent_id).toBe("agent-1");
 
     // Available filter in test-avail should find only agent-2
-    const availRes = await searchGET(searchRequest({ availability: "available", category: "test-avail" }));
+    const availRes = await searchGET(
+      searchRequest({ availability: "available", category: "test-avail" }),
+    );
     const availData = await availRes.json();
     expect(availData.total).toBe(1);
     expect(availData.profiles[0].agent_id).toBe("agent-2");
@@ -173,7 +200,9 @@ describe("GET /api/search", () => {
       await registerProfile(`agent-${i}`, key, { category: "test-pagination" });
     }
 
-    const res = await searchGET(searchRequest({ limit: "2", offset: "1", category: "test-pagination" }));
+    const res = await searchGET(
+      searchRequest({ limit: "2", offset: "1", category: "test-pagination" }),
+    );
     const data = await res.json();
     expect(data.profiles).toHaveLength(2);
     expect(data.limit).toBe(2);
@@ -213,11 +242,25 @@ describe("GET /api/search", () => {
     const key1 = await getApiKey("agent-1");
     const key2 = await getApiKey("agent-2");
     const key3 = await getApiKey("agent-3");
-    await registerProfile("agent-1", key1, { side: "offering", category: "test-combo", params: { skills: ["uniquecombo"] } });
-    await registerProfile("agent-2", key2, { side: "offering", category: "test-other", params: { skills: ["docker"] } });
-    await registerProfile("agent-3", key3, { side: "seeking", category: "test-combo", params: { skills: ["uniquecombo"] } });
+    await registerProfile("agent-1", key1, {
+      side: "offering",
+      category: "test-combo",
+      params: { skills: ["uniquecombo"] },
+    });
+    await registerProfile("agent-2", key2, {
+      side: "offering",
+      category: "test-other",
+      params: { skills: ["docker"] },
+    });
+    await registerProfile("agent-3", key3, {
+      side: "seeking",
+      category: "test-combo",
+      params: { skills: ["uniquecombo"] },
+    });
 
-    const res = await searchGET(searchRequest({ category: "test-combo", side: "offering", skill: "uniquecombo" }));
+    const res = await searchGET(
+      searchRequest({ category: "test-combo", side: "offering", skill: "uniquecombo" }),
+    );
     const data = await res.json();
     expect(data.profiles).toHaveLength(1);
     expect(data.profiles[0].agent_id).toBe("agent-1");

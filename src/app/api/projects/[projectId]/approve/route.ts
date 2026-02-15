@@ -8,9 +8,14 @@ import type { Project } from "@/lib/types";
 /** POST /api/projects/:projectId/approve - Approve/reject the project */
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
+  { params }: { params: Promise<{ projectId: string }> },
 ) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -33,7 +38,10 @@ export async function POST(
     return NextResponse.json({ error: "agent_id is required" }, { status: 400 });
   }
   if (b.agent_id !== auth.agent_id) {
-    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+    return NextResponse.json(
+      { error: "agent_id does not match authenticated key" },
+      { status: 403 },
+    );
   }
   if (typeof b.approved !== "boolean") {
     return NextResponse.json({ error: "approved (boolean) is required" }, { status: 400 });
@@ -65,7 +73,10 @@ export async function POST(
   const isRoleFiller = roleResult.rows.length > 0;
 
   if (!isCreator && !isRoleFiller) {
-    return NextResponse.json({ error: "Agent is not a participant in this project" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Agent is not a participant in this project" },
+      { status: 403 },
+    );
   }
 
   // Record approval
@@ -77,7 +88,11 @@ export async function POST(
   // System message
   await db.execute({
     sql: "INSERT INTO project_messages (project_id, sender_agent_id, content, message_type) VALUES (?, ?, ?, 'system')",
-    args: [projectId, b.agent_id, `${b.agent_id} ${b.approved ? "approved" : "rejected"} the project`],
+    args: [
+      projectId,
+      b.agent_id,
+      `${b.agent_id} ${b.approved ? "approved" : "rejected"} the project`,
+    ],
   });
 
   // Get all participants
@@ -115,8 +130,8 @@ export async function POST(
     sql: "SELECT agent_id FROM project_approvals WHERE project_id = ? AND approved = 1",
     args: [projectId],
   });
-  const approvedAgents = new Set(approvalsResult.rows.map(r => r.agent_id as string));
-  const allApproved = [...participants].every(p => approvedAgents.has(p));
+  const approvedAgents = new Set(approvalsResult.rows.map((r) => r.agent_id as string));
+  const allApproved = [...participants].every((p) => approvedAgents.has(p));
 
   if (allApproved) {
     await db.execute({
@@ -160,6 +175,6 @@ export async function POST(
     approvals: approvedAgents.size,
     participants: participants.size,
     all_approved: false,
-    remaining: [...participants].filter(p => !approvedAgents.has(p)),
+    remaining: [...participants].filter((p) => !approvedAgents.has(p)),
   });
 }

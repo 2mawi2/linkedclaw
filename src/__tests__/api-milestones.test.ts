@@ -5,7 +5,10 @@ import type { Client } from "@libsql/client";
 import { POST as connectPOST } from "@/app/api/connect/route";
 import { GET as matchesGET } from "@/app/api/matches/[profileId]/route";
 import { POST as messagesPOST } from "@/app/api/deals/[matchId]/messages/route";
-import { GET as milestonesGET, POST as milestonesPOST } from "@/app/api/deals/[matchId]/milestones/route";
+import {
+  GET as milestonesGET,
+  POST as milestonesPOST,
+} from "@/app/api/deals/[matchId]/milestones/route";
 import { PATCH as milestonePATCH } from "@/app/api/deals/[matchId]/milestones/[milestoneId]/route";
 import { NextRequest } from "next/server";
 
@@ -22,12 +25,26 @@ afterEach(() => {
   restore();
 });
 
-async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
+async function getApiKey(agentId: string): Promise<string> {
+  return createApiKey(agentId);
+}
 
-async function createProfile(agentId: string, side: string, category: string, params: Record<string, unknown>, apiKey: string) {
+async function createProfile(
+  agentId: string,
+  side: string,
+  category: string,
+  params: Record<string, unknown>,
+  apiKey: string,
+) {
   const req = new NextRequest("http://localhost:3000/api/connect", {
     method: "POST",
-    body: JSON.stringify({ agent_id: agentId, side, category, params, description: `${agentId} profile` }),
+    body: JSON.stringify({
+      agent_id: agentId,
+      side,
+      category,
+      params,
+      description: `${agentId} profile`,
+    }),
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
   });
   const res = await connectPOST(req);
@@ -43,7 +60,13 @@ async function getMatches(profileId: string) {
 async function setupDealInProgress() {
   const keyA = await getApiKey("agent-a");
   const keyB = await getApiKey("agent-b");
-  const profileA = await createProfile("agent-a", "offering", "dev", { skills: ["typescript"] }, keyA);
+  const profileA = await createProfile(
+    "agent-a",
+    "offering",
+    "dev",
+    { skills: ["typescript"] },
+    keyA,
+  );
   await createProfile("agent-b", "seeking", "dev", { skills: ["typescript"] }, keyB);
 
   const matchData = await getMatches(profileA.profile_id);
@@ -52,7 +75,11 @@ async function setupDealInProgress() {
   // Move deal to negotiating by sending a message
   const msgReq = new NextRequest(`http://localhost:3000/api/deals/${matchId}/messages`, {
     method: "POST",
-    body: JSON.stringify({ agent_id: "agent-a", content: "Let's work together", message_type: "negotiation" }),
+    body: JSON.stringify({
+      agent_id: "agent-a",
+      content: "Let's work together",
+      message_type: "negotiation",
+    }),
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${keyA}` },
   });
   await messagesPOST(msgReq, { params: Promise.resolve({ matchId }) });
@@ -68,7 +95,12 @@ function milestoneRequest(matchId: string, body: unknown, apiKey: string) {
   });
 }
 
-function patchMilestoneRequest(matchId: string, milestoneId: string, body: unknown, apiKey: string) {
+function patchMilestoneRequest(
+  matchId: string,
+  milestoneId: string,
+  body: unknown,
+  apiKey: string,
+) {
   return new NextRequest(`http://localhost:3000/api/deals/${matchId}/milestones/${milestoneId}`, {
     method: "PATCH",
     body: JSON.stringify(body),
@@ -77,21 +109,27 @@ function patchMilestoneRequest(matchId: string, milestoneId: string, body: unkno
 }
 
 function getMilestonesRequest(matchId: string) {
-  return new NextRequest(`http://localhost:3000/api/deals/${matchId}/milestones`, { method: "GET" });
+  return new NextRequest(`http://localhost:3000/api/deals/${matchId}/milestones`, {
+    method: "GET",
+  });
 }
 
 describe("Deal Milestones", () => {
   it("creates milestones for a deal", async () => {
     const { matchId, keyA } = await setupDealInProgress();
 
-    const req = milestoneRequest(matchId, {
-      agent_id: "agent-a",
-      milestones: [
-        { title: "Phase 1: Setup", description: "Set up project scaffolding" },
-        { title: "Phase 2: Core", description: "Implement core features" },
-        { title: "Phase 3: Deploy", description: "Deploy to production" },
-      ],
-    }, keyA);
+    const req = milestoneRequest(
+      matchId,
+      {
+        agent_id: "agent-a",
+        milestones: [
+          { title: "Phase 1: Setup", description: "Set up project scaffolding" },
+          { title: "Phase 2: Core", description: "Implement core features" },
+          { title: "Phase 3: Deploy", description: "Deploy to production" },
+        ],
+      },
+      keyA,
+    );
 
     const res = await milestonesPOST(req, { params: Promise.resolve({ matchId }) });
     const data = await res.json();
@@ -105,13 +143,14 @@ describe("Deal Milestones", () => {
     const { matchId, keyA } = await setupDealInProgress();
 
     // Create milestones
-    const createReq = milestoneRequest(matchId, {
-      agent_id: "agent-a",
-      milestones: [
-        { title: "Step 1" },
-        { title: "Step 2" },
-      ],
-    }, keyA);
+    const createReq = milestoneRequest(
+      matchId,
+      {
+        agent_id: "agent-a",
+        milestones: [{ title: "Step 1" }, { title: "Step 2" }],
+      },
+      keyA,
+    );
     await milestonesPOST(createReq, { params: Promise.resolve({ matchId }) });
 
     // List them
@@ -130,20 +169,31 @@ describe("Deal Milestones", () => {
     const { matchId, keyA } = await setupDealInProgress();
 
     // Create a milestone
-    const createReq = milestoneRequest(matchId, {
-      agent_id: "agent-a",
-      milestones: [{ title: "Task 1" }],
-    }, keyA);
+    const createReq = milestoneRequest(
+      matchId,
+      {
+        agent_id: "agent-a",
+        milestones: [{ title: "Task 1" }],
+      },
+      keyA,
+    );
     const createRes = await milestonesPOST(createReq, { params: Promise.resolve({ matchId }) });
     const created = await createRes.json();
     const milestoneId = created.milestones[0].id;
 
     // Update it
-    const patchReq = patchMilestoneRequest(matchId, milestoneId, {
-      agent_id: "agent-a",
-      status: "in_progress",
-    }, keyA);
-    const res = await milestonePATCH(patchReq, { params: Promise.resolve({ matchId, milestoneId }) });
+    const patchReq = patchMilestoneRequest(
+      matchId,
+      milestoneId,
+      {
+        agent_id: "agent-a",
+        status: "in_progress",
+      },
+      keyA,
+    );
+    const res = await milestonePATCH(patchReq, {
+      params: Promise.resolve({ matchId, milestoneId }),
+    });
     const data = await res.json();
 
     expect(res.status).toBe(200);
@@ -154,19 +204,32 @@ describe("Deal Milestones", () => {
     const { matchId, keyA, keyB } = await setupDealInProgress();
 
     // Agent A creates milestone
-    const createReq = milestoneRequest(matchId, {
-      agent_id: "agent-a",
-      milestones: [{ title: "Shared task" }],
-    }, keyA);
-    const created = await (await milestonesPOST(createReq, { params: Promise.resolve({ matchId }) })).json();
+    const createReq = milestoneRequest(
+      matchId,
+      {
+        agent_id: "agent-a",
+        milestones: [{ title: "Shared task" }],
+      },
+      keyA,
+    );
+    const created = await (
+      await milestonesPOST(createReq, { params: Promise.resolve({ matchId }) })
+    ).json();
     const milestoneId = created.milestones[0].id;
 
     // Agent B updates it
-    const patchReq = patchMilestoneRequest(matchId, milestoneId, {
-      agent_id: "agent-b",
-      status: "completed",
-    }, keyB);
-    const res = await milestonePATCH(patchReq, { params: Promise.resolve({ matchId, milestoneId }) });
+    const patchReq = patchMilestoneRequest(
+      matchId,
+      milestoneId,
+      {
+        agent_id: "agent-b",
+        status: "completed",
+      },
+      keyB,
+    );
+    const res = await milestonePATCH(patchReq, {
+      params: Promise.resolve({ matchId, milestoneId }),
+    });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.milestone.status).toBe("completed");
@@ -176,10 +239,14 @@ describe("Deal Milestones", () => {
     const { matchId } = await setupDealInProgress();
     const keyC = await getApiKey("agent-c");
 
-    const req = milestoneRequest(matchId, {
-      agent_id: "agent-c",
-      milestones: [{ title: "Intruder task" }],
-    }, keyC);
+    const req = milestoneRequest(
+      matchId,
+      {
+        agent_id: "agent-c",
+        milestones: [{ title: "Intruder task" }],
+      },
+      keyC,
+    );
     const res = await milestonesPOST(req, { params: Promise.resolve({ matchId }) });
     expect(res.status).toBe(403);
   });
@@ -199,18 +266,31 @@ describe("Deal Milestones", () => {
   it("rejects invalid milestone status", async () => {
     const { matchId, keyA } = await setupDealInProgress();
 
-    const createReq = milestoneRequest(matchId, {
-      agent_id: "agent-a",
-      milestones: [{ title: "Task" }],
-    }, keyA);
-    const created = await (await milestonesPOST(createReq, { params: Promise.resolve({ matchId }) })).json();
+    const createReq = milestoneRequest(
+      matchId,
+      {
+        agent_id: "agent-a",
+        milestones: [{ title: "Task" }],
+      },
+      keyA,
+    );
+    const created = await (
+      await milestonesPOST(createReq, { params: Promise.resolve({ matchId }) })
+    ).json();
     const milestoneId = created.milestones[0].id;
 
-    const patchReq = patchMilestoneRequest(matchId, milestoneId, {
-      agent_id: "agent-a",
-      status: "invalid_status",
-    }, keyA);
-    const res = await milestonePATCH(patchReq, { params: Promise.resolve({ matchId, milestoneId }) });
+    const patchReq = patchMilestoneRequest(
+      matchId,
+      milestoneId,
+      {
+        agent_id: "agent-a",
+        status: "invalid_status",
+      },
+      keyA,
+    );
+    const res = await milestonePATCH(patchReq, {
+      params: Promise.resolve({ matchId, milestoneId }),
+    });
     expect(res.status).toBe(400);
   });
 
@@ -224,7 +304,11 @@ describe("Deal Milestones", () => {
     expect(res.status).toBe(201);
 
     // Try to add one more
-    const req2 = milestoneRequest(matchId, { agent_id: "agent-a", milestones: [{ title: "One too many" }] }, keyA);
+    const req2 = milestoneRequest(
+      matchId,
+      { agent_id: "agent-a", milestones: [{ title: "One too many" }] },
+      keyA,
+    );
     const res2 = await milestonesPOST(req2, { params: Promise.resolve({ matchId }) });
     expect(res2.status).toBe(400);
   });
@@ -233,15 +317,26 @@ describe("Deal Milestones", () => {
     const { matchId, keyA } = await setupDealInProgress();
 
     // Create 4 milestones
-    const createReq = milestoneRequest(matchId, {
-      agent_id: "agent-a",
-      milestones: [{ title: "A" }, { title: "B" }, { title: "C" }, { title: "D" }],
-    }, keyA);
-    const created = await (await milestonesPOST(createReq, { params: Promise.resolve({ matchId }) })).json();
+    const createReq = milestoneRequest(
+      matchId,
+      {
+        agent_id: "agent-a",
+        milestones: [{ title: "A" }, { title: "B" }, { title: "C" }, { title: "D" }],
+      },
+      keyA,
+    );
+    const created = await (
+      await milestonesPOST(createReq, { params: Promise.resolve({ matchId }) })
+    ).json();
 
     // Complete 2 of them
     for (const m of created.milestones.slice(0, 2)) {
-      const req = patchMilestoneRequest(matchId, m.id, { agent_id: "agent-a", status: "completed" }, keyA);
+      const req = patchMilestoneRequest(
+        matchId,
+        m.id,
+        { agent_id: "agent-a", status: "completed" },
+        keyA,
+      );
       await milestonePATCH(req, { params: Promise.resolve({ matchId, milestoneId: m.id }) });
     }
 
@@ -256,26 +351,41 @@ describe("Deal Milestones", () => {
 
   it("returns 404 for milestones of nonexistent deal", async () => {
     const req = getMilestonesRequest("nonexistent-deal");
-    const res = await milestonesGET(req, { params: Promise.resolve({ matchId: "nonexistent-deal" }) });
+    const res = await milestonesGET(req, {
+      params: Promise.resolve({ matchId: "nonexistent-deal" }),
+    });
     expect(res.status).toBe(404);
   });
 
   it("can update milestone title and description", async () => {
     const { matchId, keyA } = await setupDealInProgress();
 
-    const createReq = milestoneRequest(matchId, {
-      agent_id: "agent-a",
-      milestones: [{ title: "Original title", description: "Original desc" }],
-    }, keyA);
-    const created = await (await milestonesPOST(createReq, { params: Promise.resolve({ matchId }) })).json();
+    const createReq = milestoneRequest(
+      matchId,
+      {
+        agent_id: "agent-a",
+        milestones: [{ title: "Original title", description: "Original desc" }],
+      },
+      keyA,
+    );
+    const created = await (
+      await milestonesPOST(createReq, { params: Promise.resolve({ matchId }) })
+    ).json();
     const milestoneId = created.milestones[0].id;
 
-    const patchReq = patchMilestoneRequest(matchId, milestoneId, {
-      agent_id: "agent-a",
-      title: "Updated title",
-      description: "Updated description",
-    }, keyA);
-    const res = await milestonePATCH(patchReq, { params: Promise.resolve({ matchId, milestoneId }) });
+    const patchReq = patchMilestoneRequest(
+      matchId,
+      milestoneId,
+      {
+        agent_id: "agent-a",
+        title: "Updated title",
+        description: "Updated description",
+      },
+      keyA,
+    );
+    const res = await milestonePATCH(patchReq, {
+      params: Promise.resolve({ matchId, milestoneId }),
+    });
     const data = await res.json();
 
     expect(res.status).toBe(200);

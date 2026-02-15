@@ -23,13 +23,20 @@ afterEach(() => {
   restore();
 });
 
-async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
+async function getApiKey(agentId: string): Promise<string> {
+  return createApiKey(agentId);
+}
 
 function makeParams(projectId: string) {
   return { params: Promise.resolve({ projectId }) };
 }
 
-async function createProject(agentId: string, apiKey: string, title: string, roles: Array<{ role_name: string; category: string }>) {
+async function createProject(
+  agentId: string,
+  apiKey: string,
+  title: string,
+  roles: Array<{ role_name: string; category: string }>,
+) {
   const req = new NextRequest("http://localhost:3000/api/projects", {
     method: "POST",
     body: JSON.stringify({ agent_id: agentId, title, roles }),
@@ -81,7 +88,11 @@ describe("POST /api/projects", () => {
   it("rejects without auth", async () => {
     const req = new NextRequest("http://localhost:3000/api/projects", {
       method: "POST",
-      body: JSON.stringify({ agent_id: "creator", title: "Test", roles: [{ role_name: "Dev", category: "dev" }] }),
+      body: JSON.stringify({
+        agent_id: "creator",
+        title: "Test",
+        roles: [{ role_name: "Dev", category: "dev" }],
+      }),
       headers: { "Content-Type": "application/json" },
     });
     const res = await projectsPOST(req);
@@ -93,7 +104,9 @@ describe("GET /api/projects", () => {
   it("lists projects", async () => {
     const key = await getApiKey("creator");
     await createProject("creator", key, "Project 1", [{ role_name: "Dev", category: "dev" }]);
-    await createProject("creator", key, "Project 2", [{ role_name: "Designer", category: "design" }]);
+    await createProject("creator", key, "Project 2", [
+      { role_name: "Designer", category: "design" },
+    ]);
 
     const req = new NextRequest("http://localhost:3000/api/projects");
     const res = await projectsGET(req);
@@ -119,7 +132,9 @@ describe("GET /api/projects", () => {
   it("filters by category", async () => {
     const key = await getApiKey("creator");
     await createProject("creator", key, "Dev Project", [{ role_name: "Dev", category: "web-dev" }]);
-    await createProject("creator", key, "Design Project", [{ role_name: "Designer", category: "design" }]);
+    await createProject("creator", key, "Design Project", [
+      { role_name: "Designer", category: "design" },
+    ]);
 
     const req = new NextRequest("http://localhost:3000/api/projects?category=design");
     const res = await projectsGET(req);
@@ -240,11 +255,14 @@ describe("POST /api/projects/:projectId/messages", () => {
       { role_name: "Dev", category: "dev" },
     ]);
 
-    const req = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/messages`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "creator", content: "Hello team!" }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${creatorKey}` },
-    });
+    const req = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/messages`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "creator", content: "Hello team!" }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${creatorKey}` },
+      },
+    );
     const res = await messagesPOST(req, makeParams(project.project_id));
     const data = await res.json();
 
@@ -260,11 +278,14 @@ describe("POST /api/projects/:projectId/messages", () => {
       { role_name: "Dev", category: "dev" },
     ]);
 
-    const req = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/messages`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "outsider", content: "Can I join?" }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${outsiderKey}` },
-    });
+    const req = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/messages`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "outsider", content: "Can I join?" }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${outsiderKey}` },
+      },
+    );
     const res = await messagesPOST(req, makeParams(project.project_id));
     expect(res.status).toBe(403);
   });
@@ -277,19 +298,25 @@ describe("POST /api/projects/:projectId/messages", () => {
     ]);
 
     // Join first
-    const joinReq = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/join`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "joiner", role_id: project.roles[0].id }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
-    });
+    const joinReq = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/join`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "joiner", role_id: project.roles[0].id }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
+      },
+    );
     await joinPOST(joinReq, makeParams(project.project_id));
 
     // Then message
-    const msgReq = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/messages`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "joiner", content: "Ready to work!" }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
-    });
+    const msgReq = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/messages`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "joiner", content: "Ready to work!" }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
+      },
+    );
     const res = await messagesPOST(msgReq, makeParams(project.project_id));
     expect(res.status).toBe(200);
   });
@@ -304,19 +331,25 @@ describe("POST /api/projects/:projectId/approve", () => {
     ]);
 
     // Join
-    const joinReq = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/join`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "joiner", role_id: project.roles[0].id }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
-    });
+    const joinReq = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/join`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "joiner", role_id: project.roles[0].id }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
+      },
+    );
     await joinPOST(joinReq, makeParams(project.project_id));
 
     // Creator approves
-    const approveReq = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/approve`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "creator", approved: true }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${creatorKey}` },
-    });
+    const approveReq = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/approve`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "creator", approved: true }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${creatorKey}` },
+      },
+    );
     const res = await approvePOST(approveReq, makeParams(project.project_id));
     const data = await res.json();
 
@@ -334,26 +367,35 @@ describe("POST /api/projects/:projectId/approve", () => {
     ]);
 
     // Join
-    const joinReq = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/join`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "joiner", role_id: project.roles[0].id }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
-    });
+    const joinReq = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/join`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "joiner", role_id: project.roles[0].id }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
+      },
+    );
     await joinPOST(joinReq, makeParams(project.project_id));
 
     // Both approve
-    const approve1 = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/approve`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "creator", approved: true }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${creatorKey}` },
-    });
+    const approve1 = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/approve`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "creator", approved: true }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${creatorKey}` },
+      },
+    );
     await approvePOST(approve1, makeParams(project.project_id));
 
-    const approve2 = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/approve`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "joiner", approved: true }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
-    });
+    const approve2 = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/approve`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "joiner", approved: true }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
+      },
+    );
     const res = await approvePOST(approve2, makeParams(project.project_id));
     const data = await res.json();
 
@@ -370,19 +412,25 @@ describe("POST /api/projects/:projectId/approve", () => {
     ]);
 
     // Join
-    const joinReq = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/join`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "joiner", role_id: project.roles[0].id }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
-    });
+    const joinReq = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/join`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "joiner", role_id: project.roles[0].id }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
+      },
+    );
     await joinPOST(joinReq, makeParams(project.project_id));
 
     // Reject
-    const rejectReq = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/approve`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "joiner", approved: false }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
-    });
+    const rejectReq = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/approve`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "joiner", approved: false }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
+      },
+    );
     const res = await approvePOST(rejectReq, makeParams(project.project_id));
     const data = await res.json();
 
@@ -400,19 +448,25 @@ describe("POST /api/projects/:projectId/leave", () => {
     ]);
 
     // Join
-    const joinReq = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/join`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "joiner", role_id: project.roles[0].id }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
-    });
+    const joinReq = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/join`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "joiner", role_id: project.roles[0].id }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
+      },
+    );
     await joinPOST(joinReq, makeParams(project.project_id));
 
     // Leave
-    const leaveReq = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/leave`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "joiner" }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
-    });
+    const leaveReq = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/leave`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "joiner" }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${joinerKey}` },
+      },
+    );
     const res = await leavePOST(leaveReq, makeParams(project.project_id));
     const data = await res.json();
 
@@ -427,11 +481,14 @@ describe("POST /api/projects/:projectId/leave", () => {
       { role_name: "Dev", category: "dev" },
     ]);
 
-    const leaveReq = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/leave`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "creator" }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${creatorKey}` },
-    });
+    const leaveReq = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/leave`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "creator" }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${creatorKey}` },
+      },
+    );
     const res = await leavePOST(leaveReq, makeParams(project.project_id));
     expect(res.status).toBe(400);
   });
@@ -443,11 +500,14 @@ describe("POST /api/projects/:projectId/leave", () => {
       { role_name: "Dev", category: "dev" },
     ]);
 
-    const leaveReq = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/leave`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "outsider" }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${outsiderKey}` },
-    });
+    const leaveReq = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/leave`,
+      {
+        method: "POST",
+        body: JSON.stringify({ agent_id: "outsider" }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${outsiderKey}` },
+      },
+    );
     const res = await leavePOST(leaveReq, makeParams(project.project_id));
     expect(res.status).toBe(400);
   });
@@ -486,20 +546,33 @@ describe("full project lifecycle", () => {
     expect(join2Data.all_roles_filled).toBe(true);
 
     // Group discussion
-    const msgReq = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/messages`, {
-      method: "POST",
-      body: JSON.stringify({ agent_id: "creator", content: "Welcome everyone! Let's build something great." }),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${creatorKey}` },
-    });
+    const msgReq = new NextRequest(
+      `http://localhost:3000/api/projects/${project.project_id}/messages`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          agent_id: "creator",
+          content: "Welcome everyone! Let's build something great.",
+        }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${creatorKey}` },
+      },
+    );
     await messagesPOST(msgReq, makeParams(project.project_id));
 
     // All three approve
-    for (const [agentId, key] of [["creator", creatorKey], ["dev1", dev1Key], ["dev2", dev2Key]]) {
-      const approveReq = new NextRequest(`http://localhost:3000/api/projects/${project.project_id}/approve`, {
-        method: "POST",
-        body: JSON.stringify({ agent_id: agentId, approved: true }),
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-      });
+    for (const [agentId, key] of [
+      ["creator", creatorKey],
+      ["dev1", dev1Key],
+      ["dev2", dev2Key],
+    ]) {
+      const approveReq = new NextRequest(
+        `http://localhost:3000/api/projects/${project.project_id}/approve`,
+        {
+          method: "POST",
+          body: JSON.stringify({ agent_id: agentId, approved: true }),
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+        },
+      );
       await approvePOST(approveReq, makeParams(project.project_id));
     }
 

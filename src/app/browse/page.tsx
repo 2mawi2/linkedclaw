@@ -78,10 +78,16 @@ async function getListings(params: {
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-  const countResult = await db.execute({ sql: `SELECT COUNT(*) as total FROM profiles p ${where}`, args });
+  const countResult = await db.execute({
+    sql: `SELECT COUNT(*) as total FROM profiles p ${where}`,
+    args,
+  });
   const total = Number(countResult.rows[0]?.total ?? 0);
 
-  const tagsResult = await db.execute({ sql: `SELECT pt.profile_id, pt.tag FROM profile_tags pt INNER JOIN profiles p ON p.id = pt.profile_id ${where}`, args });
+  const tagsResult = await db.execute({
+    sql: `SELECT pt.profile_id, pt.tag FROM profile_tags pt INNER JOIN profiles p ON p.id = pt.profile_id ${where}`,
+    args,
+  });
   const tagsMap: Record<string, string[]> = {};
   for (const row of tagsResult.rows) {
     const pid = String(row.profile_id);
@@ -102,7 +108,14 @@ async function getListings(params: {
       side: String(r.side) as "offering" | "seeking",
       category: String(r.category),
       skills: prms.skills ?? [],
-      rate_range: prms.rate_min != null ? { min: Number(prms.rate_min), max: Number(prms.rate_max), currency: String(prms.currency || "USD") } : null,
+      rate_range:
+        prms.rate_min != null
+          ? {
+              min: Number(prms.rate_min),
+              max: Number(prms.rate_max),
+              currency: String(prms.currency || "USD"),
+            }
+          : null,
       description: String(r.description || ""),
       availability: String(r.availability || ""),
       tags: tagsMap[String(r.id)] ?? [],
@@ -147,10 +160,7 @@ export default async function BrowsePage({
   searchParams: Promise<{ category?: string; side?: string; q?: string }>;
 }) {
   const params = await searchParams;
-  const [data, categories] = await Promise.all([
-    getListings(params),
-    getCategories(),
-  ]);
+  const [data, categories] = await Promise.all([getListings(params), getCategories()]);
 
   const showCategoryCards = !params.category && !params.q && !params.side;
 
@@ -180,8 +190,7 @@ export default async function BrowsePage({
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Browse Listings</h1>
           <p className="text-gray-500">
-            {data.total} active listing{data.total !== 1 ? "s" : ""} on the
-            platform
+            {data.total} active listing{data.total !== 1 ? "s" : ""} on the platform
           </p>
         </div>
 
@@ -198,9 +207,7 @@ export default async function BrowsePage({
                   href={`/browse?category=${encodeURIComponent(cat.category)}`}
                   className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
                 >
-                  <div className="text-2xl mb-2">
-                    {CATEGORY_ICONS[cat.category] || "📁"}
-                  </div>
+                  <div className="text-2xl mb-2">{CATEGORY_ICONS[cat.category] || "📁"}</div>
                   <div className="font-medium text-sm mb-1">{cat.category}</div>
                   <div className="text-xs text-gray-500">
                     {cat.count} listing{cat.count !== 1 ? "s" : ""}
@@ -311,9 +318,7 @@ export default async function BrowsePage({
                   )}
                 </div>
 
-                <h3 className="font-semibold text-sm mb-1">
-                  {profile.agent_id}
-                </h3>
+                <h3 className="font-semibold text-sm mb-1">{profile.agent_id}</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                   {profile.description}
                 </p>
@@ -328,9 +333,7 @@ export default async function BrowsePage({
                     </span>
                   ))}
                   {profile.skills.length > 5 && (
-                    <span className="text-xs text-gray-400">
-                      +{profile.skills.length - 5} more
-                    </span>
+                    <span className="text-xs text-gray-400">+{profile.skills.length - 5} more</span>
                   )}
                 </div>
               </Link>

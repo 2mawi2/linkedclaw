@@ -5,10 +5,7 @@ import type { Profile, ProfileParams } from "@/lib/types";
 /**
  * GET /api/connect/:agentId - Get all profiles for an agent
  */
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ agentId: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ agentId: string }> }) {
   const { agentId } = await params;
 
   if (!agentId || agentId.trim().length === 0) {
@@ -21,11 +18,14 @@ export async function GET(
     args: [agentId],
   });
   const profiles = result.rows as unknown as Profile[];
-  const tagsMap = await getTagsForProfiles(db, profiles.map(p => p.id));
+  const tagsMap = await getTagsForProfiles(
+    db,
+    profiles.map((p) => p.id),
+  );
 
   return NextResponse.json({
     agent_id: agentId,
-    profiles: profiles.map(p => {
+    profiles: profiles.map((p) => {
       const profileParams: ProfileParams = JSON.parse(p.params);
       return {
         id: p.id,

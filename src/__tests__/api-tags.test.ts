@@ -22,7 +22,9 @@ afterEach(() => {
   restore();
 });
 
-async function getApiKey(agentId: string): Promise<string> { return createApiKey(agentId); }
+async function getApiKey(agentId: string): Promise<string> {
+  return createApiKey(agentId);
+}
 
 function makeConnectRequest(body: unknown, apiKey?: string): NextRequest {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -34,7 +36,10 @@ function makeConnectRequest(body: unknown, apiKey?: string): NextRequest {
   });
 }
 
-async function createProfile(agentId: string, opts?: { tags?: string[]; category?: string; side?: string; description?: string }) {
+async function createProfile(
+  agentId: string,
+  opts?: { tags?: string[]; category?: string; side?: string; description?: string },
+) {
   const key = await getApiKey(agentId);
   const body: Record<string, unknown> = {
     agent_id: agentId,
@@ -57,25 +62,36 @@ describe("Tags in POST /api/connect", () => {
       sql: "SELECT tag FROM profile_tags WHERE profile_id = ? ORDER BY tag",
       args: [profileId],
     });
-    expect(result.rows.map(r => r.tag)).toEqual(["ai", "typescript", "web3"]);
+    expect(result.rows.map((r) => r.tag)).toEqual(["ai", "typescript", "web3"]);
   });
 
   it("lowercases and trims tags", async () => {
-    const { profileId } = await createProfile("agent-1", { tags: ["  AI  ", "TypeScript", " Web3 "] });
+    const { profileId } = await createProfile("agent-1", {
+      tags: ["  AI  ", "TypeScript", " Web3 "],
+    });
 
     const result = await db.execute({
       sql: "SELECT tag FROM profile_tags WHERE profile_id = ? ORDER BY tag",
       args: [profileId],
     });
-    expect(result.rows.map(r => r.tag)).toEqual(["ai", "typescript", "web3"]);
+    expect(result.rows.map((r) => r.tag)).toEqual(["ai", "typescript", "web3"]);
   });
 
   it("rejects more than 10 tags", async () => {
     const tags = Array.from({ length: 11 }, (_, i) => `tag${i}`);
     const key = await getApiKey("agent-1");
-    const res = await POST(makeConnectRequest({
-      agent_id: "agent-1", side: "offering", category: "dev", params: {}, tags,
-    }, key));
+    const res = await POST(
+      makeConnectRequest(
+        {
+          agent_id: "agent-1",
+          side: "offering",
+          category: "dev",
+          params: {},
+          tags,
+        },
+        key,
+      ),
+    );
     expect(res.status).toBe(400);
     const data = await res.json();
     expect(data.error).toContain("Maximum 10 tags");
@@ -83,10 +99,18 @@ describe("Tags in POST /api/connect", () => {
 
   it("rejects tags longer than 30 characters", async () => {
     const key = await getApiKey("agent-1");
-    const res = await POST(makeConnectRequest({
-      agent_id: "agent-1", side: "offering", category: "dev", params: {},
-      tags: ["a".repeat(31)],
-    }, key));
+    const res = await POST(
+      makeConnectRequest(
+        {
+          agent_id: "agent-1",
+          side: "offering",
+          category: "dev",
+          params: {},
+          tags: ["a".repeat(31)],
+        },
+        key,
+      ),
+    );
     expect(res.status).toBe(400);
     const data = await res.json();
     expect(data.error).toContain("exceeds 30 characters");
@@ -112,7 +136,7 @@ describe("Tags in PATCH /api/profiles/:profileId", () => {
     const patchReq = new NextRequest(`http://localhost:3000/api/profiles/${profileId}`, {
       method: "PATCH",
       body: JSON.stringify({ agent_id: "agent-1", tags: ["new-tag-1", "new-tag-2"] }),
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
     });
     const res = await patchProfile(patchReq, { params: Promise.resolve({ profileId }) });
     const data = await res.json();
@@ -127,7 +151,7 @@ describe("Tags in PATCH /api/profiles/:profileId", () => {
     const patchReq = new NextRequest(`http://localhost:3000/api/profiles/${profileId}`, {
       method: "PATCH",
       body: JSON.stringify({ agent_id: "agent-1", tags: ["solo-tag"] }),
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
     });
     const res = await patchProfile(patchReq, { params: Promise.resolve({ profileId }) });
     expect(res.status).toBe(200);
@@ -163,8 +187,16 @@ describe("Tags in GET /api/connect/:agentId", () => {
 describe("Tags in GET /api/search", () => {
   it("filters profiles by tags", async () => {
     await createProfile("agent-1", { tags: ["ai", "ml"], description: "AI agent" });
-    await createProfile("agent-2", { tags: ["web", "react"], description: "Web agent", category: "design" });
-    await createProfile("agent-3", { tags: ["ai", "web3"], description: "Web3 agent", category: "crypto" });
+    await createProfile("agent-2", {
+      tags: ["web", "react"],
+      description: "Web agent",
+      category: "design",
+    });
+    await createProfile("agent-3", {
+      tags: ["ai", "web3"],
+      description: "Web3 agent",
+      category: "crypto",
+    });
 
     const req = new NextRequest("http://localhost:3000/api/search?tags=ai");
     const res = await searchProfiles(req);
@@ -178,7 +210,11 @@ describe("Tags in GET /api/search", () => {
   it("matches profiles with ANY of the given tags", async () => {
     await createProfile("agent-1", { tags: ["ai"], description: "AI" });
     await createProfile("agent-2", { tags: ["web"], description: "Web", category: "design" });
-    await createProfile("agent-3", { tags: ["blockchain"], description: "Chain", category: "crypto" });
+    await createProfile("agent-3", {
+      tags: ["blockchain"],
+      description: "Chain",
+      category: "crypto",
+    });
 
     const req = new NextRequest("http://localhost:3000/api/search?tags=ai,web");
     const res = await searchProfiles(req);

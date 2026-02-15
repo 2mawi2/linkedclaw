@@ -29,7 +29,17 @@ describe("Architecture", () => {
       const relativePath = file.replace(process.cwd() + "/", "");
 
       // Skip public-only routes that don't need auth
-      const publicRoutes = ["/api/register", "/api/login", "/api/stats", "/api/categories", "/api/search", "/api/tags", "/api/openapi.json", "/api/market", "/skill/"];
+      const publicRoutes = [
+        "/api/register",
+        "/api/login",
+        "/api/stats",
+        "/api/categories",
+        "/api/search",
+        "/api/tags",
+        "/api/openapi.json",
+        "/api/market",
+        "/skill/",
+      ];
       const isPublic = publicRoutes.some((r) => relativePath.includes(r.replace(/\//g, "/")));
       if (isPublic) continue;
 
@@ -57,7 +67,10 @@ describe("Architecture", () => {
         const logLines = lines
           .map((l, i) => ({ line: i + 1, text: l }))
           .filter((l) => /\bconsole\.log\b/.test(l.text) && !l.text.trim().startsWith("//"));
-        expect(logLines, `Found console.log at lines: ${logLines.map((l) => l.line).join(", ")}`).toHaveLength(0);
+        expect(
+          logLines,
+          `Found console.log at lines: ${logLines.map((l) => l.line).join(", ")}`,
+        ).toHaveLength(0);
       });
     }
   });
@@ -70,7 +83,9 @@ describe("Architecture", () => {
       const relativePath = file.replace(process.cwd() + "/", "");
 
       it(`${relativePath} exports at least one HTTP handler`, () => {
-        const hasHandler = /export\s+async\s+function\s+(GET|POST|PUT|PATCH|DELETE)\b/.test(content);
+        const hasHandler = /export\s+async\s+function\s+(GET|POST|PUT|PATCH|DELETE)\b/.test(
+          content,
+        );
         expect(hasHandler, "Must export GET, POST, PUT, PATCH, or DELETE").toBe(true);
       });
     }

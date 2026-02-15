@@ -6,7 +6,9 @@ import type { ConnectRequest, Side } from "@/lib/types";
 
 const VALID_SIDES: Side[] = ["offering", "seeking"];
 
-function validateConnectRequest(body: unknown): { valid: true; data: ConnectRequest } | { valid: false; error: string } {
+function validateConnectRequest(
+  body: unknown,
+): { valid: true; data: ConnectRequest } | { valid: false; error: string } {
   if (!body || typeof body !== "object") return { valid: false, error: "Invalid request body" };
   const b = body as Record<string, unknown>;
 
@@ -30,7 +32,12 @@ function validateConnectRequest(body: unknown): { valid: true; data: ConnectRequ
 }
 
 export async function POST(req: NextRequest) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -53,7 +60,10 @@ export async function POST(req: NextRequest) {
   const data = validation.data;
 
   if (data.agent_id !== auth.agent_id) {
-    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+    return NextResponse.json(
+      { error: "agent_id does not match authenticated key" },
+      { status: 403 },
+    );
   }
 
   // Validate tags if provided
@@ -87,7 +97,14 @@ export async function POST(req: NextRequest) {
 
   await db.execute({
     sql: "INSERT INTO profiles (id, agent_id, side, category, params, description) VALUES (?, ?, ?, ?, ?, ?)",
-    args: [id, data.agent_id, data.side, data.category, JSON.stringify(data.params), data.description ?? null],
+    args: [
+      id,
+      data.agent_id,
+      data.side,
+      data.category,
+      JSON.stringify(data.params),
+      data.description ?? null,
+    ],
   });
 
   if (tags.length > 0) {
@@ -101,7 +118,12 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -114,7 +136,10 @@ export async function DELETE(req: NextRequest) {
   const agentId = searchParams.get("agent_id");
 
   if (!profileId && !agentId) {
-    return NextResponse.json({ error: "Provide profile_id or agent_id query parameter" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Provide profile_id or agent_id query parameter" },
+      { status: 400 },
+    );
   }
 
   const db = await ensureDb();
@@ -129,7 +154,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Profile not found or already inactive" }, { status: 404 });
     }
     if (profile.agent_id !== auth.agent_id) {
-      return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+      return NextResponse.json(
+        { error: "agent_id does not match authenticated key" },
+        { status: 403 },
+      );
     }
     await db.execute({
       sql: "UPDATE profiles SET active = 0 WHERE id = ?",
@@ -139,7 +167,10 @@ export async function DELETE(req: NextRequest) {
   }
 
   if (agentId !== auth.agent_id) {
-    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+    return NextResponse.json(
+      { error: "agent_id does not match authenticated key" },
+      { status: 403 },
+    );
   }
 
   const result = await db.execute({

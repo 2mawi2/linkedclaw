@@ -23,15 +23,20 @@ function getReq(url: string): NextRequest {
 
 /** Insert a profile directly in the DB */
 async function insertProfile(
-  agentId: string, side: string, category: string,
-  opts: { description?: string; active?: number; createdAt?: string } = {}
+  agentId: string,
+  side: string,
+  category: string,
+  opts: { description?: string; active?: number; createdAt?: string } = {},
 ): Promise<string> {
   const id = crypto.randomUUID();
   await db.execute({
     sql: `INSERT INTO profiles (id, agent_id, side, category, params, description, active, created_at)
           VALUES (?, ?, ?, ?, '{}', ?, ?, ?)`,
     args: [
-      id, agentId, side, category,
+      id,
+      agentId,
+      side,
+      category,
       opts.description ?? null,
       opts.active ?? 1,
       opts.createdAt ?? new Date().toISOString().replace("T", " ").slice(0, 19),
@@ -41,7 +46,11 @@ async function insertProfile(
 }
 
 /** Insert a match directly in the DB */
-async function insertMatch(profileAId: string, profileBId: string, status = "matched"): Promise<string> {
+async function insertMatch(
+  profileAId: string,
+  profileBId: string,
+  status = "matched",
+): Promise<string> {
   const matchId = crypto.randomUUID();
   const [aId, bId] = profileAId < profileBId ? [profileAId, profileBId] : [profileBId, profileAId];
   await db.execute({
@@ -53,7 +62,12 @@ async function insertMatch(profileAId: string, profileBId: string, status = "mat
 }
 
 /** Insert a message directly */
-async function insertMessage(matchId: string, senderAgentId: string, content: string, messageType = "negotiation"): Promise<void> {
+async function insertMessage(
+  matchId: string,
+  senderAgentId: string,
+  content: string,
+  messageType = "negotiation",
+): Promise<void> {
   await db.execute({
     sql: `INSERT INTO messages (match_id, sender_agent_id, content, message_type) VALUES (?, ?, ?, ?)`,
     args: [matchId, senderAgentId, content, messageType],
@@ -62,20 +76,18 @@ async function insertMessage(matchId: string, senderAgentId: string, content: st
 
 describe("GET /api/agents/:agentId/summary", () => {
   it("returns 404 for unknown agent", async () => {
-    const res = await summaryGET(
-      getReq("/api/agents/nobody/summary"),
-      { params: Promise.resolve({ agentId: "nobody" }) }
-    );
+    const res = await summaryGET(getReq("/api/agents/nobody/summary"), {
+      params: Promise.resolve({ agentId: "nobody" }),
+    });
     expect(res.status).toBe(404);
   });
 
   it("returns basic summary for agent with one profile", async () => {
     await insertProfile("alice", "offering", "dev", { description: "I build things" });
 
-    const res = await summaryGET(
-      getReq("/api/agents/alice/summary"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await summaryGET(getReq("/api/agents/alice/summary"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     expect(res.status).toBe(200);
     const data = await res.json();
 
@@ -99,10 +111,9 @@ describe("GET /api/agents/:agentId/summary", () => {
     const seekingId = await insertProfile("bob", "seeking", "dev");
     await insertMatch(offeringId, seekingId, "matched");
 
-    const res = await summaryGET(
-      getReq("/api/agents/alice/summary"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await summaryGET(getReq("/api/agents/alice/summary"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.match_stats.total_matches).toBe(1);
@@ -116,10 +127,9 @@ describe("GET /api/agents/:agentId/summary", () => {
 
     await insertMessage(matchId, "alice", "Hello Bob!", "negotiation");
 
-    const res = await summaryGET(
-      getReq("/api/agents/alice/summary"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await summaryGET(getReq("/api/agents/alice/summary"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.recent_activity).toHaveLength(1);
@@ -137,10 +147,9 @@ describe("GET /api/agents/:agentId/summary", () => {
     const b2 = await insertProfile("bob", "seeking", "design");
     await insertMatch(a2, b2, "rejected");
 
-    const res = await summaryGET(
-      getReq("/api/agents/alice/summary"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await summaryGET(getReq("/api/agents/alice/summary"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.match_stats.total_matches).toBe(2);
@@ -153,10 +162,9 @@ describe("GET /api/agents/:agentId/summary", () => {
     await insertProfile("alice", "offering", "dev");
     await insertProfile("alice", "seeking", "design");
 
-    const res = await summaryGET(
-      getReq("/api/agents/alice/summary"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await summaryGET(getReq("/api/agents/alice/summary"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.profile_count).toBe(2);
@@ -164,12 +172,14 @@ describe("GET /api/agents/:agentId/summary", () => {
   });
 
   it("excludes inactive profiles from count but keeps member_since", async () => {
-    await insertProfile("alice", "offering", "dev", { active: 0, createdAt: "2024-01-01 00:00:00" });
+    await insertProfile("alice", "offering", "dev", {
+      active: 0,
+      createdAt: "2024-01-01 00:00:00",
+    });
 
-    const res = await summaryGET(
-      getReq("/api/agents/alice/summary"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await summaryGET(getReq("/api/agents/alice/summary"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.profile_count).toBe(0);
@@ -186,10 +196,9 @@ describe("GET /api/agents/:agentId/summary", () => {
       await insertMessage(matchId, "alice", `Message ${i}`);
     }
 
-    const res = await summaryGET(
-      getReq("/api/agents/alice/summary"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await summaryGET(getReq("/api/agents/alice/summary"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.recent_activity).toHaveLength(5);
@@ -203,10 +212,9 @@ describe("GET /api/agents/:agentId/summary", () => {
     await insertMessage(matchId, "alice", "From Alice");
     await insertMessage(matchId, "bob", "From Bob");
 
-    const res = await summaryGET(
-      getReq("/api/agents/alice/summary"),
-      { params: Promise.resolve({ agentId: "alice" }) }
-    );
+    const res = await summaryGET(getReq("/api/agents/alice/summary"), {
+      params: Promise.resolve({ agentId: "alice" }),
+    });
     const data = await res.json();
 
     expect(data.recent_activity).toHaveLength(1);

@@ -46,11 +46,17 @@ async function getListing(id: string): Promise<ListingDetail | null> {
     skills: params.skills ?? [],
     rate_range:
       params.rate_min != null && params.rate_max != null
-        ? { min: Number(params.rate_min), max: Number(params.rate_max), currency: String(params.currency || "USD") }
+        ? {
+            min: Number(params.rate_min),
+            max: Number(params.rate_max),
+            currency: String(params.currency || "USD"),
+          }
         : null,
     remote: params.remote ?? null,
     description: String(profile.description || ""),
-    availability: String((profile as Profile & { availability?: string }).availability ?? "available"),
+    availability: String(
+      (profile as Profile & { availability?: string }).availability ?? "available",
+    ),
     tags,
     reputation: {
       avg_rating: Math.round(Number(rep.avg_rating ?? 0) * 100) / 100,
@@ -89,11 +95,7 @@ function AvailabilityDot({ status }: { status: string }) {
   );
 }
 
-export default async function ListingDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const listing = await getListing(id);
 
@@ -159,9 +161,7 @@ export default async function ListingDetailPage({
                 <span className="text-sm font-normal text-gray-500"> /hr</span>
               </p>
               {listing.remote !== null && (
-                <p className="text-sm text-gray-500 mt-1 capitalize">
-                  {listing.remote}
-                </p>
+                <p className="text-sm text-gray-500 mt-1 capitalize">{listing.remote}</p>
               )}
             </div>
           )}
@@ -225,7 +225,8 @@ export default async function ListingDetailPage({
               <p className="text-gray-700 dark:text-gray-300">
                 ⭐ {listing.reputation.avg_rating.toFixed(1)} / 5.0
                 <span className="text-sm text-gray-500 ml-2">
-                  ({listing.reputation.total_reviews} review{listing.reputation.total_reviews !== 1 ? "s" : ""})
+                  ({listing.reputation.total_reviews} review
+                  {listing.reputation.total_reviews !== 1 ? "s" : ""})
                 </span>
               </p>
             </div>

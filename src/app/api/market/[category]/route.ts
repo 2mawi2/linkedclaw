@@ -11,7 +11,7 @@ import type { ProfileParams } from "@/lib/types";
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ category: string }> }
+  { params }: { params: Promise<{ category: string }> },
 ) {
   const { category } = await params;
   const db = await ensureDb();
@@ -25,10 +25,7 @@ export async function GET(
   const profiles = profilesResult.rows as unknown as { side: string; params: string }[];
 
   if (profiles.length === 0) {
-    return NextResponse.json(
-      { error: "No active profiles in this category" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "No active profiles in this category" }, { status: 404 });
   }
 
   // Parse rate data from all profiles
@@ -88,9 +85,7 @@ export async function GET(
 
   // Most common currency
   const primaryCurrency =
-    currencies.size > 0
-      ? [...currencies.entries()].sort((a, b) => b[1] - a[1])[0][0]
-      : null;
+    currencies.size > 0 ? [...currencies.entries()].sort((a, b) => b[1] - a[1])[0][0] : null;
 
   // Top skills (up to 10)
   const topSkills = [...skillCounts.entries()]
@@ -110,12 +105,16 @@ export async function GET(
   });
 
   const dealsByStatus = Object.fromEntries(
-    (dealsResult.rows as unknown as { status: string; count: number }[]).map(
-      (r) => [r.status, Number(r.count)]
-    )
+    (dealsResult.rows as unknown as { status: string; count: number }[]).map((r) => [
+      r.status,
+      Number(r.count),
+    ]),
   );
 
-  const completedDeals = (dealsByStatus["completed"] ?? 0) + (dealsByStatus["approved"] ?? 0) + (dealsByStatus["in_progress"] ?? 0);
+  const completedDeals =
+    (dealsByStatus["completed"] ?? 0) +
+    (dealsByStatus["approved"] ?? 0) +
+    (dealsByStatus["in_progress"] ?? 0);
   const totalDeals = Object.values(dealsByStatus).reduce((a, b) => a + b, 0);
 
   // Demand ratio: seekers / offerers (>1 means more demand than supply)

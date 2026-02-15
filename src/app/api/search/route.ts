@@ -9,12 +9,22 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
   const side = searchParams.get("side");
-  const skills = searchParams.get("skill")?.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-  const tags = searchParams.get("tags")?.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+  const skills = searchParams
+    .get("skill")
+    ?.split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  const tags = searchParams
+    .get("tags")
+    ?.split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
   const q = searchParams.get("q");
   const excludeAgent = searchParams.get("exclude_agent");
   const availability = searchParams.get("availability"); // filter by availability status
-  const minRating = searchParams.get("min_rating") ? parseFloat(searchParams.get("min_rating")!) : null;
+  const minRating = searchParams.get("min_rating")
+    ? parseFloat(searchParams.get("min_rating")!)
+    : null;
   const sortBy = searchParams.get("sort"); // "rating" or default (created_at)
   const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "20"), 1), 100);
   const offset = Math.max(parseInt(searchParams.get("offset") ?? "0"), 0);
@@ -51,7 +61,10 @@ export async function GET(req: NextRequest) {
 
   if (availability) {
     if (!["available", "busy", "away"].includes(availability)) {
-      return NextResponse.json({ error: "availability must be 'available', 'busy', or 'away'" }, { status: 400 });
+      return NextResponse.json(
+        { error: "availability must be 'available', 'busy', or 'away'" },
+        { status: 400 },
+      );
     }
     conditions.push("COALESCE(p.availability, 'available') = ?");
     args.push(availability);
@@ -59,12 +72,17 @@ export async function GET(req: NextRequest) {
 
   if (tags && tags.length > 0) {
     const tagPlaceholders = tags.map(() => "?").join(", ");
-    conditions.push(`p.id IN (SELECT profile_id FROM profile_tags WHERE tag IN (${tagPlaceholders}))`);
+    conditions.push(
+      `p.id IN (SELECT profile_id FROM profile_tags WHERE tag IN (${tagPlaceholders}))`,
+    );
     args.push(...tags);
   }
 
   if (minRating !== null && (isNaN(minRating) || minRating < 0 || minRating > 5)) {
-    return NextResponse.json({ error: "min_rating must be a number between 0 and 5" }, { status: 400 });
+    return NextResponse.json(
+      { error: "min_rating must be a number between 0 and 5" },
+      { status: 400 },
+    );
   }
 
   const whereClause = conditions.join(" AND ");
@@ -82,9 +100,10 @@ export async function GET(req: NextRequest) {
     havingArgs.push(minRating);
   }
 
-  const orderClause = sortBy === "rating"
-    ? "ORDER BY COALESCE(rep.avg_rating, 0) DESC, rep.total_reviews DESC"
-    : "ORDER BY p.created_at DESC";
+  const orderClause =
+    sortBy === "rating"
+      ? "ORDER BY COALESCE(rep.avg_rating, 0) DESC, rep.total_reviews DESC"
+      : "ORDER BY p.created_at DESC";
 
   const countResult = await db.execute({
     sql: `SELECT COUNT(*) as total FROM profiles p ${repSubquery} WHERE ${whereClause} ${havingClause}`,
@@ -101,20 +120,23 @@ export async function GET(req: NextRequest) {
   // Filter by skills in-memory (since params is JSON)
   let filtered = profiles;
   if (skills && skills.length > 0) {
-    filtered = profiles.filter(p => {
+    filtered = profiles.filter((p) => {
       const profileParams: ProfileParams = JSON.parse(p.params);
-      const profileSkills = (profileParams.skills ?? []).map(s => s.toLowerCase());
-      return skills.some(s => profileSkills.includes(s));
+      const profileSkills = (profileParams.skills ?? []).map((s) => s.toLowerCase());
+      return skills.some((s) => profileSkills.includes(s));
     });
   }
 
-  const tagsMap = await getTagsForProfiles(db, filtered.map(p => p.id));
+  const tagsMap = await getTagsForProfiles(
+    db,
+    filtered.map((p) => p.id),
+  );
 
   return NextResponse.json({
     total: skills ? filtered.length : total,
     limit,
     offset,
-    profiles: filtered.map(p => {
+    profiles: filtered.map((p) => {
       const profileParams: ProfileParams = JSON.parse(p.params);
       const pr = p as Profile & { agent_avg_rating?: number; agent_total_reviews?: number };
       return {
@@ -123,9 +145,14 @@ export async function GET(req: NextRequest) {
         side: p.side,
         category: p.category,
         skills: profileParams.skills ?? [],
-        rate_range: profileParams.rate_min != null && profileParams.rate_max != null
-          ? { min: profileParams.rate_min, max: profileParams.rate_max, currency: profileParams.currency ?? "USD" }
-          : null,
+        rate_range:
+          profileParams.rate_min != null && profileParams.rate_max != null
+            ? {
+                min: profileParams.rate_min,
+                max: profileParams.rate_max,
+                currency: profileParams.currency ?? "USD",
+              }
+            : null,
         remote: profileParams.remote ?? null,
         description: p.description,
         availability: (p as Profile & { availability?: string }).availability ?? "available",

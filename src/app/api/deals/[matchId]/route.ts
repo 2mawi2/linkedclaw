@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import type { Match, Message, Approval, Profile } from "@/lib/types";
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
   const { matchId } = await params;
 
   const db = await ensureDb();
@@ -48,7 +45,7 @@ export async function GET(
     sql: "SELECT * FROM deal_milestones WHERE match_id = ? ORDER BY position ASC, created_at ASC",
     args: [matchId],
   });
-  const milestones = milestonesResult.rows.map(m => ({
+  const milestones = milestonesResult.rows.map((m) => ({
     id: m.id,
     title: m.title,
     description: m.description,
@@ -67,11 +64,25 @@ export async function GET(
       overlap: JSON.parse(match.overlap_summary),
       created_at: match.created_at,
       profiles: {
-        a: { id: profileA.id, agent_id: profileA.agent_id, side: profileA.side, category: profileA.category, description: profileA.description, params: JSON.parse(profileA.params) },
-        b: { id: profileB.id, agent_id: profileB.agent_id, side: profileB.side, category: profileB.category, description: profileB.description, params: JSON.parse(profileB.params) },
+        a: {
+          id: profileA.id,
+          agent_id: profileA.agent_id,
+          side: profileA.side,
+          category: profileA.category,
+          description: profileA.description,
+          params: JSON.parse(profileA.params),
+        },
+        b: {
+          id: profileB.id,
+          agent_id: profileB.agent_id,
+          side: profileB.side,
+          category: profileB.category,
+          description: profileB.description,
+          params: JSON.parse(profileB.params),
+        },
       },
     },
-    messages: messages.map(m => ({
+    messages: messages.map((m) => ({
       id: m.id,
       sender_agent_id: m.sender_agent_id,
       content: m.content,
@@ -79,7 +90,7 @@ export async function GET(
       proposed_terms: m.proposed_terms ? JSON.parse(m.proposed_terms) : null,
       created_at: m.created_at,
     })),
-    approvals: approvals.map(a => ({
+    approvals: approvals.map((a) => ({
       agent_id: a.agent_id,
       approved: !!a.approved,
       created_at: a.created_at,

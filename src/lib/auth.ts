@@ -50,7 +50,11 @@ export async function authenticateRequest(req: NextRequest): Promise<AuthResult 
     sql: "UPDATE api_keys SET last_used_at = datetime('now') WHERE id = ?",
     args: [row.id as string],
   });
-  return { agent_id: row.agent_id as string, key_id: row.id as string, user_id: (row.user_id as string) || undefined };
+  return {
+    agent_id: row.agent_id as string,
+    key_id: row.id as string,
+    user_id: (row.user_id as string) || undefined,
+  };
 }
 
 export async function authenticateSession(req: NextRequest): Promise<AuthResult | null> {

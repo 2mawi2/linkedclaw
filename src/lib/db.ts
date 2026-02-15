@@ -47,7 +47,9 @@ export function createTestDb(): Client {
 export function _setDb(replacement: Client): () => void {
   const prev = client;
   client = replacement;
-  return () => { client = prev; };
+  return () => {
+    client = prev;
+  };
 }
 
 /** Run schema migrations. Must be called before using the database. */
@@ -168,7 +170,9 @@ export async function migrate(db: Client): Promise<void> {
 
   // Add availability column to profiles
   try {
-    await db.execute("ALTER TABLE profiles ADD COLUMN availability TEXT NOT NULL DEFAULT 'available' CHECK (availability IN ('available', 'busy', 'away'))");
+    await db.execute(
+      "ALTER TABLE profiles ADD COLUMN availability TEXT NOT NULL DEFAULT 'available' CHECK (availability IN ('available', 'busy', 'away'))",
+    );
   } catch {
     // Column already exists
   }
@@ -268,7 +272,9 @@ export async function migrate(db: Client): Promise<void> {
 }
 
 /** Validate and normalize tags array. Returns normalized tags or error string. */
-export function validateTags(tags: unknown): { valid: true; tags: string[] } | { valid: false; error: string } {
+export function validateTags(
+  tags: unknown,
+): { valid: true; tags: string[] } | { valid: false; error: string } {
   if (!Array.isArray(tags)) {
     return { valid: false, error: "tags must be an array" };
   }
@@ -307,11 +313,14 @@ export async function getTagsForProfile(db: Client, profileId: string): Promise<
     sql: "SELECT tag FROM profile_tags WHERE profile_id = ? ORDER BY tag",
     args: [profileId],
   });
-  return result.rows.map(r => r.tag as string);
+  return result.rows.map((r) => r.tag as string);
 }
 
 /** Get tags for multiple profiles at once. */
-export async function getTagsForProfiles(db: Client, profileIds: string[]): Promise<Record<string, string[]>> {
+export async function getTagsForProfiles(
+  db: Client,
+  profileIds: string[],
+): Promise<Record<string, string[]>> {
   if (profileIds.length === 0) return {};
   const placeholders = profileIds.map(() => "?").join(", ");
   const result = await db.execute({

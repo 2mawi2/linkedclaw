@@ -6,11 +6,13 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
  * GET /api/agents/:agentId/summary
  * Public endpoint - returns a consolidated view of an agent's presence.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ agentId: string }> }
-) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, RATE_LIMITS.READ.prefix);
+export async function GET(req: NextRequest, { params }: { params: Promise<{ agentId: string }> }) {
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    RATE_LIMITS.READ.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const { agentId } = await params;
@@ -29,7 +31,11 @@ export async function GET(
     args: [agentId],
   });
   const profiles = profilesResult.rows as unknown as Array<{
-    id: string; side: string; category: string; description: string | null; created_at: string;
+    id: string;
+    side: string;
+    category: string;
+    description: string | null;
+    created_at: string;
   }>;
 
   // member_since: earliest profile created_at (including inactive)
@@ -37,7 +43,8 @@ export async function GET(
     sql: `SELECT MIN(created_at) as member_since FROM profiles WHERE agent_id = ?`,
     args: [agentId],
   });
-  const memberSince = (memberSinceResult.rows[0] as unknown as { member_since: string | null }).member_since;
+  const memberSince = (memberSinceResult.rows[0] as unknown as { member_since: string | null })
+    .member_since;
 
   if (!memberSince) {
     return NextResponse.json({ error: "Agent not found" }, { status: 404 });
@@ -48,7 +55,9 @@ export async function GET(
     sql: `SELECT id FROM profiles WHERE agent_id = ?`,
     args: [agentId],
   });
-  const allProfileIds = (allProfilesResult.rows as unknown as Array<{ id: string }>).map(p => p.id);
+  const allProfileIds = (allProfilesResult.rows as unknown as Array<{ id: string }>).map(
+    (p) => p.id,
+  );
 
   let matchStats = { total_matches: 0, active_deals: 0, completed_deals: 0, success_rate: 0 };
   const placeholders = allProfileIds.map(() => "?").join(",");
@@ -65,7 +74,10 @@ export async function GET(
       args: [...allProfileIds, ...allProfileIds],
     });
     const row = matchStatsResult.rows[0] as unknown as {
-      total_matches: number; active_deals: number; completed_deals: number; failed_deals: number;
+      total_matches: number;
+      active_deals: number;
+      completed_deals: number;
+      failed_deals: number;
     };
     const total = Number(row.total_matches);
     const completed = Number(row.completed_deals);
@@ -88,9 +100,15 @@ export async function GET(
           LIMIT 5`,
     args: [agentId],
   });
-  const recentActivity = (recentActivityResult.rows as unknown as Array<{
-    match_id: string; content: string; message_type: string; created_at: string; sender_agent_id: string;
-  }>).map(r => ({
+  const recentActivity = (
+    recentActivityResult.rows as unknown as Array<{
+      match_id: string;
+      content: string;
+      message_type: string;
+      created_at: string;
+      sender_agent_id: string;
+    }>
+  ).map((r) => ({
     match_id: r.match_id,
     type: r.message_type,
     content: r.content,
@@ -134,11 +152,14 @@ export async function GET(
       args: [...allProfileIds, ...allProfileIds, agentId],
     });
 
-    verifiedCategories = (completedResult.rows as unknown as Array<{ category: string; deal_count: number }>)
-      .map(r => ({
+    verifiedCategories = (
+      completedResult.rows as unknown as Array<{ category: string; deal_count: number }>
+    )
+      .map((r) => ({
         category: r.category,
         completed_deals: Number(r.deal_count),
-        level: Number(r.deal_count) >= 10 ? "gold" : Number(r.deal_count) >= 3 ? "silver" : "bronze",
+        level:
+          Number(r.deal_count) >= 10 ? "gold" : Number(r.deal_count) >= 3 ? "silver" : "bronze",
       }))
       .sort((a, b) => b.completed_deals - a.completed_deals);
 
@@ -155,15 +176,17 @@ export async function GET(
     if (totalCompleted >= 1) badges.push({ id: "first_deal", name: "First Deal" });
     if (totalCompleted >= 5) badges.push({ id: "prolific", name: "Prolific" });
     if (totalCompleted >= 10) badges.push({ id: "veteran", name: "Veteran" });
-    if (verifiedCategories.length >= 3) badges.push({ id: "multi_category", name: "Multi-Category" });
-    if (repTotal >= 3 && avgRating >= 4.0) badges.push({ id: "highly_rated", name: "Highly Rated" });
+    if (verifiedCategories.length >= 3)
+      badges.push({ id: "multi_category", name: "Multi-Category" });
+    if (repTotal >= 3 && avgRating >= 4.0)
+      badges.push({ id: "highly_rated", name: "Highly Rated" });
     if (repTotal >= 3 && avgRating >= 4.8) badges.push({ id: "exceptional", name: "Exceptional" });
   }
 
   return NextResponse.json({
     agent_id: agentId,
     profile_count: profiles.length,
-    active_profiles: profiles.map(p => ({
+    active_profiles: profiles.map((p) => ({
       id: p.id,
       side: p.side,
       category: p.category,

@@ -26,7 +26,7 @@ async function deliverWebhook(
   url: string,
   secret: string,
   payload: WebhookPayload,
-  failureCount: number
+  failureCount: number,
 ): Promise<void> {
   const body = JSON.stringify(payload);
   const signature = signPayload(body, secret);
@@ -62,7 +62,11 @@ async function deliverWebhook(
   }
 }
 
-async function incrementFailure(db: Client, webhookId: string, currentCount: number): Promise<void> {
+async function incrementFailure(
+  db: Client,
+  webhookId: string,
+  currentCount: number,
+): Promise<void> {
   const newCount = currentCount + 1;
   if (newCount >= MAX_FAILURES) {
     // Auto-disable after too many failures
@@ -85,7 +89,7 @@ export async function fireWebhooks(
   event: NotificationType,
   matchId: string | undefined,
   fromAgentId: string | undefined,
-  summary: string
+  summary: string,
 ): Promise<void> {
   try {
     const result = await db.execute({
@@ -108,7 +112,7 @@ export async function fireWebhooks(
       const events = row.events as string;
       // Check if webhook subscribes to this event
       if (events !== "*") {
-        const eventList = events.split(",").map(e => e.trim());
+        const eventList = events.split(",").map((e) => e.trim());
         if (!eventList.includes(event)) continue;
       }
 
@@ -119,7 +123,7 @@ export async function fireWebhooks(
         row.url as string,
         row.secret as string,
         payload,
-        row.failure_count as number
+        row.failure_count as number,
       ).catch(() => {}); // swallow errors - webhook delivery must never break the caller
     }
   } catch {

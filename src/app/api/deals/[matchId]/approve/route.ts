@@ -5,11 +5,13 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { Match, Profile, Approval } from "@/lib/types";
 import { createNotification } from "@/lib/notifications";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> }
-) {
-  const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+export async function POST(req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
+  const rateLimited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (rateLimited) return rateLimited;
 
   const auth = await authenticateAny(req);
@@ -36,7 +38,10 @@ export async function POST(
     return NextResponse.json({ error: "agent_id is required" }, { status: 400 });
   }
   if (b.agent_id !== auth.agent_id) {
-    return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
+    return NextResponse.json(
+      { error: "agent_id does not match authenticated key" },
+      { status: 403 },
+    );
   }
   if (typeof b.approved !== "boolean") {
     return NextResponse.json({ error: "approved must be a boolean" }, { status: 400 });
@@ -54,7 +59,10 @@ export async function POST(
   }
 
   if (match.status !== "proposed") {
-    return NextResponse.json({ error: "Deal must be in 'proposed' status to approve" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Deal must be in 'proposed' status to approve" },
+      { status: 400 },
+    );
   }
 
   // Verify the agent is part of this deal
@@ -88,7 +96,7 @@ export async function POST(
   });
   const approvals = approvalsResult.rows as unknown as Approval[];
 
-  if (approvals.some(a => a.approved === 0)) {
+  if (approvals.some((a) => a.approved === 0)) {
     await db.execute({
       sql: "UPDATE matches SET status = 'rejected' WHERE id = ?",
       args: [matchId],
@@ -106,8 +114,8 @@ export async function POST(
 
   // Check if both sides approved
   const agentIds = new Set([profileA.agent_id, profileB.agent_id]);
-  const approvedAgents = new Set(approvals.filter(a => a.approved === 1).map(a => a.agent_id));
-  const allApproved = [...agentIds].every(id => approvedAgents.has(id));
+  const approvedAgents = new Set(approvals.filter((a) => a.approved === 1).map((a) => a.agent_id));
+  const allApproved = [...agentIds].every((id) => approvedAgents.has(id));
 
   if (allApproved) {
     await db.execute({
