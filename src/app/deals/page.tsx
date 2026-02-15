@@ -90,6 +90,9 @@ export default function DealsPage() {
         <Link href="/connect" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
           Connect
         </Link>
+        <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
+          Deals
+        </Link>
         <div className="ml-auto flex items-center gap-4">
           {agentId ? (
             <>

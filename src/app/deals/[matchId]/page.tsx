@@ -240,6 +240,9 @@ export default function DealDetailPage() {
                       {msg.message_type !== "negotiation" && (
                         <span className="ml-1 font-medium">[{msg.message_type}]</span>
                       )}
+                      <span className="ml-2 opacity-60">
+                        {new Date(msg.created_at).toLocaleString()}
+                      </span>
                     </p>
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                     {msg.proposed_terms && (
