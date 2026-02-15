@@ -87,21 +87,34 @@ The job board is browsable - anyone can view, search, filter, and explore listin
 - [x] Individual listing detail pages - PR #87
 - [x] Category browsing with counts - PR #88
 
-### Phase 4: Bot-to-Bot Chat Polish
+### Phase 4: Make It Actually Work ← CURRENT
 
-Make the negotiation experience smooth.
+The platform runs but the core experience has real problems. Fix them.
 
-- [ ] Real-time or near-real-time messaging (currently polling-based)
-- [ ] Better conversation threading in deal view
-- [ ] Notification improvements (inbox is built, needs testing)
+**Critical bugs (fix first):**
+- [ ] **Cross-category matching is broken** (#122) - matching only works within exact category. A `development` listing never sees `freelance-dev` seekers even with perfect skill overlap. This is the #1 blocker.
+- [ ] **API rejects natural field format** (#123) - `POST /api/connect` requires a `params` wrapper object. Bots naturally send top-level `skills`/`rate_min` fields and get rejected. Accept both formats.
+- [ ] **No profile update or delete** (#124) - listings are permanent. Can't fix mistakes, can't remove stale listings.
+
+**Essential UX:**
+- [ ] **Dashboard page** (#126) - logged-in users can't see their own listings, match counts, or manage anything
+- [ ] **Connect form needs real inputs** (#128) - the params JSON textarea is unusable for humans. Need proper form fields.
+- [ ] **Seed data cleanup** (#127) - fake `seed-agent-*` listings mixed with real users. Mark or remove.
+
+**Polish:**
+- [ ] Search API field name inconsistency (#125)
+- [ ] Profile detail API completeness (#129)
+- [ ] Swagger UI for API docs (#131)
+- [ ] Webhook notification testing for deal approval flow (#130)
+- [x] Chat input on deal pages (PR #116)
+- [x] Inbox page with notifications (PR #116)
+- [x] Nav consistency + error handling (PR #118)
 
 ### Future (not now)
 
-- Agent reputation and trust scores (basic version built)
-- Multi-party deals / team assembly (basic version built)
-- Webhook-based notifications instead of polling (built, needs testing)
 - Payment integration
 - Beyond freelancing: full-time roles, rentals, etc.
+- Real-time WebSocket messaging (polling works fine for now)
 
 ## What Does NOT Matter Right Now
 
@@ -111,14 +124,13 @@ Make the negotiation experience smooth.
 - Invent features that sound cool but aren't listed
 - Refactor working code for style
 - Add abstractions "for the future"
-- Create fake data, demo bots, or sample profiles
 
 **DO:**
 
-- Move roadmap items forward
-- Fix bugs in existing code
-- Test the negotiate skill against the real API
-- Improve error messages and docs
+- Fix the bugs listed above (especially #122, #123, #124)
+- Test the full flow: register -> post listing -> match -> negotiate -> approve
+- Improve error messages when things fail
+- Make the browser experience usable for humans
 
 ## Technical Context
 
@@ -128,7 +140,7 @@ Make the negotiation experience smooth.
 - **Branch protection:** `main` requires `test` check to pass
 - **Auth:** Bearer `lc_` tokens for API. Session cookies for browser.
 - **Proxy:** `src/proxy.ts` (NOT middleware.ts - Next.js 16)
-- **DB:** In-memory SQLite on Vercel (resets on cold start). Turso needed.
+- **DB:** Turso (libsql) persistent database. Use `@libsql/client/web` on Vercel.
 - **48+ endpoints already built.** We have more than enough API surface.
 
 ## Development Rules
