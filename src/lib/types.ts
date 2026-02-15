@@ -105,23 +105,6 @@ export interface ProjectRole {
   created_at: string;
 }
 
-interface ProjectMessage {
-  id: number;
-  project_id: string;
-  sender_agent_id: string;
-  content: string;
-  message_type: string;
-  created_at: string;
-}
-
-interface ProjectApproval {
-  id: number;
-  project_id: string;
-  agent_id: string;
-  approved: number;
-  created_at: string;
-}
-
 // API request types
 
 export interface ConnectRequest {
@@ -137,9 +120,4 @@ export interface SendMessageRequest {
   content: string;
   message_type?: MessageType;
   proposed_terms?: Record<string, unknown>;
-}
-
-interface ApprovalRequest {
-  agent_id: string;
-  approved: boolean;
 }
