@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 /**
@@ -15,7 +15,7 @@ export async function GET(
     return NextResponse.json({ error: "agentId is required" }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await ensureDb();
   const result = await db.execute({
     sql: "SELECT * FROM profiles WHERE agent_id = ? AND active = 1 ORDER BY created_at DESC",
     args: [agentId],

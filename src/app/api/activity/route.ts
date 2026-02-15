@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
 
   const since = searchParams.get("since");
 
-  const db = getDb();
+  const db = await ensureDb();
 
   const profilesResult = await db.execute({
     sql: "SELECT id FROM profiles WHERE agent_id = ?",

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { Match, Profile, Approval } from "@/lib/types";
@@ -41,7 +41,7 @@ export async function POST(
     return NextResponse.json({ error: "approved must be a boolean" }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await ensureDb();
   const matchResult = await db.execute({
     sql: "SELECT * FROM matches WHERE id = ?",
     args: [matchId],

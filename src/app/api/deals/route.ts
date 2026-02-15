@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 
 interface DealRow {
   id: string;
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "agent_id query parameter is required" }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await ensureDb();
 
   // Find all profile ids for this agent
   const profilesResult = await db.execute({

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import { generateApiKey } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   const { raw, hash } = generateApiKey();
   const id = crypto.randomUUID();
 
-  const db = getDb();
+  const db = await ensureDb();
   await db.execute({
     sql: "INSERT INTO api_keys (id, agent_id, key_hash) VALUES (?, ?, ?)",
     args: [id, agentId, hash],

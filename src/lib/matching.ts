@@ -1,8 +1,8 @@
-import { getDb } from "./db";
+import { ensureDb } from "./db";
 import type { Profile, ProfileParams, OverlapSummary } from "./types";
 
 export async function findMatches(profileId: string): Promise<Array<{ matchId: string; counterpart: Profile; overlap: OverlapSummary }>> {
-  const db = getDb();
+  const db = await ensureDb();
   const profileResult = await db.execute({
     sql: "SELECT * FROM profiles WHERE id = ? AND active = 1",
     args: [profileId],

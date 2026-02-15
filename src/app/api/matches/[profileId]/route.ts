@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findMatches } from "@/lib/matching";
-import { getDb } from "@/lib/db";
+import { ensureDb } from "@/lib/db";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 export async function GET(
@@ -13,7 +13,7 @@ export async function GET(
     return NextResponse.json({ error: "profileId is required" }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await ensureDb();
   const profileResult = await db.execute({
     sql: "SELECT * FROM profiles WHERE id = ? AND active = 1",
     args: [profileId],
