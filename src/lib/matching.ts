@@ -65,15 +65,36 @@ function computeOverlap(a: Profile, b: Profile): OverlapSummary | null {
     }
   }
 
-  // Score: skill match ratio + rate overlap bonus
-  const allSkills = new Set([...aSkills, ...bSkills]);
-  const skillScore = allSkills.size > 0 ? matchingSkills.length / allSkills.size : 0.5;
-  let rateScore = 0.5;
+  // Score: category match (base) + skill overlap + rate compatibility
+  // Category match is already guaranteed by the query, so start with a base score
+  const categoryBase = 0.3; // 30 points just for same category + opposite sides
+
+  // Skill score: use Jaccard-like but weighted toward the SMALLER set
+  // (an agent seeking [typescript] matching an agent offering [typescript, react, node] is a strong match)
+  const minSkillSet = Math.min(aSkills.length, bSkills.length);
+  let skillScore = 0.5; // default when no skills specified
+  if (minSkillSet > 0) {
+    // What fraction of the smaller skill set is covered?
+    skillScore = matchingSkills.length / minSkillSet;
+  } else if (aSkills.length === 0 && bSkills.length === 0) {
+    skillScore = 0.5; // both have no skills - neutral
+  }
+
+  let rateScore = 0.5; // default when no rates specified
   if (rateOverlap && aParams.rate_max != null && bParams.rate_min != null) {
     const totalRange = Math.max(aParams.rate_max, bParams.rate_max ?? 0) - Math.min(aParams.rate_min ?? 0, bParams.rate_min);
     rateScore = totalRange > 0 ? (rateOverlap.max - rateOverlap.min) / totalRange : 0.5;
   }
-  const score = Math.round((skillScore * 0.6 + rateScore * 0.4) * 100);
+
+  // Remote compatibility bonus
+  const remoteBonus = remoteCompatible ? 0.05 : 0;
+
+  // Description bonus: both have descriptions = more info to work with
+  const descBonus = (a.description && b.description) ? 0.05 : 0;
+
+  const score = Math.min(100, Math.round(
+    (categoryBase + skillScore * 0.35 + rateScore * 0.2 + remoteBonus + descBonus) * 100
+  ));
 
   return { matching_skills: matchingSkills, rate_overlap: rateOverlap, remote_compatible: remoteCompatible, score };
 }
