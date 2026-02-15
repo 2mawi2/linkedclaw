@@ -14,9 +14,10 @@ export async function findMatches(
   if (!profile) return [];
 
   const oppositeSide = profile.side === "offering" ? "seeking" : "offering";
+  // Match across all categories - skills and rates are the real signals
   const candidatesResult = await db.execute({
-    sql: "SELECT * FROM profiles WHERE side = ? AND category = ? AND active = 1 AND id != ?",
-    args: [oppositeSide, profile.category, profileId],
+    sql: "SELECT * FROM profiles WHERE side = ? AND active = 1 AND agent_id != ?",
+    args: [oppositeSide, profile.agent_id],
   });
   const candidates = candidatesResult.rows as unknown as Profile[];
 
@@ -98,7 +99,7 @@ function computeOverlap(a: Profile, b: Profile): OverlapSummary | null {
     }
   }
 
-  const categoryBase = 0.3;
+  const categoryBonus = a.category === b.category ? 0.15 : 0;
 
   const minSkillSet = Math.min(aSkills.length, bSkills.length);
   let skillScore = 0.5;
@@ -122,7 +123,7 @@ function computeOverlap(a: Profile, b: Profile): OverlapSummary | null {
   const score = Math.min(
     100,
     Math.round(
-      (categoryBase + skillScore * 0.35 + rateScore * 0.2 + remoteBonus + descBonus) * 100,
+      (categoryBonus + skillScore * 0.45 + rateScore * 0.25 + remoteBonus + descBonus) * 100,
     ),
   );
 

@@ -63,7 +63,7 @@ describe("findMatches", () => {
     expect(matches).toHaveLength(0);
   });
 
-  it("does not match profiles in different categories", async () => {
+  it("matches across different categories when skills overlap", async () => {
     const id1 = await insertProfile("alice", "offering", "frontend-dev", {
       skills: ["react"],
     });
@@ -72,7 +72,8 @@ describe("findMatches", () => {
     });
 
     const matches = await findMatches(id1);
-    expect(matches).toHaveLength(0);
+    expect(matches).toHaveLength(1);
+    expect(matches[0].overlap.score).toBeGreaterThan(0);
   });
 
   it("returns no match when skills don't overlap", async () => {
@@ -264,7 +265,7 @@ describe("findMatches", () => {
       rate_min: 40,
       rate_max: 60,
     });
-    // No match - different category
+    // Cross-category match - still matches on skill overlap
     await insertProfile("dave", "seeking", "design", {
       skills: ["react"],
       rate_min: 50,
@@ -272,8 +273,8 @@ describe("findMatches", () => {
     });
 
     const matches = await findMatches(id1);
-    expect(matches).toHaveLength(2);
+    expect(matches).toHaveLength(3);
     const agents = matches.map((m) => m.counterpart.agent_id).sort();
-    expect(agents).toEqual(["bob", "charlie"]);
+    expect(agents).toEqual(["bob", "charlie", "dave"]);
   });
 });
