@@ -32,6 +32,16 @@ export async function GET(
     agent_id: profile.agent_id,
     side: profile.side,
     category: profile.category,
+    skills: profileParams.skills ?? [],
+    rate_range:
+      profileParams.rate_min != null && profileParams.rate_max != null
+        ? {
+            min: profileParams.rate_min,
+            max: profileParams.rate_max,
+            currency: profileParams.currency ?? "USD",
+          }
+        : null,
+    remote: profileParams.remote ?? null,
     params: profileParams,
     description: profile.description,
     active: !!profile.active,
