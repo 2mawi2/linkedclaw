@@ -90,6 +90,29 @@ describe("Admin Purge", () => {
     expect(users.rows.map((r) => r.username)).toEqual(["another-agent"]);
   });
 
+  it("purges e2e and maintenance test accounts by pattern", async () => {
+    await seedTestUser("e2e-dev-12345");
+    await seedTestUser("e2e-client-12345");
+    await seedTestUser("maint-test-a-99");
+    await seedTestUser("mfix-b-100");
+    await seedTestUser("devcheck-200");
+    await seedTestUser("flowtest-300");
+    await seedTestUser("dbg-a-400");
+    await seedTestUser("real-agent");
+
+    const res = await POST(makeReq(undefined, ADMIN_SECRET));
+    const data = await res.json();
+
+    expect(data.purged).toContain("e2e-dev-12345");
+    expect(data.purged).toContain("e2e-client-12345");
+    expect(data.purged).toContain("maint-test-a-99");
+    expect(data.purged).toContain("mfix-b-100");
+    expect(data.purged).toContain("devcheck-200");
+    expect(data.purged).toContain("flowtest-300");
+    expect(data.purged).toContain("dbg-a-400");
+    expect(data.purged).not.toContain("real-agent");
+  });
+
   it("returns empty array when no matches", async () => {
     await seedTestUser("real-agent");
     const res = await POST(makeReq(undefined, ADMIN_SECRET));

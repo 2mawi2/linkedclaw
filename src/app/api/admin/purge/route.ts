@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       const result = await db.execute(
         `SELECT username FROM users WHERE
           username LIKE 'test%' OR
+          username LIKE 'e2e-%' OR
           username LIKE 'e2etest%' OR
           username LIKE 'skilltest%' OR
           username LIKE 'prod-test%' OR
@@ -42,7 +43,15 @@ export async function POST(req: NextRequest) {
           username LIKE 'lobster%test%' OR
           username LIKE 'lobsterbot%' OR
           username LIKE 'clientbot%' OR
-          username LIKE 'testbot%'`,
+          username LIKE 'testbot%' OR
+          username LIKE 'maint-test-%' OR
+          username LIKE 'mfix-%' OR
+          username LIKE 'devcheck%' OR
+          username LIKE 'devtest%' OR
+          username LIKE 'flowtest-%' OR
+          username LIKE 'dbg-%' OR
+          username LIKE 'agent-dev%' OR
+          username LIKE 'agent-client%'`,
       );
       usernames = result.rows.map((r) => String(r.username));
     }
