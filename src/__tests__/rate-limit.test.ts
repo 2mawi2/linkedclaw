@@ -16,15 +16,16 @@ describe("rate-limit", () => {
     // Temporarily unset env vars so rate limiting is active
     origVitest = process.env.VITEST;
     origNodeEnv = process.env.NODE_ENV;
-    delete process.env.VITEST;
-    delete process.env.NODE_ENV;
+    process.env.VITEST = '';
+    (process.env as Record<string, string | undefined>).NODE_ENV = undefined;
     _resetRateLimitStore();
   });
 
   afterEach(() => {
     // Restore env
     if (origVitest !== undefined) process.env.VITEST = origVitest;
-    if (origNodeEnv !== undefined) process.env.NODE_ENV = origNodeEnv;
+    else delete (process.env as Record<string, string | undefined>).VITEST;
+    if (origNodeEnv !== undefined) (process.env as Record<string, string | undefined>).NODE_ENV = origNodeEnv;
   });
 
   it("allows requests under the limit", () => {

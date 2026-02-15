@@ -13,7 +13,8 @@ import { NextRequest } from "next/server";
 const BASE = "http://localhost:3000";
 
 function req(url: string, opts?: RequestInit & { headers?: Record<string, string> }) {
-  return new NextRequest(new URL(url, BASE), opts);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return new NextRequest(new URL(url, BASE), opts as any);
 }
 
 let db: Client;
