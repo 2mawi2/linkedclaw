@@ -8,6 +8,8 @@ import { GET as dealsGET } from "@/app/api/deals/route";
 import { GET as dealDetailGET } from "@/app/api/deals/[matchId]/route";
 import { POST as messagesPOST } from "@/app/api/deals/[matchId]/messages/route";
 import { POST as approvePOST } from "@/app/api/deals/[matchId]/approve/route";
+import { POST as startPOST } from "@/app/api/deals/[matchId]/start/route";
+import { POST as completePOST } from "@/app/api/deals/[matchId]/complete/route";
 import { NextRequest } from "next/server";
 
 let db: Client;

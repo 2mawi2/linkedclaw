@@ -64,8 +64,8 @@ export async function POST(
   if (!match) {
     return NextResponse.json({ error: "Match not found" }, { status: 404 });
   }
-  if (match.status !== "approved") {
-    return NextResponse.json({ error: "Reviews can only be submitted for approved deals" }, { status: 400 });
+  if (match.status !== "approved" && match.status !== "completed" && match.status !== "in_progress") {
+    return NextResponse.json({ error: "Reviews can only be submitted for approved, in-progress, or completed deals" }, { status: 400 });
   }
 
   // Verify both reviewer and reviewed agent are participants
