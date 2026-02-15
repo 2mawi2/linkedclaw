@@ -48,6 +48,15 @@ interface DealData {
   approvals: ApprovalInfo[];
 }
 
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  if (diffMs < 60_000) return "just now";
+  if (diffMs < 3600_000) return `${Math.floor(diffMs / 60_000)}m ago`;
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
 const STATUS_COLORS: Record<string, string> = {
   matched: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
   negotiating: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
@@ -294,6 +303,7 @@ export default function DealDetailPage() {
               const isProposal = msg.message_type === "proposal";
               const isSystem = msg.message_type === "system";
               const prevMsg = idx > 0 ? messages[idx - 1] : null;
+              const nextMsg = idx < messages.length - 1 ? messages[idx + 1] : null;
 
               // Day separator
               const msgDate = new Date(msg.created_at).toDateString();
@@ -302,6 +312,28 @@ export default function DealDetailPage() {
 
               // Round separator: show before a proposal (if there are messages before it)
               const showRoundSep = isProposal && idx > 0;
+
+              // Message grouping: hide sender header when same sender sends
+              // consecutive messages within 2 minutes
+              const isGrouped =
+                !isProposal &&
+                !isSystem &&
+                prevMsg &&
+                !showDaySep &&
+                prevMsg.sender_agent_id === msg.sender_agent_id &&
+                prevMsg.message_type !== "proposal" &&
+                prevMsg.message_type !== "system" &&
+                new Date(msg.created_at).getTime() - new Date(prevMsg.created_at).getTime() <
+                  120_000;
+
+              // Show timestamp on last message in a group (or standalone)
+              const isLastInGroup =
+                !nextMsg ||
+                nextMsg.sender_agent_id !== msg.sender_agent_id ||
+                nextMsg.message_type === "proposal" ||
+                nextMsg.message_type === "system" ||
+                new Date(nextMsg.created_at).getTime() - new Date(msg.created_at).getTime() >=
+                  120_000;
 
               return (
                 <div key={msg.id}>
@@ -340,12 +372,7 @@ export default function DealDetailPage() {
                       <p className="text-xs text-purple-600 dark:text-purple-400 mb-1 flex items-center gap-1">
                         <span className="font-semibold">{msg.sender_agent_id}</span>
                         <span className="opacity-60">proposed terms</span>
-                        <span className="ml-auto opacity-60">
-                          {new Date(msg.created_at).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
+                        <span className="ml-auto opacity-60">{formatTime(msg.created_at)}</span>
                       </p>
                       <p className="text-sm whitespace-pre-wrap mb-2">{msg.content}</p>
                       {msg.proposed_terms && (
@@ -355,29 +382,40 @@ export default function DealDetailPage() {
                       )}
                     </div>
                   ) : (
-                    <div className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+                    <div
+                      className={`flex ${isMe ? "justify-end" : "justify-start"} ${isGrouped ? "mt-0.5" : ""}`}
+                    >
                       <div
-                        className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                        className={`max-w-[80%] px-3 text-sm ${
                           isMe
                             ? "bg-foreground text-background"
                             : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
+                        } ${
+                          isGrouped
+                            ? isMe
+                              ? "rounded-lg rounded-tr-md py-1.5"
+                              : "rounded-lg rounded-tl-md py-1.5"
+                            : "rounded-lg py-2"
                         }`}
                       >
-                        <p
-                          className={`text-xs mb-1 ${isMe ? "opacity-70" : "text-gray-500 dark:text-gray-400"}`}
-                        >
-                          {msg.sender_agent_id}
-                          {msg.message_type !== "negotiation" && (
-                            <span className="ml-1 font-medium">[{msg.message_type}]</span>
-                          )}
-                          <span className="ml-2 opacity-60">
-                            {new Date(msg.created_at).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        </p>
+                        {!isGrouped && (
+                          <p
+                            className={`text-xs mb-1 ${isMe ? "opacity-70" : "text-gray-500 dark:text-gray-400"}`}
+                          >
+                            {msg.sender_agent_id}
+                            {msg.message_type !== "negotiation" && (
+                              <span className="ml-1 font-medium">[{msg.message_type}]</span>
+                            )}
+                          </p>
+                        )}
                         <p className="whitespace-pre-wrap">{msg.content}</p>
+                        {isLastInGroup && (
+                          <p
+                            className={`text-[10px] mt-0.5 ${isMe ? "opacity-50 text-right" : "text-gray-400 dark:text-gray-500"}`}
+                          >
+                            {formatTime(msg.created_at)}
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
@@ -387,18 +425,30 @@ export default function DealDetailPage() {
             <div ref={messagesEndRef} />
           </div>
           {isActive && agentId && (
-            <form onSubmit={handleSendMessage} className="mt-3 flex gap-2">
-              <input
-                type="text"
+            <form onSubmit={handleSendMessage} className="mt-3 flex gap-2 items-end">
+              <textarea
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (newMessage.trim()) handleSendMessage(e);
+                  }
+                }}
+                placeholder="Type a message... (Enter to send, Shift+Enter for newline)"
+                rows={1}
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm resize-none max-h-32 overflow-y-auto"
+                style={{ minHeight: "2.5rem" }}
+                onInput={(e) => {
+                  const el = e.target as HTMLTextAreaElement;
+                  el.style.height = "auto";
+                  el.style.height = Math.min(el.scrollHeight, 128) + "px";
+                }}
               />
               <button
                 type="submit"
                 disabled={sending || !newMessage.trim()}
-                className="px-4 py-2 bg-foreground text-background rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                className="px-4 py-2 bg-foreground text-background rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 shrink-0"
               >
                 Send
               </button>
