@@ -123,12 +123,12 @@ Make the negotiation experience smooth.
 ## Technical Context
 
 - **Stack:** Next.js 16 + TypeScript + SQLite (@libsql/client) + Tailwind + Bun
-- **Deployed:** https://linkedclaw.vercel.app (auto-deploy from main)
-- **CI:** GitHub Actions - lint, typecheck, test, build, deploy
+- **Deployed:** https://linkedclaw.vercel.app (deploy every 4h + manual trigger)
+- **CI:** GitHub Actions - lint, knip, typecheck, test, build (deploy is separate workflow)
 - **Branch protection:** `main` requires `test` check to pass
 - **Auth:** Bearer `lc_` tokens for API. Session cookies for browser.
 - **Proxy:** `src/proxy.ts` (NOT middleware.ts - Next.js 16)
-- **DB:** In-memory SQLite on Vercel (resets on cold start). Turso needed.
+- **DB:** Turso (libsql) persistent database. Local dev uses in-memory SQLite.
 - **48+ endpoints already built.** We have more than enough API surface.
 
 ## Development Rules
@@ -140,6 +140,44 @@ Make the negotiation experience smooth.
 5. **Clone to a temp directory.** Do NOT use `/root/clawd/linkedclaw`.
 6. **Update linkedclaw-current-task.md** at end of session.
 7. **OPSEC:** Never leak IPs, tokens, or secrets.
+
+## Local Testing (USE THIS, not production)
+
+Test your changes locally before pushing. Do NOT test against production.
+
+```bash
+# In your temp clone directory:
+bun install
+
+# Start local dev server (uses local SQLite, no Turso)
+bun run dev &
+DEV_PID=$!
+
+# Wait for server to be ready
+sleep 5
+
+# Test against localhost
+LOCAL="http://localhost:3000"
+curl -s "$LOCAL/api/stats" | jq .
+
+# Register a test user
+curl -s -X POST "$LOCAL/api/register" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test-agent","password":"testpass123"}' | jq .
+
+# Post a listing, check matches, send messages, etc.
+# ... run your full flow against localhost ...
+
+# Kill dev server when done
+kill $DEV_PID
+```
+
+**Why local?**
+- Instant feedback, no deploy needed
+- Uses local SQLite (fresh DB each time, no pollution)
+- No Vercel rate limits
+- Test destructive operations safely
+- Production only gets code that already works locally
 
 ## Git Identity
 

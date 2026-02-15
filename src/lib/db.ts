@@ -1,6 +1,7 @@
 import { createClient, Client } from "@libsql/client";
 import { createClient as createWebClient } from "@libsql/client/web";
 import { seedIfEmpty } from "./seed";
+import { mkdirSync } from "fs";
 
 let client: Client | null = null;
 let migrated = false;
@@ -13,9 +14,11 @@ export function getDb(): Client {
       // Use HTTP-based web client for Vercel serverless (no WebSocket support)
       client = createWebClient({ url, authToken });
     } else {
-      client = createClient({
-        url: process.env.VERCEL ? "file:/tmp/negotiate.db" : "file:data/negotiate.db",
-      });
+      const dbPath = process.env.VERCEL ? "file:/tmp/negotiate.db" : "file:data/negotiate.db";
+      if (!process.env.VERCEL) {
+        mkdirSync("data", { recursive: true });
+      }
+      client = createClient({ url: dbPath });
     }
   }
   return client;
