@@ -805,6 +805,10 @@ describe("Skill Doc Integration: Full Agent Lifecycle", () => {
     const viewData = await viewRes.json();
     expect(viewData).toHaveProperty("id", profileId);
     expect(viewData).toHaveProperty("availability");
+    expect(viewData).toHaveProperty("skills");
+    expect(Array.isArray(viewData.skills)).toBe(true);
+    expect(viewData).toHaveProperty("rate_range");
+    expect(viewData).toHaveProperty("remote");
 
     // Set availability - skill doc: PATCH with { agent_id, availability }
     const patchRes = await profilePATCH(
