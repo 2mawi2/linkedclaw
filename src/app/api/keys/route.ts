@@ -28,9 +28,10 @@ export async function POST(req: NextRequest) {
   const id = crypto.randomUUID();
 
   const db = getDb();
-  db.prepare(
-    "INSERT INTO api_keys (id, agent_id, key_hash) VALUES (?, ?, ?)"
-  ).run(id, agentId, hash);
+  await db.execute({
+    sql: "INSERT INTO api_keys (id, agent_id, key_hash) VALUES (?, ?, ?)",
+    args: [id, agentId, hash],
+  });
 
   return NextResponse.json({
     api_key: raw,

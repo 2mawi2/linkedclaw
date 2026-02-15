@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
-import type { ConnectRequest, Side, Profile } from "@/lib/types";
+import type { ConnectRequest, Side } from "@/lib/types";
 
 const VALID_SIDES: Side[] = ["offering", "seeking"];
 
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
   if (rateLimited) return rateLimited;
 
-  const auth = authenticateRequest(req);
+  const auth = await authenticateRequest(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -58,19 +58,25 @@ export async function POST(req: NextRequest) {
   const db = getDb();
 
   // Deactivate previous profiles from the same agent with the same side+category
-  const existing = db.prepare(
-    "SELECT id FROM profiles WHERE agent_id = ? AND side = ? AND category = ? AND active = 1"
-  ).get(data.agent_id, data.side, data.category) as { id: string } | undefined;
+  const existingResult = await db.execute({
+    sql: "SELECT id FROM profiles WHERE agent_id = ? AND side = ? AND category = ? AND active = 1",
+    args: [data.agent_id, data.side, data.category],
+  });
+  const existing = existingResult.rows[0] as unknown as { id: string } | undefined;
 
   if (existing) {
-    db.prepare("UPDATE profiles SET active = 0 WHERE id = ?").run(existing.id);
+    await db.execute({
+      sql: "UPDATE profiles SET active = 0 WHERE id = ?",
+      args: [existing.id],
+    });
   }
 
   const id = crypto.randomUUID();
 
-  db.prepare(
-    "INSERT INTO profiles (id, agent_id, side, category, params, description) VALUES (?, ?, ?, ?, ?, ?)"
-  ).run(id, data.agent_id, data.side, data.category, JSON.stringify(data.params), data.description ?? null);
+  await db.execute({
+    sql: "INSERT INTO profiles (id, agent_id, side, category, params, description) VALUES (?, ?, ?, ?, ?, ?)",
+    args: [id, data.agent_id, data.side, data.category, JSON.stringify(data.params), data.description ?? null],
+  });
 
   return NextResponse.json({
     profile_id: id,
@@ -82,7 +88,7 @@ export async function DELETE(req: NextRequest) {
   const rateLimited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
   if (rateLimited) return rateLimited;
 
-  const auth = authenticateRequest(req);
+  const auth = await authenticateRequest(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -98,14 +104,21 @@ export async function DELETE(req: NextRequest) {
   const db = getDb();
 
   if (profileId) {
-    const profile = db.prepare("SELECT * FROM profiles WHERE id = ? AND active = 1").get(profileId) as Profile | undefined;
+    const profileResult = await db.execute({
+      sql: "SELECT * FROM profiles WHERE id = ? AND active = 1",
+      args: [profileId],
+    });
+    const profile = profileResult.rows[0] as unknown as { agent_id: string } | undefined;
     if (!profile) {
       return NextResponse.json({ error: "Profile not found or already inactive" }, { status: 404 });
     }
     if (profile.agent_id !== auth.agent_id) {
       return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
     }
-    db.prepare("UPDATE profiles SET active = 0 WHERE id = ?").run(profileId);
+    await db.execute({
+      sql: "UPDATE profiles SET active = 0 WHERE id = ?",
+      args: [profileId],
+    });
     return NextResponse.json({ deactivated: profileId });
   }
 
@@ -113,6 +126,9 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "agent_id does not match authenticated key" }, { status: 403 });
   }
 
-  const result = db.prepare("UPDATE profiles SET active = 0 WHERE agent_id = ? AND active = 1").run(agentId!);
-  return NextResponse.json({ deactivated_count: result.changes });
+  const result = await db.execute({
+    sql: "UPDATE profiles SET active = 0 WHERE agent_id = ? AND active = 1",
+    args: [agentId!],
+  });
+  return NextResponse.json({ deactivated_count: result.rowsAffected });
 }

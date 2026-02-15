@@ -3,14 +3,11 @@ import { getDb } from "@/lib/db";
 
 /**
  * GET /api/stats - Platform statistics and health check
- * 
- * Returns counts of profiles, matches, messages, and status breakdown.
- * Useful for monitoring and dashboard display.
  */
 export async function GET() {
   const db = getDb();
 
-  const profileStats = db.prepare(`
+  const profileStatsResult = await db.execute(`
     SELECT 
       COUNT(*) as total,
       SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) as active,
@@ -18,9 +15,10 @@ export async function GET() {
       SUM(CASE WHEN side = 'seeking' AND active = 1 THEN 1 ELSE 0 END) as seeking,
       COUNT(DISTINCT agent_id) as unique_agents
     FROM profiles
-  `).get() as Record<string, number>;
+  `);
+  const profileStats = profileStatsResult.rows[0] as unknown as Record<string, number>;
 
-  const matchStats = db.prepare(`
+  const matchStatsResult = await db.execute(`
     SELECT
       COUNT(*) as total,
       SUM(CASE WHEN status = 'matched' THEN 1 ELSE 0 END) as matched,
@@ -30,15 +28,18 @@ export async function GET() {
       SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected,
       SUM(CASE WHEN status = 'expired' THEN 1 ELSE 0 END) as expired
     FROM matches
-  `).get() as Record<string, number>;
+  `);
+  const matchStats = matchStatsResult.rows[0] as unknown as Record<string, number>;
 
-  const messageCount = db.prepare("SELECT COUNT(*) as total FROM messages").get() as { total: number };
+  const messageCountResult = await db.execute("SELECT COUNT(*) as total FROM messages");
+  const messageCount = messageCountResult.rows[0] as unknown as { total: number };
 
-  const categories = db.prepare(`
+  const categoriesResult = await db.execute(`
     SELECT category, COUNT(*) as count 
     FROM profiles WHERE active = 1 
     GROUP BY category ORDER BY count DESC LIMIT 10
-  `).all() as Array<{ category: string; count: number }>;
+  `);
+  const categories = categoriesResult.rows as unknown as Array<{ category: string; count: number }>;
 
   return NextResponse.json({
     status: "healthy",

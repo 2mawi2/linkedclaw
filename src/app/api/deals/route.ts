@@ -21,9 +21,11 @@ export async function GET(req: NextRequest) {
   const db = getDb();
 
   // Find all profile ids for this agent
-  const profiles = db.prepare(
-    "SELECT id FROM profiles WHERE agent_id = ?"
-  ).all(agentId) as Array<{ id: string }>;
+  const profilesResult = await db.execute({
+    sql: "SELECT id FROM profiles WHERE agent_id = ?",
+    args: [agentId],
+  });
+  const profiles = profilesResult.rows as unknown as Array<{ id: string }>;
 
   if (profiles.length === 0) {
     return NextResponse.json({ deals: [] });
@@ -32,8 +34,8 @@ export async function GET(req: NextRequest) {
   const profileIds = profiles.map(p => p.id);
   const placeholders = profileIds.map(() => "?").join(",");
 
-  const deals = db.prepare(
-    `SELECT m.id, m.status, m.overlap_summary, m.created_at,
+  const dealsResult = await db.execute({
+    sql: `SELECT m.id, m.status, m.overlap_summary, m.created_at,
        CASE
          WHEN m.profile_a_id IN (${placeholders}) THEN pb.agent_id
          ELSE pa.agent_id
@@ -45,8 +47,10 @@ export async function GET(req: NextRequest) {
      FROM matches m
      JOIN profiles pa ON pa.id = m.profile_a_id
      JOIN profiles pb ON pb.id = m.profile_b_id
-     WHERE m.profile_a_id IN (${placeholders}) OR m.profile_b_id IN (${placeholders})`
-  ).all(...profileIds, ...profileIds, ...profileIds, ...profileIds) as DealRow[];
+     WHERE m.profile_a_id IN (${placeholders}) OR m.profile_b_id IN (${placeholders})`,
+    args: [...profileIds, ...profileIds, ...profileIds, ...profileIds],
+  });
+  const deals = dealsResult.rows as unknown as DealRow[];
 
   return NextResponse.json({
     deals: deals.map(d => ({

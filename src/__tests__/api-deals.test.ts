@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { createTestDb, _setDb } from "@/lib/db";
-import type Database from "better-sqlite3";
+import { createTestDb, _setDb, migrate } from "@/lib/db";
+import type { Client } from "@libsql/client";
 import { POST as connectPOST } from "@/app/api/connect/route";
 import { POST as keysPOST } from "@/app/api/keys/route";
 import { GET as matchesGET } from "@/app/api/matches/[profileId]/route";
@@ -10,7 +10,7 @@ import { POST as messagesPOST } from "@/app/api/deals/[matchId]/messages/route";
 import { POST as approvePOST } from "@/app/api/deals/[matchId]/approve/route";
 import { NextRequest } from "next/server";
 
-let db: Database.Database;
+let db: Client;
 let restore: () => void;
 let aliceKey: string;
 let bobKey: string;
@@ -29,13 +29,13 @@ async function getApiKey(agentId: string): Promise<string> {
 beforeEach(async () => {
   db = createTestDb();
   restore = _setDb(db);
+  await migrate(db);
   aliceKey = await getApiKey("alice");
   bobKey = await getApiKey("bob");
 });
 
 afterEach(() => {
   restore();
-  db.close();
 });
 
 function jsonReq(url: string, body?: unknown, apiKey?: string): NextRequest {
@@ -82,7 +82,10 @@ describe("GET /api/matches/:profileId", () => {
       agent_id: "x", side: "offering", category: "dev", params: {},
     }, xKey));
     const { profile_id } = await r.json();
-    db.prepare("UPDATE profiles SET active = 0 WHERE id = ?").run(profile_id);
+    await db.execute({
+      sql: "UPDATE profiles SET active = 0 WHERE id = ?",
+      args: [profile_id],
+    });
 
     const res = await matchesGET(
       jsonReq(`/api/matches/${profile_id}`),
