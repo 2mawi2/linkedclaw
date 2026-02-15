@@ -71,6 +71,7 @@ export default function DealDetailPage() {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastActivityRef = useRef(Date.now());
 
   // Auto-detect logged-in user from localStorage if not in URL
   useEffect(() => {
@@ -98,14 +99,22 @@ export default function DealDetailPage() {
     fetchDeal();
   }, [fetchDeal]);
 
-  // Auto-poll while negotiating
+  // Adaptive polling: 1.5s when recently active, 5s when idle (>30s no interaction)
   useEffect(() => {
     if (!data) return;
     const status = data.match.status;
     if (status === "approved" || status === "rejected" || status === "expired") return;
 
-    const interval = setInterval(fetchDeal, 3000);
-    return () => clearInterval(interval);
+    let timer: ReturnType<typeof setTimeout>;
+    function schedulePoll() {
+      const idleMs = Date.now() - lastActivityRef.current;
+      const interval = idleMs < 30_000 ? 1500 : 5000;
+      timer = setTimeout(() => {
+        fetchDeal().then(schedulePoll);
+      }, interval);
+    }
+    schedulePoll();
+    return () => clearTimeout(timer);
   }, [data, fetchDeal]);
 
   // Scroll to bottom on new messages
@@ -143,27 +152,52 @@ export default function DealDetailPage() {
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
     if (!agentId || !newMessage.trim()) return;
+    const content = newMessage.trim();
     setSending(true);
     setSendError("");
+
+    lastActivityRef.current = Date.now();
+    // Optimistic update: show message immediately
+    const optimisticMsg: MessageInfo = {
+      id: Date.now(),
+      sender_agent_id: agentId,
+      content,
+      message_type: "negotiation",
+      proposed_terms: null,
+      created_at: new Date().toISOString(),
+    };
+    setData((prev) => (prev ? { ...prev, messages: [...prev.messages, optimisticMsg] } : prev));
+    setNewMessage("");
+
     try {
       const res = await fetch(`/api/deals/${matchId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           agent_id: agentId,
-          content: newMessage.trim(),
+          content,
           message_type: "negotiation",
         }),
       });
       if (res.ok) {
-        setNewMessage("");
-        fetchDeal();
+        fetchDeal(); // Sync with server to get real message ID
       } else {
         const json = await res.json().catch(() => ({}));
         setSendError(json.error || "Failed to send message");
+        // Roll back optimistic update
+        setData((prev) =>
+          prev
+            ? { ...prev, messages: prev.messages.filter((m) => m.id !== optimisticMsg.id) }
+            : prev,
+        );
+        setNewMessage(content);
       }
     } catch {
       setSendError("Failed to send message");
+      setData((prev) =>
+        prev ? { ...prev, messages: prev.messages.filter((m) => m.id !== optimisticMsg.id) } : prev,
+      );
+      setNewMessage(content);
     } finally {
       setSending(false);
     }
@@ -370,9 +404,7 @@ export default function DealDetailPage() {
             </form>
           )}
           {sendError && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{sendError}</p>}
-          {isActive && (
-            <p className="text-xs text-gray-400 mt-1">Auto-refreshing every 3 seconds</p>
-          )}
+          {isActive && <p className="text-xs text-gray-400 mt-1">Live updates enabled</p>}
         </div>
 
         {/* Proposed terms + approval */}
