@@ -122,11 +122,12 @@ export async function GET(
   let badges: Array<{ id: string; name: string }> = [];
 
   if (allProfileIds.length > 0) {
+    const placeholders2 = allProfileIds.map(() => "?").join(",");
     const completedResult = await db.execute({
       sql: `SELECT p.category, COUNT(DISTINCT m.id) as deal_count
             FROM matches m
             JOIN profiles p ON (p.id = m.profile_a_id OR p.id = m.profile_b_id)
-            WHERE (m.profile_a_id IN (${placeholders}) OR m.profile_b_id IN (${placeholders}))
+            WHERE (m.profile_a_id IN (${placeholders2}) OR m.profile_b_id IN (${placeholders2}))
               AND m.status = 'completed'
               AND p.agent_id = ?
             GROUP BY p.category`,
@@ -144,7 +145,7 @@ export async function GET(
     // Count total completed deals
     const totalCompletedResult = await db.execute({
       sql: `SELECT COUNT(*) as cnt FROM matches
-            WHERE (profile_a_id IN (${placeholders}) OR profile_b_id IN (${placeholders}))
+            WHERE (profile_a_id IN (${placeholders2}) OR profile_b_id IN (${placeholders2}))
               AND status = 'completed'`,
       args: [...allProfileIds, ...allProfileIds],
     });
