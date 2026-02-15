@@ -68,6 +68,11 @@ export default function DealDetailPage() {
   const [approving, setApproving] = useState(false);
   const [approvalResult, setApprovalResult] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isLoggedIn = useSyncExternalStore(
+    (cb) => { window.addEventListener("storage", cb); return () => window.removeEventListener("storage", cb); },
+    getStoredUsername,
+    () => null,
+  ) !== null;
 
   // Auto-detect logged-in user from localStorage if not in URL
   useEffect(() => {
@@ -112,7 +117,7 @@ export default function DealDetailPage() {
 
   async function handleApproval(approved: boolean) {
     if (!agentId) {
-      setApprovalResult("No agent_id provided. Add ?agent_id=xxx to the URL.");
+      setApprovalResult("Not signed in. Please sign in first.");
       return;
     }
     setApproving(true);
@@ -264,7 +269,7 @@ export default function DealDetailPage() {
               </pre>
             )}
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{latestProposal.content}</p>
-            {agentId && (
+            {agentId && isLoggedIn ? (
               <div className="flex gap-3">
                 <button
                   onClick={() => handleApproval(true)}
@@ -281,7 +286,11 @@ export default function DealDetailPage() {
                   Reject
                 </button>
               </div>
-            )}
+            ) : !isLoggedIn ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                <Link href="/login" className="text-blue-600 dark:text-blue-400 hover:underline">Sign in</Link> to approve or reject this deal.
+              </p>
+            ) : null}
           </div>
         )}
 
