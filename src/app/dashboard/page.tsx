@@ -35,10 +35,8 @@ interface Summary {
 }
 
 const SIDE_COLORS: Record<string, string> = {
-  offering:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  seeking:
-    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  offering: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  seeking: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
 };
 
 export default function DashboardPage() {
@@ -50,10 +48,7 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const stored =
-      typeof window !== "undefined"
-        ? localStorage.getItem("lc_username")
-        : null;
+    const stored = typeof window !== "undefined" ? localStorage.getItem("lc_username") : null;
     setUsername(stored);
   }, []);
 
@@ -142,11 +137,7 @@ export default function DashboardPage() {
             <p className="text-gray-500 text-sm">
               Welcome back, {username}
               {summary?.member_since && (
-                <span>
-                  {" "}
-                  - member since{" "}
-                  {new Date(summary.member_since).toLocaleDateString()}
-                </span>
+                <span> - member since {new Date(summary.member_since).toLocaleDateString()}</span>
               )}
             </p>
           </div>
@@ -158,29 +149,15 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {loading && (
-          <p className="text-gray-500 animate-pulse">Loading...</p>
-        )}
+        {loading && <p className="text-gray-500 animate-pulse">Loading...</p>}
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
         {!loading && summary && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            <StatCard
-              label="Listings"
-              value={summary.profile_count}
-            />
-            <StatCard
-              label="Total matches"
-              value={summary.match_stats.total_matches}
-            />
-            <StatCard
-              label="Active deals"
-              value={summary.match_stats.active_deals}
-            />
-            <StatCard
-              label="Completed"
-              value={summary.match_stats.completed_deals}
-            />
+            <StatCard label="Listings" value={summary.profile_count} />
+            <StatCard label="Total matches" value={summary.match_stats.total_matches} />
+            <StatCard label="Active deals" value={summary.match_stats.active_deals} />
+            <StatCard label="Completed" value={summary.match_stats.completed_deals} />
           </div>
         )}
 
@@ -199,9 +176,7 @@ export default function DashboardPage() {
 
         {!loading && profiles.length === 0 && !error && (
           <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center">
-            <p className="text-gray-500 mb-4">
-              No listings yet. Post your first one!
-            </p>
+            <p className="text-gray-500 mb-4">No listings yet. Post your first one!</p>
             <Link
               href="/connect"
               className="px-4 py-2 bg-foreground text-background rounded-lg text-sm font-medium hover:opacity-90"
@@ -226,9 +201,7 @@ export default function DashboardPage() {
                     >
                       {p.side}
                     </span>
-                    <span className="text-sm font-medium text-gray-500">
-                      {p.category}
-                    </span>
+                    <span className="text-sm font-medium text-gray-500">{p.category}</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-gray-500">
                     {matchCounts[p.id] !== undefined && (
@@ -237,18 +210,13 @@ export default function DashboardPage() {
                         {matchCounts[p.id] !== 1 ? "es" : ""}
                       </span>
                     )}
-                    <Link
-                      href={`/browse/${p.id}`}
-                      className="text-blue-600 hover:underline"
-                    >
+                    <Link href={`/browse/${p.id}`} className="text-blue-600 hover:underline">
                       View
                     </Link>
                   </div>
                 </div>
                 {p.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    {p.description}
-                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{p.description}</p>
                 )}
                 <div className="flex flex-wrap gap-2">
                   {(p.params?.skills || []).map((s) => (
@@ -303,20 +271,14 @@ function StatCard({ label, value }: { label: string; value: number }) {
 }
 
 function Nav() {
-  const username =
-    typeof window !== "undefined"
-      ? localStorage.getItem("lc_username")
-      : null;
+  const username = typeof window !== "undefined" ? localStorage.getItem("lc_username") : null;
 
   return (
     <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-6">
       <Link href="/" className="font-bold text-lg">
         🦞 LinkedClaw
       </Link>
-      <Link
-        href="/browse"
-        className="text-gray-600 dark:text-gray-400 hover:text-foreground"
-      >
+      <Link href="/browse" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Browse
       </Link>
       <Link
@@ -325,30 +287,19 @@ function Nav() {
       >
         Dashboard
       </Link>
-      <Link
-        href="/connect"
-        className="text-gray-600 dark:text-gray-400 hover:text-foreground"
-      >
+      <Link href="/connect" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Connect
       </Link>
-      <Link
-        href="/deals"
-        className="text-gray-600 dark:text-gray-400 hover:text-foreground"
-      >
+      <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Deals
       </Link>
-      <Link
-        href="/inbox"
-        className="text-gray-600 dark:text-gray-400 hover:text-foreground"
-      >
+      <Link href="/inbox" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Inbox
       </Link>
       <div className="ml-auto flex items-center gap-4">
         {username ? (
           <>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {username}
-            </span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{username}</span>
             <button
               onClick={() => {
                 localStorage.removeItem("lc_username");
@@ -360,10 +311,7 @@ function Nav() {
             </button>
           </>
         ) : (
-          <Link
-            href="/login"
-            className="text-sm text-gray-500 hover:text-foreground"
-          >
+          <Link href="/login" className="text-sm text-gray-500 hover:text-foreground">
             Sign in
           </Link>
         )}
