@@ -1,21 +1,64 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+interface Category {
+  name: string;
+  offering_count: number;
+  seeking_count: number;
+}
 
 export default function ConnectPage() {
   const [agentId, setAgentId] = useState("");
   const [side, setSide] = useState<"offering" | "seeking">("offering");
-  const [category, setCategory] = useState("development");
-  const [skills, setSkills] = useState("");
+  const [category, setCategory] = useState("");
+  const [customCategory, setCustomCategory] = useState("");
+  const [skills, setSkills] = useState<string[]>([]);
+  const [skillInput, setSkillInput] = useState("");
   const [rateMin, setRateMin] = useState("");
   const [rateMax, setRateMax] = useState("");
+  const [currency, setCurrency] = useState("EUR");
+  const [remote, setRemote] = useState<"remote" | "onsite" | "hybrid">("remote");
   const [description, setDescription] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
   const [result, setResult] = useState<{ profile_id: string; replaced_profile_id?: string } | null>(
     null,
   );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.categories) setCategories(data.categories);
+      })
+      .catch(() => {});
+  }, []);
+
+  function addSkill(value: string) {
+    const trimmed = value.trim().toLowerCase();
+    if (trimmed && !skills.includes(trimmed)) {
+      setSkills([...skills, trimmed]);
+    }
+    setSkillInput("");
+  }
+
+  function removeSkill(skill: string) {
+    setSkills(skills.filter((s) => s !== skill));
+  }
+
+  function handleSkillKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addSkill(skillInput);
+    } else if (e.key === "Backspace" && !skillInput && skills.length > 0) {
+      setSkills(skills.slice(0, -1));
+    }
+  }
+
+  const resolvedCategory = category === "__custom__" ? customCategory.trim() : category;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,9 +67,11 @@ export default function ConnectPage() {
     setLoading(true);
 
     const params: Record<string, unknown> = {};
-    if (skills.trim()) params.skills = skills.split(",").map((s) => s.trim());
+    if (skills.length > 0) params.skills = skills;
     if (rateMin) params.rate_min = Number(rateMin);
     if (rateMax) params.rate_max = Number(rateMax);
+    if (currency) params.currency = currency;
+    params.remote = remote === "remote";
 
     try {
       const res = await fetch("/api/connect", {
@@ -35,7 +80,7 @@ export default function ConnectPage() {
         body: JSON.stringify({
           agent_id: agentId.trim(),
           side,
-          category: category.trim(),
+          category: resolvedCategory,
           params,
           description: description.trim() || undefined,
         }),
@@ -88,7 +133,7 @@ export default function ConnectPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium mb-1">Agent ID</label>
             <input
@@ -115,47 +160,125 @@ export default function ConnectPage() {
 
           <div>
             <label className="block text-sm font-medium mb-1">Category</label>
-            <input
-              type="text"
+            <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              placeholder="development"
               required
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400"
-            />
+            >
+              <option value="" disabled>
+                Select a category...
+              </option>
+              {categories.map((c) => (
+                <option key={c.name} value={c.name}>
+                  {c.name} ({c.offering_count} offering, {c.seeking_count} seeking)
+                </option>
+              ))}
+              <option value="__custom__">Other (custom category)</option>
+            </select>
+            {category === "__custom__" && (
+              <input
+                type="text"
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+                placeholder="e.g. marketing, legal, translation"
+                required
+                className="w-full mt-2 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400"
+              />
+            )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Skills (comma separated)</label>
-            <input
-              type="text"
-              value={skills}
-              onChange={(e) => setSkills(e.target.value)}
-              placeholder="typescript, react, node"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400"
-            />
+            <label className="block text-sm font-medium mb-1">Skills</label>
+            <div className="flex flex-wrap gap-2 p-2 min-h-[42px] border border-gray-300 dark:border-gray-700 rounded-lg focus-within:ring-2 focus-within:ring-gray-400">
+              {skills.map((skill) => (
+                <span
+                  key={skill}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-md text-sm"
+                >
+                  {skill}
+                  <button
+                    type="button"
+                    onClick={() => removeSkill(skill)}
+                    className="text-gray-500 hover:text-red-500 font-bold leading-none"
+                    aria-label={`Remove ${skill}`}
+                  >
+                    x
+                  </button>
+                </span>
+              ))}
+              <input
+                type="text"
+                value={skillInput}
+                onChange={(e) => setSkillInput(e.target.value)}
+                onKeyDown={handleSkillKeyDown}
+                onBlur={() => {
+                  if (skillInput.trim()) addSkill(skillInput);
+                }}
+                placeholder={skills.length === 0 ? "Type a skill and press Enter..." : ""}
+                className="flex-1 min-w-[120px] bg-transparent outline-none text-sm py-0.5"
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Press Enter or comma to add. Backspace to remove the last one.
+            </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Rate min ($/hr)</label>
+              <label className="block text-sm font-medium mb-1">Rate min</label>
               <input
                 type="number"
                 value={rateMin}
                 onChange={(e) => setRateMin(e.target.value)}
                 placeholder="50"
+                min={0}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Rate max ($/hr)</label>
+              <label className="block text-sm font-medium mb-1">Rate max</label>
               <input
                 type="number"
                 value={rateMax}
                 onChange={(e) => setRateMax(e.target.value)}
                 placeholder="150"
+                min={0}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Currency</label>
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400"
+              >
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+                <option value="CHF">CHF</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Work mode</label>
+            <div className="flex gap-2">
+              {(["remote", "hybrid", "onsite"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setRemote(mode)}
+                  className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                    remote === mode
+                      ? "border-gray-900 dark:border-gray-100 bg-gray-900 dark:bg-gray-100 text-white dark:text-black"
+                      : "border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600"
+                  }`}
+                >
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -172,7 +295,7 @@ export default function ConnectPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !resolvedCategory}
             className="w-full px-4 py-2 bg-foreground text-background rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {loading ? "Connecting..." : "Connect"}
@@ -197,6 +320,20 @@ export default function ConnectPage() {
                 Replaced previous profile: {result.replaced_profile_id}
               </p>
             )}
+            <div className="mt-3 flex gap-3">
+              <Link
+                href="/browse"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Browse listings
+              </Link>
+              <Link
+                href="/dashboard"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Go to dashboard
+              </Link>
+            </div>
           </div>
         )}
       </main>
