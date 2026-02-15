@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureDb } from "@/lib/db";
+import { ensureDb, validateTags, saveTags, getTagsForProfile } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 /**
  * GET /api/profiles/:profileId - Get a single profile by ID
- * PATCH /api/profiles/:profileId - Update a profile's params or description
+ * PATCH /api/profiles/:profileId - Update a profile's params, description, or tags
  */
 export async function GET(
   _req: NextRequest,
@@ -26,6 +26,7 @@ export async function GET(
   }
 
   const profileParams: ProfileParams = JSON.parse(profile.params);
+  const tags = await getTagsForProfile(db, profile.id);
   return NextResponse.json({
     id: profile.id,
     agent_id: profile.agent_id,
@@ -34,6 +35,7 @@ export async function GET(
     params: profileParams,
     description: profile.description,
     active: !!profile.active,
+    tags,
     created_at: profile.created_at,
   });
 }
@@ -107,15 +109,31 @@ export async function PATCH(
     values.push(b.description as string | null);
   }
 
-  if (updates.length === 0) {
-    return NextResponse.json({ error: "No fields to update. Provide params or description." }, { status: 400 });
+  // Handle tags
+  let newTags: string[] | undefined;
+  if (b.tags !== undefined) {
+    const tagValidation = validateTags(b.tags);
+    if (!tagValidation.valid) {
+      return NextResponse.json({ error: tagValidation.error }, { status: 400 });
+    }
+    newTags = tagValidation.tags;
   }
 
-  values.push(profileId);
-  await db.execute({
-    sql: `UPDATE profiles SET ${updates.join(", ")} WHERE id = ?`,
-    args: values,
-  });
+  if (updates.length === 0 && newTags === undefined) {
+    return NextResponse.json({ error: "No fields to update. Provide params, description, or tags." }, { status: 400 });
+  }
+
+  if (updates.length > 0) {
+    values.push(profileId);
+    await db.execute({
+      sql: `UPDATE profiles SET ${updates.join(", ")} WHERE id = ?`,
+      args: values,
+    });
+  }
+
+  if (newTags !== undefined) {
+    await saveTags(db, profileId, newTags);
+  }
 
   // Return updated profile
   const updatedResult = await db.execute({
@@ -124,6 +142,7 @@ export async function PATCH(
   });
   const updated = updatedResult.rows[0] as unknown as Profile;
   const updatedParams: ProfileParams = JSON.parse(updated.params);
+  const updatedTags = await getTagsForProfile(db, profileId);
 
   return NextResponse.json({
     id: updated.id,
@@ -133,6 +152,7 @@ export async function PATCH(
     params: updatedParams,
     description: updated.description,
     active: !!updated.active,
+    tags: updatedTags,
     created_at: updated.created_at,
   });
 }
