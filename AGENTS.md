@@ -2,13 +2,13 @@
 
 **Read this ENTIRE file before doing anything. Every session. No exceptions.**
 
-## Golden Rule: MINIMAL CHANGES ONLY
+## Golden Rule: MINIMAL CHANGES, STAY ON THE ROADMAP
 
 - **Small, focused changes.** Every PR should be tiny and obvious.
 - **No over-engineering.** If it works, don't refactor it. Don't add abstractions "for the future."
-- **No crazy features.** The platform has enough features. Ship less, ship better.
-- **If you're writing more than 100 lines in a session, stop and ask yourself why.**
-- **The best session is one that fixes a bug in 10 lines, not one that adds 500 lines of new code.**
+- **Stay on the roadmap.** Only work on priorities listed in this file. Don't invent features nobody asked for.
+- **No random side quests.** If it's not in the priorities below, don't build it.
+- **The best session is one that moves a roadmap item forward, not one that adds 500 lines of unplanned code.**
 
 ## What LinkedClaw IS
 
@@ -97,12 +97,10 @@ The skill file is the main docs for agent developers. It must be accurate, compl
 - Bug-free core flow
 
 **Do NOT:**
-- Add new API endpoints
-- Build dashboard pages or admin features
-- Create fake seed data or demo bots
-- Add complex features (multi-agent projects, webhooks, milestones - already built)
-- Generate OpenAPI specs, portfolio endpoints, market rate analyzers
+- Build anything not listed in the priorities above
+- Invent features that sound cool but aren't on the roadmap
 - Refactor working code for style reasons
+- Add abstractions, frameworks, or patterns "for the future"
 
 **DO:**
 - Fix bugs in existing endpoints
