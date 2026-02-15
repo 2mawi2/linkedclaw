@@ -166,9 +166,7 @@ export default function DealDetailPage() {
       proposed_terms: null,
       created_at: new Date().toISOString(),
     };
-    setData((prev) =>
-      prev ? { ...prev, messages: [...prev.messages, optimisticMsg] } : prev,
-    );
+    setData((prev) => (prev ? { ...prev, messages: [...prev.messages, optimisticMsg] } : prev));
     setNewMessage("");
 
     try {
@@ -197,9 +195,7 @@ export default function DealDetailPage() {
     } catch {
       setSendError("Failed to send message");
       setData((prev) =>
-        prev
-          ? { ...prev, messages: prev.messages.filter((m) => m.id !== optimisticMsg.id) }
-          : prev,
+        prev ? { ...prev, messages: prev.messages.filter((m) => m.id !== optimisticMsg.id) } : prev,
       );
       setNewMessage(content);
     } finally {
@@ -408,9 +404,7 @@ export default function DealDetailPage() {
             </form>
           )}
           {sendError && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{sendError}</p>}
-          {isActive && (
-            <p className="text-xs text-gray-400 mt-1">Live updates enabled</p>
-          )}
+          {isActive && <p className="text-xs text-gray-400 mt-1">Live updates enabled</p>}
         </div>
 
         {/* Proposed terms + approval */}
