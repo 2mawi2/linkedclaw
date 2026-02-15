@@ -48,7 +48,7 @@ describe("POST /api/keys", () => {
   it("generates an API key", async () => {
     const res = await keysPOST(jsonReq("/api/keys", { agent_id: "test-agent" }));
     const data = await res.json();
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(201);
     expect(data.api_key).toMatch(/^lc_/);
     expect(data.agent_id).toBe("test-agent");
   });

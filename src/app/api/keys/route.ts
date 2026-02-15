@@ -37,5 +37,5 @@ export async function POST(req: NextRequest) {
     api_key: raw,
     agent_id: agentId,
     key_id: id,
-  });
+  }, { status: 201 });
 }
