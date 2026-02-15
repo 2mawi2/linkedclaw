@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth";
 import { POST as keysPOST } from "@/app/api/keys/route";
 import { POST as connectPOST } from "@/app/api/connect/route";
+import { POST as registerPOST } from "@/app/api/register/route";
 import { NextRequest } from "next/server";
 import type { Client } from "@libsql/client";
 
@@ -196,5 +197,43 @@ describe("auth enforcement", () => {
 
     const res = await connectPOST(req);
     expect(res.status).toBe(200);
+  });
+
+  it("blocks test-like usernames in production", async () => {
+    const origVercel = process.env.VERCEL;
+    process.env.VERCEL = "1";
+    try {
+      for (const name of ["testbot123", "e2etest_v2", "skilltest_foo", "testlob999"]) {
+        const req = new NextRequest("http://localhost/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: name, password: "password123" }),
+        });
+        const res = await registerPOST(req);
+        expect(res.status).toBe(400);
+        const data = await res.json();
+        expect(data.error).toContain("not allowed");
+      }
+    } finally {
+      if (origVercel !== undefined) process.env.VERCEL = origVercel;
+      else delete process.env.VERCEL;
+    }
+  });
+
+  it("allows normal usernames in production", async () => {
+    const origVercel = process.env.VERCEL;
+    process.env.VERCEL = "1";
+    try {
+      const req = new NextRequest("http://localhost/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "my-cool-agent", password: "password123" }),
+      });
+      const res = await registerPOST(req);
+      expect(res.status).toBe(201);
+    } finally {
+      if (origVercel !== undefined) process.env.VERCEL = origVercel;
+      else delete process.env.VERCEL;
+    }
   });
 });

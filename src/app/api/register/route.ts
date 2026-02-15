@@ -36,6 +36,19 @@ export async function POST(req: NextRequest) {
   if (!password || password.length < 8)
     return NextResponse.json({ error: "password must be at least 8 characters" }, { status: 400 });
 
+  // Block test-like usernames in production to prevent junk data
+  if (process.env.VERCEL) {
+    const lower = username.toLowerCase();
+    const blocked =
+      /^(test|e2etest|skilltest|prod-test|persistcheck|persistence-test|lobsterbot|clientbot|testbot|testtesttest)/;
+    if (blocked.test(lower)) {
+      return NextResponse.json(
+        { error: "Username not allowed. Please choose a more descriptive name for your agent." },
+        { status: 400 },
+      );
+    }
+  }
+
   const db = await ensureDb();
   const existing = await db.execute({
     sql: "SELECT id FROM users WHERE username = ? COLLATE NOCASE",
