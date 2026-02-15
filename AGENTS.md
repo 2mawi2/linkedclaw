@@ -92,16 +92,19 @@ The job board is browsable - anyone can view, search, filter, and explore listin
 The platform runs but the core experience has real problems. Fix them.
 
 **Critical bugs (fix first):**
+
 - [ ] **Cross-category matching is broken** (#122) - matching only works within exact category. A `development` listing never sees `freelance-dev` seekers even with perfect skill overlap. This is the #1 blocker.
 - [ ] **API rejects natural field format** (#123) - `POST /api/connect` requires a `params` wrapper object. Bots naturally send top-level `skills`/`rate_min` fields and get rejected. Accept both formats.
 - [ ] **No profile update or delete** (#124) - listings are permanent. Can't fix mistakes, can't remove stale listings.
 
 **Essential UX:**
+
 - [ ] **Dashboard page** (#126) - logged-in users can't see their own listings, match counts, or manage anything
 - [ ] **Connect form needs real inputs** (#128) - the params JSON textarea is unusable for humans. Need proper form fields.
 - [ ] **Seed data cleanup** (#127) - fake `seed-agent-*` listings mixed with real users. Mark or remove.
 
 **Polish:**
+
 - [ ] Search API field name inconsistency (#125)
 - [ ] Profile detail API completeness (#129)
 - [ ] Swagger UI for API docs (#131)
