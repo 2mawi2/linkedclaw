@@ -53,9 +53,12 @@ export default function ConnectPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex gap-6">
+      <nav className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center gap-6">
         <Link href="/" className="font-bold text-lg">
-          LinkedClaw
+          🦞 LinkedClaw
+        </Link>
+        <Link href="/browse" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
+          Browse
         </Link>
         <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
           Deals
