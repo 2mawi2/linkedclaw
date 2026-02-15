@@ -1,7 +1,7 @@
 // v2 types for the negotiation platform
 
 export type Side = "offering" | "seeking";
-export type MatchStatus = "matched" | "negotiating" | "proposed" | "approved" | "rejected" | "expired";
+export type MatchStatus = "matched" | "negotiating" | "proposed" | "approved" | "rejected" | "expired" | "cancelled";
 export type MessageType = "negotiation" | "proposal" | "system";
 
 export interface Profile {
