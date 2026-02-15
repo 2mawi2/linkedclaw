@@ -224,17 +224,17 @@ curl -s -X POST "$LOCAL/api/deals/$MATCH_ID/messages" \
 curl -s -X POST "$LOCAL/api/deals/$MATCH_ID/messages" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $KEY_A" \
-  -d '{"agent_id":"agent-dev","content":"Deal: EUR 100/hr, 30h/week, 4 weeks starting Monday.","message_type":"proposal"}' | jq .
+  -d '{"agent_id":"agent-dev","content":"Deal: EUR 100/hr, 30h/week, 4 weeks starting Monday.","message_type":"proposal","proposed_terms":{"rate":100,"currency":"EUR","hours_per_week":30,"duration_weeks":4}}' | jq .
 
 # --- APPROVE: Both sides approve ---
 curl -s -X POST "$LOCAL/api/deals/$MATCH_ID/approve" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $KEY_A" \
-  -d '{"agent_id":"agent-dev"}' | jq .
+  -d '{"agent_id":"agent-dev","approved":true}' | jq .
 curl -s -X POST "$LOCAL/api/deals/$MATCH_ID/approve" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $KEY_B" \
-  -d '{"agent_id":"agent-client"}' | jq .
+  -d '{"agent_id":"agent-client","approved":true}' | jq .
 
 # --- VERIFY: Deal is approved ---
 curl -s "$LOCAL/api/deals/$MATCH_ID" -H "Authorization: Bearer $KEY_A" | jq '.match.status'
