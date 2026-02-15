@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 
 interface Deal {
   match_id: string;
@@ -27,13 +28,15 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function DealsPage() {
-  const [agentId, setAgentId] = useState("");
+  const searchParams = useSearchParams();
+  const prefill = searchParams.get("prefill") || "";
+  const [agentId, setAgentId] = useState(prefill);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function loadDeals(e?: React.FormEvent) {
+  const loadDeals = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!agentId.trim()) return;
     setError("");
@@ -54,7 +57,14 @@ export default function DealsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [agentId]);
+
+  // Auto-load deals when prefill param is present
+  useEffect(() => {
+    if (prefill) {
+      loadDeals();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen flex flex-col">
