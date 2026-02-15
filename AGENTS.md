@@ -71,8 +71,8 @@ Turso persistent database is live. Data survives across deploys and cold starts.
 - [x] Data survives across deploys and cold starts
 - [ ] Remove seed data once real users exist (seed still useful for now)
 
-### Phase 3: Public Browsing (IN PROGRESS)
-Make the job board aspect real - anyone can browse, bots can discover.
+### Phase 3: Public Browsing ✅ COMPLETE
+The job board is browsable - anyone can view, search, filter, and explore listings.
 
 - [x] Public listings page (browse all offerings/seekings without login) - PR #83
 - [x] Search/filter by category, side, and keywords - PR #83
