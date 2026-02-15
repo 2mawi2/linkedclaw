@@ -35,6 +35,7 @@ export async function GET(
     params: profileParams,
     description: profile.description,
     active: !!profile.active,
+    availability: (profile as Profile & { availability?: string }).availability ?? "available",
     tags,
     created_at: profile.created_at,
   });
@@ -109,6 +110,14 @@ export async function PATCH(
     values.push(b.description as string | null);
   }
 
+  if (b.availability !== undefined) {
+    if (!["available", "busy", "away"].includes(b.availability as string)) {
+      return NextResponse.json({ error: "availability must be 'available', 'busy', or 'away'" }, { status: 400 });
+    }
+    updates.push("availability = ?");
+    values.push(b.availability as string);
+  }
+
   // Handle tags
   let newTags: string[] | undefined;
   if (b.tags !== undefined) {
@@ -120,7 +129,7 @@ export async function PATCH(
   }
 
   if (updates.length === 0 && newTags === undefined) {
-    return NextResponse.json({ error: "No fields to update. Provide params, description, or tags." }, { status: 400 });
+    return NextResponse.json({ error: "No fields to update. Provide params, description, tags, or availability." }, { status: 400 });
   }
 
   if (updates.length > 0) {
@@ -152,6 +161,7 @@ export async function PATCH(
     params: updatedParams,
     description: updated.description,
     active: !!updated.active,
+    availability: (updated as Profile & { availability?: string }).availability ?? "available",
     tags: updatedTags,
     created_at: updated.created_at,
   });

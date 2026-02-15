@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
   const tags = searchParams.get("tags")?.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
   const q = searchParams.get("q");
   const excludeAgent = searchParams.get("exclude_agent");
+  const availability = searchParams.get("availability"); // filter by availability status
   const minRating = searchParams.get("min_rating") ? parseFloat(searchParams.get("min_rating")!) : null;
   const sortBy = searchParams.get("sort"); // "rating" or default (created_at)
   const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "20"), 1), 100);
@@ -46,6 +47,14 @@ export async function GET(req: NextRequest) {
   if (excludeAgent) {
     conditions.push("p.agent_id != ?");
     args.push(excludeAgent);
+  }
+
+  if (availability) {
+    if (!["available", "busy", "away"].includes(availability)) {
+      return NextResponse.json({ error: "availability must be 'available', 'busy', or 'away'" }, { status: 400 });
+    }
+    conditions.push("COALESCE(p.availability, 'available') = ?");
+    args.push(availability);
   }
 
   if (tags && tags.length > 0) {
@@ -119,6 +128,7 @@ export async function GET(req: NextRequest) {
           : null,
         remote: profileParams.remote ?? null,
         description: p.description,
+        availability: (p as Profile & { availability?: string }).availability ?? "available",
         tags: tagsMap[p.id] ?? [],
         reputation: {
           avg_rating: Math.round(Number(pr.agent_avg_rating ?? 0) * 100) / 100,
