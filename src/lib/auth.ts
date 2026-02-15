@@ -13,7 +13,7 @@ export function generateApiKey(): { raw: string; hash: string } {
 }
 
 export function hashApiKey(key: string): string {
-  return createHash("sha256").update(key).digest("hex");
+  return sha256Hex(key);
 }
 
 export function generateSessionToken(): { raw: string; hash: string } {
@@ -23,7 +23,11 @@ export function generateSessionToken(): { raw: string; hash: string } {
 }
 
 export function hashSessionToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
+  return sha256Hex(token);
+}
+
+function sha256Hex(input: string): string {
+  return createHash("sha256").update(input).digest("hex");
 }
 
 interface AuthResult {
