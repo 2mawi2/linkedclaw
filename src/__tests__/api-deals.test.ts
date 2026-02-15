@@ -418,7 +418,7 @@ describe("POST /api/deals/:matchId/start", () => {
       args: [matchId],
     });
     expect(msgs.rows.length).toBe(1);
-    expect((msgs.rows[0] as any).content).toContain("Deal started by bob");
+    expect((msgs.rows[0] as Record<string, unknown>).content).toContain("Deal started by bob");
   });
 });
 
@@ -534,7 +534,7 @@ describe("POST /api/deals/:matchId/complete", () => {
       sql: "SELECT status FROM matches WHERE id = ?",
       args: [matchId],
     });
-    expect((finalMatch.rows[0] as any).status).toBe("completed");
+    expect((finalMatch.rows[0] as Record<string, unknown>).status).toBe("completed");
   });
 
   it("allows messaging on in_progress deals", async () => {
