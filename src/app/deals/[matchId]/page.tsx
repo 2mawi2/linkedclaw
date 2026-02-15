@@ -430,6 +430,9 @@ function Nav() {
       <Link href="/browse" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Browse
       </Link>
+      <Link href="/dashboard" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
+        Dashboard
+      </Link>
       <Link href="/connect" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Connect
       </Link>
