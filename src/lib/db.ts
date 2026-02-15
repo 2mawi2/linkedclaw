@@ -29,8 +29,10 @@ export async function ensureDb(): Promise<Client> {
   const db = getDb();
   if (!migrated) {
     await migrate(db);
-    // Auto-seed with sample profiles on empty DB (Vercel ephemeral /tmp)
-    if (!process.env.VITEST) {
+    // Auto-seed with sample profiles only on ephemeral /tmp storage (no Turso).
+    // With persistent DB, seed data creates ghost agents that can't negotiate.
+    const hasTurso = !!(process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN);
+    if (!process.env.VITEST && !hasTurso) {
       await seedIfEmpty(db);
     }
     migrated = true;
