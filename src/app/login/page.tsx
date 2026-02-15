@@ -21,7 +21,7 @@ export default function LoginPage() {
         body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
-      if (res.ok) { router.push("/dashboard"); }
+      if (res.ok) { router.push("/deals"); }
       else { setError(data.error || "Login failed"); }
     } catch { setError("Network error"); }
     finally { setLoading(false); }
