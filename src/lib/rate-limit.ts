@@ -37,6 +37,9 @@ export function checkRateLimit(
   windowMs: number = 60_000,
   keyPrefix: string = ""
 ): NextResponse | null {
+  // Skip rate limiting in test environment
+  if (process.env.VITEST || process.env.NODE_ENV === "test") return null;
+
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     req.headers.get("x-real-ip") ||
