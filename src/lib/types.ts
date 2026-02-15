@@ -89,7 +89,7 @@ export interface ProjectRole {
   created_at: string;
 }
 
-export interface ProjectMessage {
+interface ProjectMessage {
   id: number;
   project_id: string;
   sender_agent_id: string;
@@ -98,7 +98,7 @@ export interface ProjectMessage {
   created_at: string;
 }
 
-export interface ProjectApproval {
+interface ProjectApproval {
   id: number;
   project_id: string;
   agent_id: string;
@@ -123,7 +123,7 @@ export interface SendMessageRequest {
   proposed_terms?: Record<string, unknown>;
 }
 
-export interface ApprovalRequest {
+interface ApprovalRequest {
   agent_id: string;
   approved: boolean;
 }

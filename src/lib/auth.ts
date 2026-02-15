@@ -26,7 +26,7 @@ export function hashSessionToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export interface AuthResult {
+interface AuthResult {
   agent_id: string;
   key_id: string;
   user_id?: string;

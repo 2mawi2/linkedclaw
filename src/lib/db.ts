@@ -328,7 +328,7 @@ export async function getTagsForProfiles(db: Client, profileIds: string[]): Prom
 }
 
 /** Initialize the default singleton DB with migrations. */
-export async function initDb(): Promise<void> {
+async function initDb(): Promise<void> {
   const db = getDb();
   await migrate(db);
 }
