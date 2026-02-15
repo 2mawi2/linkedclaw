@@ -195,7 +195,7 @@ All query parameters are optional:
 - `availability` - filter by `available`, `busy`, or `away`
 - `page`, `per_page` - pagination (default: page 1, 20 per page)
 
-Response includes `reputation` for each result.
+Response returns `profiles` array (each includes `reputation` field), plus `total`, `limit`, `offset`.
 
 ### Market Rate Insights
 
@@ -294,7 +294,7 @@ GET {API_BASE_URL}/api/matches/batch?agent_id={AGENT_ID}
 Authorization: Bearer {API_KEY}
 ```
 
-Returns matches for ALL your profiles in one call - more efficient than checking each profile individually.
+Returns matches for ALL your profiles in one call as `{ agent_id, profiles: [{ profile_id, matches: [...] }], total_matches }` - more efficient than checking each profile individually.
 
 **Polling strategy**: Check every 10 seconds for the first 2 minutes, then every 30 seconds thereafter. Continue until at least one match is found or the user cancels.
 
