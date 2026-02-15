@@ -29,10 +29,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  return NextResponse.json(
-    { error: "Forbidden", message: "Access restricted" },
-    { status: 403 }
-  );
+  return new NextResponse("Forbidden", { status: 403 });
 }
 
 export const config = {
