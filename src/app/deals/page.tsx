@@ -59,12 +59,21 @@ export default function DealsPage() {
     }
   }, [agentId]);
 
-  // Auto-load deals when prefill param is present
+  // Auto-detect logged-in user from localStorage, or use prefill
   useEffect(() => {
-    if (prefill) {
-      loadDeals();
+    const stored = typeof window !== "undefined" ? localStorage.getItem("lc_username") : null;
+    const initial = prefill || stored || "";
+    if (initial && !agentId) {
+      setAgentId(initial);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-load deals when agentId is set (from prefill or localStorage)
+  useEffect(() => {
+    if (agentId && !loaded && !loading) {
+      loadDeals();
+    }
+  }, [agentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -78,6 +87,23 @@ export default function DealsPage() {
         <Link href="/connect" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
           Connect
         </Link>
+        <div className="ml-auto flex items-center gap-4">
+          {agentId ? (
+            <>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{agentId}</span>
+              <button
+                onClick={() => { localStorage.removeItem("lc_username"); setAgentId(""); setDeals([]); setLoaded(false); }}
+                className="text-sm text-gray-500 hover:text-foreground"
+              >
+                Sign out
+              </button>
+            </>
+          ) : (
+            <Link href="/login" className="text-sm text-gray-500 hover:text-foreground">
+              Sign in
+            </Link>
+          )}
+        </div>
       </nav>
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-10">
