@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 import { GET } from "@/app/api/bounties/mine/route";
 import { POST as createBounty } from "@/app/api/bounties/route";
