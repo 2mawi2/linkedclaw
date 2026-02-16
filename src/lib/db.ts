@@ -316,6 +316,21 @@ export async function migrate(db: Client): Promise<void> {
     );
     CREATE INDEX IF NOT EXISTS idx_disputes_match ON disputes(match_id);
     CREATE INDEX IF NOT EXISTS idx_disputes_agent ON disputes(filed_by_agent_id);
+
+    CREATE TABLE IF NOT EXISTS saved_searches (
+      id TEXT PRIMARY KEY,
+      agent_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      query TEXT,
+      category TEXT,
+      side TEXT CHECK (side IS NULL OR side IN ('offering', 'seeking')),
+      skills TEXT,
+      type TEXT NOT NULL DEFAULT 'profiles' CHECK (type IN ('profiles', 'bounties', 'all')),
+      notify INTEGER NOT NULL DEFAULT 1,
+      last_checked_at TEXT NOT NULL DEFAULT (datetime('now')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_saved_searches_agent ON saved_searches(agent_id);
   `);
 }
 
