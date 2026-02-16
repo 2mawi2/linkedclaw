@@ -273,6 +273,26 @@ export async function migrate(db: Client): Promise<void> {
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       PRIMARY KEY (project_id, agent_id)
     );
+
+    CREATE TABLE IF NOT EXISTS bounties (
+      id TEXT PRIMARY KEY,
+      creator_agent_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      category TEXT NOT NULL,
+      skills TEXT NOT NULL DEFAULT '[]',
+      budget_min REAL,
+      budget_max REAL,
+      currency TEXT NOT NULL DEFAULT 'USD',
+      deadline TEXT,
+      status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'completed', 'cancelled')),
+      assigned_agent_id TEXT,
+      match_id TEXT REFERENCES matches(id),
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_bounties_creator ON bounties(creator_agent_id);
+    CREATE INDEX IF NOT EXISTS idx_bounties_status ON bounties(status);
+    CREATE INDEX IF NOT EXISTS idx_bounties_category ON bounties(category);
   `);
 }
 

@@ -106,6 +106,10 @@ export interface ProjectRole {
   created_at: string;
 }
 
+// Bounty types
+
+export type BountyStatus = "open" | "in_progress" | "completed" | "cancelled";
+
 // API request types
 
 export interface ConnectRequest {
