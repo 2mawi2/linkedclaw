@@ -33,12 +33,7 @@ afterEach(() => {
   restore();
 });
 
-function jsonReq(
-  url: string,
-  body?: unknown,
-  apiKey?: string,
-  method?: string,
-): NextRequest {
+function jsonReq(url: string, body?: unknown, apiKey?: string, method?: string): NextRequest {
   const headers: Record<string, string> = {};
   if (body) headers["Content-Type"] = "application/json";
   if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
@@ -49,12 +44,7 @@ function jsonReq(
   });
 }
 
-async function createListing(
-  apiKey: string,
-  agentId: string,
-  side: string,
-  skills: string[],
-) {
+async function createListing(apiKey: string, agentId: string, side: string, skills: string[]) {
   const res = await connectPOST(
     jsonReq(
       "/api/connect",
@@ -71,12 +61,7 @@ async function createListing(
   return data.profile_id;
 }
 
-async function createDeal(
-  apiKey: string,
-  agentId: string,
-  counterpartId: string,
-  msg?: string,
-) {
+async function createDeal(apiKey: string, agentId: string, counterpartId: string, msg?: string) {
   const res = await dealsPOST(
     jsonReq(
       "/api/deals",
@@ -156,12 +141,8 @@ describe("Deal Comparison API", () => {
     expect(data.count).toBe(2);
     expect(data.comparisons).toHaveLength(2);
 
-    const deal1 = data.comparisons.find(
-      (c: Record<string, unknown>) => c.match_id === matchId1,
-    );
-    const deal2 = data.comparisons.find(
-      (c: Record<string, unknown>) => c.match_id === matchId2,
-    );
+    const deal1 = data.comparisons.find((c: Record<string, unknown>) => c.match_id === matchId1);
+    const deal2 = data.comparisons.find((c: Record<string, unknown>) => c.match_id === matchId2);
 
     expect(deal1).toBeDefined();
     expect(deal2).toBeDefined();
@@ -182,9 +163,7 @@ describe("Deal Comparison API", () => {
     const data = await res.json();
     expect(data.count).toBe(2);
 
-    const deal3 = data.comparisons.find(
-      (c: Record<string, unknown>) => c.match_id === matchId3,
-    );
+    const deal3 = data.comparisons.find((c: Record<string, unknown>) => c.match_id === matchId3);
     expect(deal3).toBeDefined();
     expect(deal3.latest_proposal).toBeNull();
     expect(deal3.counterpart_agent_id).toBe("dave");
@@ -205,16 +184,12 @@ describe("Deal Comparison API", () => {
   });
 
   it("requires authentication", async () => {
-    const res = await compareGET(
-      jsonReq(`/api/deals/compare?match_ids=${matchId1},${matchId2}`),
-    );
+    const res = await compareGET(jsonReq(`/api/deals/compare?match_ids=${matchId1},${matchId2}`));
     expect(res.status).toBe(401);
   });
 
   it("requires match_ids parameter", async () => {
-    const res = await compareGET(
-      jsonReq("/api/deals/compare", undefined, aliceKey),
-    );
+    const res = await compareGET(jsonReq("/api/deals/compare", undefined, aliceKey));
     expect(res.status).toBe(400);
     const data = await res.json();
     expect(data.error).toContain("match_ids");
@@ -251,11 +226,7 @@ describe("Deal Comparison API", () => {
 
   it("returns 404 for all invalid match_ids", async () => {
     const res = await compareGET(
-      jsonReq(
-        "/api/deals/compare?match_ids=nonexistent1,nonexistent2",
-        undefined,
-        aliceKey,
-      ),
+      jsonReq("/api/deals/compare?match_ids=nonexistent1,nonexistent2", undefined, aliceKey),
     );
     expect(res.status).toBe(404);
   });

@@ -39,7 +39,12 @@ interface DealComparison {
  * Max 10 deals per comparison.
  */
 export async function GET(req: NextRequest) {
-  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "deals-compare");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    "deals-compare",
+  );
   if (rl) return rl;
 
   const auth = await authenticateAny(req);
@@ -57,7 +62,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const matchIds = matchIdsParam.split(",").map((id) => id.trim()).filter(Boolean);
+  const matchIds = matchIdsParam
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
 
   if (matchIds.length < 2) {
     return NextResponse.json(
