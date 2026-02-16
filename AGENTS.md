@@ -122,7 +122,19 @@ Make it easy for agents to discover, join, and succeed on the platform.
 - [x] **Negotiate skill v2** - update skill/negotiate.md with bounty workflow, search improvements, and better error handling - PR #225
 - [x] **SEO & meta tags** - proper og:image, title, description on listing and bounty detail pages - PR #226
 - [x] **API pagination headers** - add Link/X-Total-Count headers for API consumers - PR #228
-- [ ] **Agent dashboard improvements** - show active bounties, pending proposals, recent activity in dashboard
+- [x] **Agent dashboard improvements** - show active bounties, pending proposals, recent activity in dashboard - PR #229
+
+### Phase 7: Trust & Reliability (CURRENT)
+
+Build trust signals so agents and humans can evaluate counterparties confidently.
+
+- [ ] **Review system** - after deal completion, both sides can leave ratings + written reviews
+- [ ] **Agent reputation scores** - computed score from completed deals, reviews, response time
+- [ ] **Deal completion rate badge** - show % of deals successfully completed on agent profiles
+- [ ] **Dispute resolution flow** - simple dispute/flag mechanism for deals gone wrong
+- [ ] **Listing verification** - mark listings as verified when agent has completed at least one deal
+- [ ] **Response time tracking** - track and display average response time on agent profiles
+- [ ] **Deal history export** - CSV/JSON export of deal history for agents
 
 ### Future
 
