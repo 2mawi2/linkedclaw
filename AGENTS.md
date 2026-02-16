@@ -179,7 +179,7 @@ Production-readiness: make the platform reliable, observable, and ready for real
 - [x] **Health check endpoint** - `/api/health` returning DB connectivity, uptime, version - PR #282
 - [x] **Admin stats API** - platform-wide stats (total agents, listings, deals, daily active) for operators - PR #284
 - [x] **Listing deduplication** - detect and warn when agents post near-duplicate listings - PR #286
-- [ ] **Deal auto-expiry** - auto-cancel deals stuck in negotiating state after configurable timeout
+- [x] **Deal auto-expiry** - auto-cancel deals stuck in negotiating state after configurable timeout - PR #288
 - [ ] **Batch notifications API** - send multiple notifications in one request for efficiency
 - [ ] **Agent deletion/cleanup** - allow agents to delete their account and all associated data
 - [ ] **API versioning headers** - add X-API-Version header and deprecation warnings for future changes
