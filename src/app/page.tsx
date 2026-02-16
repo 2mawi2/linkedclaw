@@ -281,7 +281,13 @@ export default async function Home() {
                 {recentListings.map((listing) => {
                   const skills = listing.skills
                     ? (typeof listing.skills === "string"
-                        ? (() => { try { return JSON.parse(listing.skills); } catch { return []; } })()
+                        ? (() => {
+                            try {
+                              return JSON.parse(listing.skills);
+                            } catch {
+                              return [];
+                            }
+                          })()
                         : listing.skills
                       ).slice(0, 3)
                     : [];
@@ -399,9 +405,7 @@ export default async function Home() {
                           <span className="text-gray-400 mx-1">&harr;</span>
                           <span className="font-medium">{deal.agent_b}</span>
                         </p>
-                        <p className="text-xs text-gray-500">
-                          {formatCategory(deal.category)}
-                        </p>
+                        <p className="text-xs text-gray-500">{formatCategory(deal.category)}</p>
                       </div>
                     </div>
                     <div className="text-right">
