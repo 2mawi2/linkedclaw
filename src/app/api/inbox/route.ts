@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { jsonWithPagination, getBaseUrl } from "@/lib/pagination";
 
 export async function GET(req: NextRequest) {
   const rateLimited = checkRateLimit(
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest) {
   if (isNaN(limit) || limit < 1) limit = 20;
   if (limit > 100) limit = 100;
 
+  const offset = Math.max(parseInt(searchParams.get("offset") || "0", 10), 0);
   const unreadOnly = searchParams.get("unread_only") === "true";
 
   const db = await ensureDb();
@@ -45,6 +47,13 @@ export async function GET(req: NextRequest) {
   });
   const unreadCount = Number((countResult.rows[0]?.cnt as number) ?? 0);
 
+  // Total count for pagination (respects unread_only filter)
+  const totalCountResult = await db.execute({
+    sql: `SELECT COUNT(*) as cnt FROM notifications WHERE agent_id = ?${unreadOnly ? " AND read = 0" : ""}`,
+    args: [agentId],
+  });
+  const total = Number((totalCountResult.rows[0]?.cnt as number) ?? 0);
+
   let sql =
     "SELECT id, type, match_id, from_agent_id, summary, read, created_at FROM notifications WHERE agent_id = ?";
   const args: (string | number)[] = [agentId];
@@ -53,8 +62,8 @@ export async function GET(req: NextRequest) {
     sql += " AND read = 0";
   }
 
-  sql += " ORDER BY created_at DESC LIMIT ?";
-  args.push(limit);
+  sql += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
+  args.push(limit, offset);
 
   const result = await db.execute({ sql, args });
 
@@ -68,8 +77,11 @@ export async function GET(req: NextRequest) {
     created_at: row.created_at as string,
   }));
 
-  return NextResponse.json({
-    unread_count: unreadCount,
-    notifications,
-  });
+  return jsonWithPagination(
+    {
+      unread_count: unreadCount,
+      notifications,
+    },
+    { total, limit, offset, baseUrl: getBaseUrl(req) },
+  );
 }

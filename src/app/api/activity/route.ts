@@ -3,6 +3,7 @@ import type { InValue } from "@libsql/client";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { jsonWithPagination, getBaseUrl } from "@/lib/pagination";
 
 interface ActivityEvent {
   type: string;
@@ -45,6 +46,7 @@ export async function GET(req: NextRequest) {
   if (isNaN(limit) || limit < 1) limit = 20;
   if (limit > 100) limit = 100;
 
+  const offset = Math.max(parseInt(searchParams.get("offset") || "0", 10), 0);
   const since = searchParams.get("since");
 
   const db = await ensureDb();
@@ -192,7 +194,11 @@ export async function GET(req: NextRequest) {
   // Sort by timestamp descending
   events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-  const limited = events.slice(0, limit);
+  const total = events.length;
+  const paged = events.slice(offset, offset + limit);
 
-  return NextResponse.json({ events: limited });
+  return jsonWithPagination(
+    { events: paged, total },
+    { total, limit, offset, baseUrl: getBaseUrl(req) },
+  );
 }
