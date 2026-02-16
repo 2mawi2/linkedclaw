@@ -362,11 +362,7 @@ export default function DashboardPage() {
             {activeTab === "activity" && <ActivityTab activity={activity} />}
             {activeTab === "rate-limits" && <RateLimitsTab limits={rateLimits} />}
             {activeTab === "webhooks" && (
-              <WebhooksTab
-                webhooks={webhooks}
-                setWebhooks={setWebhooks}
-                apiKey={apiKey!}
-              />
+              <WebhooksTab webhooks={webhooks} setWebhooks={setWebhooks} apiKey={apiKey!} />
             )}
 
             {/* Reputation */}
@@ -931,7 +927,11 @@ function WebhooksTab({
         headers,
         body: JSON.stringify({ active }),
       });
-      setWebhooks((prev) => prev.map((w) => (w.id === id ? { ...w, active, failure_count: active ? 0 : w.failure_count } : w)));
+      setWebhooks((prev) =>
+        prev.map((w) =>
+          w.id === id ? { ...w, active, failure_count: active ? 0 : w.failure_count } : w,
+        ),
+      );
     } catch {
       // ignore
     }
@@ -973,7 +973,10 @@ function WebhooksTab({
         </p>
         {!showForm && (
           <button
-            onClick={() => { setShowForm(true); setNewSecret(null); }}
+            onClick={() => {
+              setShowForm(true);
+              setNewSecret(null);
+            }}
             className="px-4 py-2 bg-foreground text-background rounded-lg text-sm font-medium hover:opacity-90"
           >
             + Add webhook
@@ -1014,7 +1017,10 @@ function WebhooksTab({
             {!allEvents && (
               <div className="grid grid-cols-2 gap-1">
                 {WEBHOOK_EVENT_TYPES.map((evt) => (
-                  <label key={evt} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                  <label
+                    key={evt}
+                    className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400"
+                  >
                     <input
                       type="checkbox"
                       checked={selectedEvents.includes(evt)}
@@ -1052,7 +1058,11 @@ function WebhooksTab({
               {creating ? "Creating..." : "Create webhook"}
             </button>
             <button
-              onClick={() => { setShowForm(false); setFormError(""); setNewSecret(null); }}
+              onClick={() => {
+                setShowForm(false);
+                setFormError("");
+                setNewSecret(null);
+              }}
               className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900"
             >
               Cancel
@@ -1066,7 +1076,8 @@ function WebhooksTab({
         <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center">
           <p className="text-gray-500 mb-2">No webhooks configured yet.</p>
           <p className="text-sm text-gray-400">
-            Add a webhook to receive real-time notifications when matches, messages, and deals happen.
+            Add a webhook to receive real-time notifications when matches, messages, and deals
+            happen.
           </p>
         </div>
       ) : (
@@ -1101,11 +1112,15 @@ function WebhooksTab({
                           {wh.failure_count} failure{wh.failure_count !== 1 ? "s" : ""}
                         </span>
                       )}
-                      {wh.last_triggered_at && <span>Last fired: {timeAgo(wh.last_triggered_at)}</span>}
+                      {wh.last_triggered_at && (
+                        <span>Last fired: {timeAgo(wh.last_triggered_at)}</span>
+                      )}
                       <span>Created: {timeAgo(wh.created_at)}</span>
                     </div>
                     {result && (
-                      <p className={`text-xs mt-1 ${result.ok ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+                      <p
+                        className={`text-xs mt-1 ${result.ok ? "text-green-600 dark:text-green-400" : "text-red-500"}`}
+                      >
                         Test: {result.msg}
                       </p>
                     )}
