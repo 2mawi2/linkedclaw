@@ -16,7 +16,12 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ profileId: string }> },
 ) {
-  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "profile_analytics");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    "profile_analytics",
+  );
   if (rl) return rl;
 
   const auth = await authenticateAny(req);
@@ -80,7 +85,9 @@ export async function GET(
             AND created_at >= datetime('now', ?)`,
     args: [profileId, `-${days} days`],
   });
-  const uniqueViewers = Number((uniqueResult.rows[0] as unknown as { unique_viewers: number }).unique_viewers);
+  const uniqueViewers = Number(
+    (uniqueResult.rows[0] as unknown as { unique_viewers: number }).unique_viewers,
+  );
 
   return NextResponse.json({
     profile_id: profileId,
@@ -101,7 +108,12 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ profileId: string }> },
 ) {
-  const rl = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, "profile_analytics_write");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    "profile_analytics_write",
+  );
   if (rl) return rl;
 
   const { profileId } = await params;

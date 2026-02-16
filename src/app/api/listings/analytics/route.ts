@@ -13,7 +13,12 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
  *   days - number of days to look back (default 30, max 365)
  */
 export async function GET(req: NextRequest) {
-  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "listings_analytics");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    "listings_analytics",
+  );
   if (rl) return rl;
 
   const auth = await authenticateAny(req);

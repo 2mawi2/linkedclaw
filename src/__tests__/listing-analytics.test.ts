@@ -98,7 +98,9 @@ describe("POST /api/profiles/:profileId/analytics", () => {
       const res = await POST(req, { params: Promise.resolve({ profileId: "p1" }) });
       expect(res.status).toBe(200);
     }
-    const result = await db.execute("SELECT COUNT(*) as count FROM listing_events WHERE profile_id = 'p1'");
+    const result = await db.execute(
+      "SELECT COUNT(*) as count FROM listing_events WHERE profile_id = 'p1'",
+    );
     expect(Number(result.rows[0].count)).toBe(2);
   });
 });
@@ -192,7 +194,7 @@ describe("GET /api/listings/analytics", () => {
     // Create second listing
     await db.execute({
       sql: "INSERT INTO profiles (id, agent_id, side, category, params, description) VALUES (?, ?, ?, ?, ?, ?)",
-      args: ["p2", "agent1", "seeking", "design", '{}', "Need designer"],
+      args: ["p2", "agent1", "seeking", "design", "{}", "Need designer"],
     });
 
     await insertEvent("p1", "view", "agent2");
