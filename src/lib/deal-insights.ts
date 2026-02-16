@@ -47,9 +47,7 @@ export async function getDealInsights(
   // Get completion timestamps (from deal_completions or approvals)
   let closeMap = new Map<string, string>();
   try {
-    const completions = await db.execute(
-      `SELECT match_id, created_at FROM deal_completions`,
-    );
+    const completions = await db.execute(`SELECT match_id, created_at FROM deal_completions`);
     closeMap = new Map(
       (completions.rows as unknown as { match_id: string; created_at: string }[]).map((r) => [
         r.match_id,
