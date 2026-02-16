@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { ensureDb, getTagsForProfiles } from "@/lib/db";
 import type { Profile, ProfileParams } from "@/lib/types";
 
@@ -6,6 +7,8 @@ import type { Profile, ProfileParams } from "@/lib/types";
  * GET /api/search - Search and discover active profiles
  */
 export async function GET(req: NextRequest) {
+  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "search");
+  if (rl) return rl;
   const { searchParams } = new URL(req.url);
   const category = searchParams.get("category");
   const side = searchParams.get("side");

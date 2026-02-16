@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 /**
  * GET /api/categories - Discover active categories with profile counts
@@ -7,7 +8,9 @@ import { ensureDb } from "@/lib/db";
  * Public endpoint (no auth required).
  * Returns categories with offering/seeking counts and recent deal activity.
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "categories");
+  if (rl) return rl;
   const db = await ensureDb();
 
   const categoriesResult = await db.execute(

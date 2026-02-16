@@ -1,10 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 /**
  * GET /api/stats - Platform statistics and health check
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "stats");
+  if (rl) return rl;
   const db = await ensureDb();
 
   const profileStatsResult = await db.execute(`

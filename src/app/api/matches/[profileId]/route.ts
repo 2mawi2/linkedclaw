@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findMatches } from "@/lib/matching";
 import { ensureDb } from "@/lib/db";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ profileId: string }> },
 ) {
+  const rl = checkRateLimit(_req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "matches");
+  if (rl) return rl;
   const { profileId } = await params;
 
   if (!profileId || profileId.trim().length === 0) {

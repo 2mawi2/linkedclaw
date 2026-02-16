@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createNotification } from "@/lib/notifications";
 import type { Profile, ProfileParams } from "@/lib/types";
 
@@ -19,6 +20,8 @@ interface DealRow {
 }
 
 export async function GET(req: NextRequest) {
+  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "deals-get");
+  if (rl) return rl;
   const { searchParams } = new URL(req.url);
   const agentId = searchParams.get("agent_id");
 
@@ -107,6 +110,13 @@ export async function GET(req: NextRequest) {
  * Auth: Bearer token required (must own profile_id / agent_id)
  */
 export async function POST(req: NextRequest) {
+  const rlw = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    "deals-post",
+  );
+  if (rlw) return rlw;
   const auth = await authenticateAny(req);
   if (!auth) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });

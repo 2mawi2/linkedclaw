@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createNotification } from "@/lib/notifications";
 import type { Match, Profile } from "@/lib/types";
 import { randomUUID } from "crypto";
@@ -10,6 +11,13 @@ import { randomUUID } from "crypto";
  * Public endpoint.
  */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
+  const rl = checkRateLimit(
+    _req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    "milestones-get",
+  );
+  if (rl) return rl;
   const { matchId } = await params;
   const db = await ensureDb();
 
@@ -56,6 +64,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ mat
  * Body: { agent_id, milestones: [{ title, description?, due_date?, position? }] }
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
+  const rlw = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    "milestones-post",
+  );
+  if (rlw) return rlw;
   const { matchId } = await params;
   const auth = await authenticateAny(req);
   if (!auth) {
