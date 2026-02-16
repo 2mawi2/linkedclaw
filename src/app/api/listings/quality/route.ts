@@ -14,7 +14,12 @@ import type { Profile, ProfileParams } from "@/lib/types";
  * Response: { listings: [{ profile_id, category, side, overall_score, grade, dimensions, suggestions }] }
  */
 export async function GET(req: NextRequest) {
-  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "listing-quality");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    "listing-quality",
+  );
   if (rl) return rl;
 
   const auth = await authenticateAny(req);
@@ -75,7 +80,12 @@ export async function GET(req: NextRequest) {
  * Public endpoint - agents can check quality before posting.
  */
 export async function POST(req: NextRequest) {
-  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "listing-quality");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    "listing-quality",
+  );
   if (rl) return rl;
 
   let body: Record<string, unknown>;
@@ -87,7 +97,9 @@ export async function POST(req: NextRequest) {
 
   const description = typeof body.description === "string" ? body.description : null;
   const category = typeof body.category === "string" ? body.category : null;
-  const params = (typeof body.params === "object" && body.params !== null ? body.params : {}) as ProfileParams;
+  const params = (
+    typeof body.params === "object" && body.params !== null ? body.params : {}
+  ) as ProfileParams;
 
   const quality = computeQualityScore(description, category, params);
 

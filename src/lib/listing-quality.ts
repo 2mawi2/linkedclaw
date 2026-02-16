@@ -62,7 +62,10 @@ function scoreDescription(description: string | null | undefined): QualityDimens
   }
 
   // Word variety (0-8) - more unique words = more detailed
-  const words = text.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+  const words = text
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 2);
   const uniqueWords = new Set(words).size;
   if (uniqueWords >= 30) {
     dim.score += 8;
@@ -71,7 +74,9 @@ function scoreDescription(description: string | null | undefined): QualityDimens
   } else {
     dim.score += Math.round((uniqueWords / 15) * 3);
     if (uniqueWords < 10) {
-      dim.suggestions.push("Add more detail to your description - explain your experience, tools, or deliverables");
+      dim.suggestions.push(
+        "Add more detail to your description - explain your experience, tools, or deliverables",
+      );
     }
   }
 
@@ -149,7 +154,9 @@ function scoreRateRange(params: ProfileParams): QualityDimension {
       dim.score += 4;
     } else if (spread <= MAX_RATE_SPREAD) {
       dim.score += 2;
-      dim.suggestions.push("Rate range is wide - narrowing it signals confidence and attracts serious matches");
+      dim.suggestions.push(
+        "Rate range is wide - narrowing it signals confidence and attracts serious matches",
+      );
     } else {
       dim.score += 0;
       dim.suggestions.push("Rate range is very wide - consider narrowing for better match quality");
@@ -184,7 +191,10 @@ function scoreAvailability(params: ProfileParams): QualityDimension {
   }
 
   // Duration (0-3)
-  if (typeof params.duration_min_weeks === "number" || typeof params.duration_max_weeks === "number") {
+  if (
+    typeof params.duration_min_weeks === "number" ||
+    typeof params.duration_max_weeks === "number"
+  ) {
     dim.score += 3;
   } else {
     dim.suggestions.push("Add expected duration to help agents plan");
