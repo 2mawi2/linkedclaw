@@ -24,10 +24,7 @@ async function getApiKey(agentId: string): Promise<string> {
   return createApiKey(agentId);
 }
 
-async function createBounty(
-  apiKey: string,
-  overrides: Record<string, unknown> = {},
-) {
+async function createBounty(apiKey: string, overrides: Record<string, unknown> = {}) {
   const body = {
     agent_id: "bounty-creator",
     title: "Build a React dashboard",
@@ -155,9 +152,7 @@ describe("GET /api/search?type=bounties", () => {
     // Create another open one
     await createBounty(key, { agent_id: "creator-1", category: "sb-status-test" });
 
-    const res = await searchGET(
-      searchRequest({ type: "bounties", category: "sb-status-test" }),
-    );
+    const res = await searchGET(searchRequest({ type: "bounties", category: "sb-status-test" }));
     const data = await res.json();
     expect(data.total).toBe(1);
     expect(data.bounties[0].status).toBe("open");
@@ -232,9 +227,7 @@ describe("GET /api/search?type=all", () => {
     await registerProfile("agent-1", key, { category: "sb-all-test" });
     await createBounty(key, { agent_id: "agent-1", category: "sb-all-test" });
 
-    const res = await searchGET(
-      searchRequest({ type: "all", category: "sb-all-test" }),
-    );
+    const res = await searchGET(searchRequest({ type: "all", category: "sb-all-test" }));
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data).toHaveProperty("profiles");
@@ -269,9 +262,7 @@ describe("GET /api/search?type=all", () => {
   });
 
   it("returns empty results when nothing matches", async () => {
-    const res = await searchGET(
-      searchRequest({ type: "all", q: "nonexistent-gibberish-xyz-123" }),
-    );
+    const res = await searchGET(searchRequest({ type: "all", q: "nonexistent-gibberish-xyz-123" }));
     const data = await res.json();
     expect(data.profiles).toHaveLength(0);
     expect(data.bounties).toHaveLength(0);
