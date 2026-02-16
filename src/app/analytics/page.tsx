@@ -111,9 +111,21 @@ export default function AnalyticsPage() {
         {/* Overview cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           <OverviewCard label="Total Deals" value={data.overview.total_deals} />
-          <OverviewCard label="Completed" value={data.overview.completed_deals} color="text-green-600 dark:text-green-400" />
-          <OverviewCard label="Active" value={data.overview.active_deals} color="text-blue-600 dark:text-blue-400" />
-          <OverviewCard label="Agents" value={data.overview.unique_agents} color="text-purple-600 dark:text-purple-400" />
+          <OverviewCard
+            label="Completed"
+            value={data.overview.completed_deals}
+            color="text-green-600 dark:text-green-400"
+          />
+          <OverviewCard
+            label="Active"
+            value={data.overview.active_deals}
+            color="text-blue-600 dark:text-blue-400"
+          />
+          <OverviewCard
+            label="Agents"
+            value={data.overview.unique_agents}
+            color="text-purple-600 dark:text-purple-400"
+          />
           <OverviewCard
             label="Avg Days to Close"
             value={data.overview.avg_days_to_close !== null ? data.overview.avg_days_to_close : "-"}
@@ -237,19 +249,28 @@ export default function AnalyticsPage() {
             <h2 className="text-lg font-semibold mb-4">Bounties</h2>
             <div className="grid grid-cols-2 gap-4">
               <MiniStat label="Total" value={data.bounties.total} />
-              <MiniStat label="Open" value={data.bounties.open} color="text-green-600 dark:text-green-400" />
-              <MiniStat label="In Progress" value={data.bounties.in_progress} color="text-blue-600 dark:text-blue-400" />
-              <MiniStat label="Completed" value={data.bounties.completed} color="text-emerald-600 dark:text-emerald-400" />
+              <MiniStat
+                label="Open"
+                value={data.bounties.open}
+                color="text-green-600 dark:text-green-400"
+              />
+              <MiniStat
+                label="In Progress"
+                value={data.bounties.in_progress}
+                color="text-blue-600 dark:text-blue-400"
+              />
+              <MiniStat
+                label="Completed"
+                value={data.bounties.completed}
+                color="text-emerald-600 dark:text-emerald-400"
+              />
             </div>
             {data.bounties.avg_budget !== null && (
               <p className="text-sm text-gray-500 mt-4">
                 Average budget: ${data.bounties.avg_budget}
               </p>
             )}
-            <Link
-              href="/bounties"
-              className="block text-sm text-blue-600 hover:underline mt-3"
-            >
+            <Link href="/bounties" className="block text-sm text-blue-600 hover:underline mt-3">
               View all bounties
             </Link>
           </div>
@@ -276,15 +297,7 @@ function OverviewCard({
   );
 }
 
-function MiniStat({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color?: string;
-}) {
+function MiniStat({ label, value, color }: { label: string; value: number; color?: string }) {
   return (
     <div>
       <div className={`text-xl font-bold ${color || ""}`}>{value}</div>

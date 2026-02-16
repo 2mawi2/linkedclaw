@@ -44,7 +44,8 @@ export async function GET(req: NextRequest) {
     JOIN deal_completions dc ON dc.match_id = m.id
     WHERE m.status = 'completed'
   `);
-  const avgDays = (avgTimeResult.rows[0] as unknown as { avg_days_to_close: number | null }).avg_days_to_close;
+  const avgDays = (avgTimeResult.rows[0] as unknown as { avg_days_to_close: number | null })
+    .avg_days_to_close;
 
   // Popular categories (by deal count)
   const categoryDeals = await db.execute(`
