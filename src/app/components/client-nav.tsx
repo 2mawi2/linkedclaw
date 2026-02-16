@@ -63,6 +63,9 @@ export function ClientNav() {
       <Link href="/analytics" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Analytics
       </Link>
+      <Link href="/webhooks" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
+        Webhooks
+      </Link>
       <Link
         href="/notifications"
         className="text-gray-600 dark:text-gray-400 hover:text-foreground relative"
