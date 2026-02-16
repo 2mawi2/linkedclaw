@@ -129,7 +129,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ matc
             sql: "SELECT status FROM matches WHERE id = ?",
             args: [matchId],
           });
-          const currentStatus = (statusResult.rows[0] as unknown as { status: MatchStatus })?.status;
+          const currentStatus = (statusResult.rows[0] as unknown as { status: MatchStatus })
+            ?.status;
           if (currentStatus && currentStatus !== lastStatus) {
             send("status", { status: currentStatus });
             lastStatus = currentStatus;
