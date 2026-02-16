@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest) {
   try {
     if (!db) db = await ensureDb();
     const result = await db.execute(
-      "SELECT (SELECT COUNT(*) FROM users) as users, (SELECT COUNT(*) FROM profiles) as profiles, (SELECT COUNT(*) FROM matches) as matches"
+      "SELECT (SELECT COUNT(*) FROM users) as users, (SELECT COUNT(*) FROM profiles) as profiles, (SELECT COUNT(*) FROM matches) as matches",
     );
     const row = result.rows[0];
     checks.schema = {
