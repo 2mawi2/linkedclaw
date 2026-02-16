@@ -1,6 +1,8 @@
 import { describe, test, expect } from "vitest";
+import { readFileSync } from "fs";
+import { join } from "path";
 
-// Mirror the proxy logic for testing
+// Mirror the proxy logic for testing — keep in sync with src/proxy.ts
 const PUBLIC_ANY_METHOD = ["/", "/login", "/register", "/docs", "/api/register", "/api/login"];
 const PUBLIC_GET_ONLY = [
   "/api/stats",
@@ -10,6 +12,7 @@ const PUBLIC_GET_ONLY = [
   "/api/templates",
   "/api/projects",
   "/api/openapi.json",
+  "/skill/negotiate.md",
 ];
 const PUBLIC_GET_PREFIXES = [
   "/api/agents/",
@@ -18,6 +21,7 @@ const PUBLIC_GET_PREFIXES = [
   "/api/connect/",
   "/api/profiles/",
   "/browse",
+  "/inbox",
 ];
 
 function isPublicPath(pathname: string, method: string): boolean {
@@ -38,12 +42,14 @@ describe("proxy public paths", () => {
     expect(isPublicPath("/api/templates", "GET")).toBe(true);
     expect(isPublicPath("/api/projects", "GET")).toBe(true);
     expect(isPublicPath("/api/openapi.json", "GET")).toBe(true);
+    expect(isPublicPath("/skill/negotiate.md", "GET")).toBe(true);
     expect(isPublicPath("/", "GET")).toBe(true);
     expect(isPublicPath("/login", "GET")).toBe(true);
     expect(isPublicPath("/register", "GET")).toBe(true);
     expect(isPublicPath("/docs", "GET")).toBe(true);
     expect(isPublicPath("/browse", "GET")).toBe(true);
     expect(isPublicPath("/browse/listing-123", "GET")).toBe(true);
+    expect(isPublicPath("/inbox", "GET")).toBe(true);
   });
 
   test("allows POST on auth endpoints", () => {
@@ -71,7 +77,6 @@ describe("proxy public paths", () => {
 
   test("blocks non-public paths", () => {
     expect(isPublicPath("/api/deals", "GET")).toBe(false);
-    expect(isPublicPath("/api/inbox", "GET")).toBe(false);
     expect(isPublicPath("/api/activity", "GET")).toBe(false);
     expect(isPublicPath("/api/webhooks", "GET")).toBe(false);
   });
@@ -79,5 +84,25 @@ describe("proxy public paths", () => {
   test("blocks POST on prefix-matched paths (needs auth)", () => {
     expect(isPublicPath("/api/reputation/test-agent/review", "POST")).toBe(false);
     expect(isPublicPath("/api/connect/test-agent", "POST")).toBe(false);
+  });
+
+  test("test mirrors match src/proxy.ts public path lists", () => {
+    const proxySource = readFileSync(join(__dirname, "../proxy.ts"), "utf-8");
+
+    // Extract arrays from proxy.ts source
+    function extractArray(name: string): string[] {
+      const re = new RegExp(`const ${name}\\s*=\\s*\\[([\\s\\S]*?)\\];`);
+      const m = proxySource.match(re);
+      if (!m) throw new Error(`Could not find ${name} in proxy.ts`);
+      return [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]);
+    }
+
+    const realAnyMethod = extractArray("PUBLIC_ANY_METHOD");
+    const realGetOnly = extractArray("PUBLIC_GET_ONLY");
+    const realGetPrefixes = extractArray("PUBLIC_GET_PREFIXES");
+
+    expect(PUBLIC_ANY_METHOD).toEqual(realAnyMethod);
+    expect(PUBLIC_GET_ONLY).toEqual(realGetOnly);
+    expect(PUBLIC_GET_PREFIXES).toEqual(realGetPrefixes);
   });
 });
