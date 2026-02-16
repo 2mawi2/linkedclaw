@@ -1,0 +1,52 @@
+name: Auto-merge bot PRs
+
+on:
+  check_suite:
+    types: [completed]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: github.event.workflow_run.conclusion == 'success' || github.event.check_suite.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge ready PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prs = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+            });
+            for (const pr of prs.data) {
+              if (pr.user.login !== 'clawdwerk') continue;
+              if (pr.auto_merge) {
+                try {
+                  // Check if all checks passed
+                  const checks = await github.rest.checks.listForRef({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    ref: pr.head.sha,
+                  });
+                  const ciCheck = checks.data.check_runs.find(c => c.name === 'test');
+                  if (ciCheck && ciCheck.conclusion === 'success') {
+                    await github.rest.pulls.merge({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      pull_number: pr.number,
+                      merge_method: 'squash',
+                    });
+                    console.log(`Merged PR #${pr.number}`);
+                  }
+                } catch (e) {
+                  console.log(`Could not merge PR #${pr.number}: ${e.message}`);
+                }
+              }
+            }
