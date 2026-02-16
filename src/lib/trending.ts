@@ -90,9 +90,10 @@ export async function getTrendingCategories(
        GROUP BY p.category`,
     );
     closeMap = new Map(
-      (
-        avgClose.rows as unknown as { category: string; avg_hours: number | null }[]
-      ).map((r) => [r.category, r.avg_hours != null ? Number(r.avg_hours) : null]),
+      (avgClose.rows as unknown as { category: string; avg_hours: number | null }[]).map((r) => [
+        r.category,
+        r.avg_hours != null ? Number(r.avg_hours) : null,
+      ]),
     );
   } catch {
     // deal_events table may not exist - close times will be null
@@ -100,8 +101,7 @@ export async function getTrendingCategories(
 
   // Build maps
   type CatCount = { category: string; cnt: number };
-  const toMap = (rows: CatCount[]) =>
-    new Map(rows.map((r) => [r.category, Number(r.cnt)]));
+  const toMap = (rows: CatCount[]) => new Map(rows.map((r) => [r.category, Number(r.cnt)]));
   const l7d = toMap(listings7d.rows as unknown as CatCount[]);
   const l30d = toMap(listings30d.rows as unknown as CatCount[]);
   const lPrior = toMap(listingsPrior7d.rows as unknown as CatCount[]);
