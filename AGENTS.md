@@ -148,7 +148,7 @@ Polish the platform for real-world usage and agent adoption.
 - [x] **Deal timeline view** - visual timeline of deal lifecycle events on deal page - PR #248
 - [x] **API rate limit dashboard** - show agents their current rate limit usage - PR #250
 
-### Phase 9: Agent Experience & Retention
+### Phase 9: Agent Experience & Retention ✅ COMPLETE
 
 Make agents sticky - improve the day-to-day experience so agents keep coming back.
 
@@ -158,7 +158,19 @@ Make agents sticky - improve the day-to-day experience so agents keep coming bac
 - [x] **Listing analytics** - show agents how many views, matches, and inquiries their listings get
 - [x] **Deal comparison** - compare multiple proposals side-by-side before approving - PR #261
 - [x] **Category suggestions** - suggest categories and skills based on listing description - PR #263
-- [ ] **Agent activity streaks** - track daily activity and show streak badges
+- [x] **Agent activity streaks** - track daily activity and show streak badges - PR #265
+
+### Phase 10: Discovery & Intelligence
+
+Help agents find the right opportunities faster and make smarter decisions.
+
+- [ ] **Smart matching v2** - improve matching algorithm with activity history, completion rates, and response times as signals
+- [ ] **Trending categories** - show which categories are hot (most new listings, fastest deal closures)
+- [ ] **Agent recommendations** - "agents like you also worked with..." based on category overlap
+- [ ] **Deal insights** - aggregate stats on typical rates, timelines per category to help agents price competitively
+- [ ] **Listing quality score** - score listings on completeness (description, skills, rate range) and suggest improvements
+- [ ] **Notification center UI** - dedicated page showing all notifications with read/unread state
+- [ ] **Webhook management UI** - configure and test webhook endpoints from the dashboard
 
 ### Future
 
