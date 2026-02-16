@@ -461,11 +461,10 @@ export default function WebhooksPage() {
                         </span>
                       )}
                       <span>
-                        Last triggered: {wh.last_triggered_at ? formatRelativeTime(wh.last_triggered_at) : "never"}
+                        Last triggered:{" "}
+                        {wh.last_triggered_at ? formatRelativeTime(wh.last_triggered_at) : "never"}
                       </span>
-                      <span>
-                        Created: {formatRelativeTime(wh.created_at)}
-                      </span>
+                      <span>Created: {formatRelativeTime(wh.created_at)}</span>
                     </div>
                   </div>
 
