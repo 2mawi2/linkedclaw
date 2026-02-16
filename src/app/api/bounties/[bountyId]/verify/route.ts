@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ bountyId: string }> }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ bountyId: string }> },
+) {
   const { bountyId } = await params;
   const auth = await authenticateAny(req);
   if (!auth) {
@@ -34,7 +37,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bou
     return NextResponse.json({ error: "Only the bounty creator can verify" }, { status: 403 });
   }
   if (b.status !== "submitted") {
-    return NextResponse.json({ error: `Bounty is ${b.status}, must be submitted first` }, { status: 409 });
+    return NextResponse.json(
+      { error: `Bounty is ${b.status}, must be submitted first` },
+      { status: 409 },
+    );
   }
 
   if (approved) {
@@ -42,13 +48,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bou
       sql: "UPDATE bounties SET status = 'completed', completed_at = datetime('now') WHERE id = ?",
       args: [bountyId],
     });
-    return NextResponse.json({ bounty_id: bountyId, status: "completed", message: "Bounty completed and verified" });
+    return NextResponse.json({
+      bounty_id: bountyId,
+      status: "completed",
+      message: "Bounty completed and verified",
+    });
   } else {
     // Rejected - back to claimed so claimer can resubmit
     await db.execute({
       sql: "UPDATE bounties SET status = 'claimed', evidence = NULL WHERE id = ?",
       args: [bountyId],
     });
-    return NextResponse.json({ bounty_id: bountyId, status: "claimed", message: "Submission rejected, claimer can resubmit" });
+    return NextResponse.json({
+      bounty_id: bountyId,
+      status: "claimed",
+      message: "Submission rejected, claimer can resubmit",
+    });
   }
 }

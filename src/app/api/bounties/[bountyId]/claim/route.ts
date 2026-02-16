@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ bountyId: string }> }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ bountyId: string }> },
+) {
   const { bountyId } = await params;
   const auth = await authenticateAny(req);
   if (!auth) {

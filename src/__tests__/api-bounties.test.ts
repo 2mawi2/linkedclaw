@@ -39,16 +39,20 @@ const routeParams = (bountyId: string) => ({ params: Promise.resolve({ bountyId 
 
 async function createBounty(key: string, agentId: string, overrides?: Record<string, unknown>) {
   const res = await bountiesPOST(
-    jsonReq("/api/bounties", {
-      agent_id: agentId,
-      title: "Build an API integration",
-      description: "Connect our service to the Stripe API for payment processing",
-      category: "development",
-      skills: ["TypeScript", "Stripe", "API"],
-      reward_amount: 200,
-      reward_currency: "EUR",
-      ...overrides,
-    }, key),
+    jsonReq(
+      "/api/bounties",
+      {
+        agent_id: agentId,
+        title: "Build an API integration",
+        description: "Connect our service to the Stripe API for payment processing",
+        category: "development",
+        skills: ["TypeScript", "Stripe", "API"],
+        reward_amount: 200,
+        reward_currency: "EUR",
+        ...overrides,
+      },
+      key,
+    ),
   );
   return res.json();
 }
@@ -63,14 +67,23 @@ describe("Bounties", () => {
 
     it("rejects unauthenticated requests", async () => {
       const res = await bountiesPOST(
-        jsonReq("/api/bounties", { agent_id: "alice", title: "test", description: "test", category: "dev" }),
+        jsonReq("/api/bounties", {
+          agent_id: "alice",
+          title: "test",
+          description: "test",
+          category: "dev",
+        }),
       );
       expect(res.status).toBe(401);
     });
 
     it("rejects mismatched agent_id", async () => {
       const res = await bountiesPOST(
-        jsonReq("/api/bounties", { agent_id: "bob", title: "test", description: "test", category: "dev" }, aliceKey),
+        jsonReq(
+          "/api/bounties",
+          { agent_id: "bob", title: "test", description: "test", category: "dev" },
+          aliceKey,
+        ),
       );
       expect(res.status).toBe(403);
     });
@@ -112,14 +125,20 @@ describe("Bounties", () => {
   describe("GET /api/bounties/:id", () => {
     it("returns bounty details", async () => {
       const created = await createBounty(aliceKey, "alice");
-      const res = await bountyDetailGET(jsonReq(`/api/bounties/${created.bounty_id}`), routeParams(created.bounty_id));
+      const res = await bountyDetailGET(
+        jsonReq(`/api/bounties/${created.bounty_id}`),
+        routeParams(created.bounty_id),
+      );
       const data = await res.json();
       expect(data.title).toBe("Build an API integration");
       expect(data.skills).toEqual(["TypeScript", "Stripe", "API"]);
     });
 
     it("returns 404 for missing bounty", async () => {
-      const res = await bountyDetailGET(jsonReq("/api/bounties/nonexistent"), routeParams("nonexistent"));
+      const res = await bountyDetailGET(
+        jsonReq("/api/bounties/nonexistent"),
+        routeParams("nonexistent"),
+      );
       expect(res.status).toBe(404);
     });
   });
@@ -127,7 +146,10 @@ describe("Bounties", () => {
   describe("POST /api/bounties/:id/claim", () => {
     it("allows another agent to claim", async () => {
       const created = await createBounty(aliceKey, "alice");
-      const res = await claimPOST(jsonReq(`/api/bounties/${created.bounty_id}/claim`, { agent_id: "bob" }, bobKey), routeParams(created.bounty_id));
+      const res = await claimPOST(
+        jsonReq(`/api/bounties/${created.bounty_id}/claim`, { agent_id: "bob" }, bobKey),
+        routeParams(created.bounty_id),
+      );
       const data = await res.json();
       expect(data.status).toBe("claimed");
       expect(data.claimed_by).toBe("bob");
@@ -135,15 +157,24 @@ describe("Bounties", () => {
 
     it("prevents claiming own bounty", async () => {
       const created = await createBounty(aliceKey, "alice");
-      const res = await claimPOST(jsonReq(`/api/bounties/${created.bounty_id}/claim`, { agent_id: "alice" }, aliceKey), routeParams(created.bounty_id));
+      const res = await claimPOST(
+        jsonReq(`/api/bounties/${created.bounty_id}/claim`, { agent_id: "alice" }, aliceKey),
+        routeParams(created.bounty_id),
+      );
       expect(res.status).toBe(400);
     });
 
     it("prevents double-claiming", async () => {
       const created = await createBounty(aliceKey, "alice");
-      await claimPOST(jsonReq(`/api/bounties/${created.bounty_id}/claim`, { agent_id: "bob" }, bobKey), routeParams(created.bounty_id));
+      await claimPOST(
+        jsonReq(`/api/bounties/${created.bounty_id}/claim`, { agent_id: "bob" }, bobKey),
+        routeParams(created.bounty_id),
+      );
       const charlieKey = await createApiKey("charlie");
-      const res = await claimPOST(jsonReq(`/api/bounties/${created.bounty_id}/claim`, { agent_id: "charlie" }, charlieKey), routeParams(created.bounty_id));
+      const res = await claimPOST(
+        jsonReq(`/api/bounties/${created.bounty_id}/claim`, { agent_id: "charlie" }, charlieKey),
+        routeParams(created.bounty_id),
+      );
       expect(res.status).toBe(409);
     });
   });
@@ -151,16 +182,36 @@ describe("Bounties", () => {
   describe("POST /api/bounties/:id/submit", () => {
     it("allows claimer to submit evidence", async () => {
       const created = await createBounty(aliceKey, "alice");
-      await claimPOST(jsonReq(`/api/bounties/${created.bounty_id}/claim`, { agent_id: "bob" }, bobKey), routeParams(created.bounty_id));
-      const res = await submitPOST(jsonReq(`/api/bounties/${created.bounty_id}/submit`, { agent_id: "bob", evidence: "PR merged: https://github.com/example/repo/pull/42" }, bobKey), routeParams(created.bounty_id));
+      await claimPOST(
+        jsonReq(`/api/bounties/${created.bounty_id}/claim`, { agent_id: "bob" }, bobKey),
+        routeParams(created.bounty_id),
+      );
+      const res = await submitPOST(
+        jsonReq(
+          `/api/bounties/${created.bounty_id}/submit`,
+          { agent_id: "bob", evidence: "PR merged: https://github.com/example/repo/pull/42" },
+          bobKey,
+        ),
+        routeParams(created.bounty_id),
+      );
       const data = await res.json();
       expect(data.status).toBe("submitted");
     });
 
     it("rejects non-claimer", async () => {
       const created = await createBounty(aliceKey, "alice");
-      await claimPOST(jsonReq(`/api/bounties/${created.bounty_id}/claim`, { agent_id: "bob" }, bobKey), routeParams(created.bounty_id));
-      const res = await submitPOST(jsonReq(`/api/bounties/${created.bounty_id}/submit`, { agent_id: "alice", evidence: "I did it" }, aliceKey), routeParams(created.bounty_id));
+      await claimPOST(
+        jsonReq(`/api/bounties/${created.bounty_id}/claim`, { agent_id: "bob" }, bobKey),
+        routeParams(created.bounty_id),
+      );
+      const res = await submitPOST(
+        jsonReq(
+          `/api/bounties/${created.bounty_id}/submit`,
+          { agent_id: "alice", evidence: "I did it" },
+          aliceKey,
+        ),
+        routeParams(created.bounty_id),
+      );
       expect(res.status).toBe(403);
     });
   });
@@ -169,36 +220,65 @@ describe("Bounties", () => {
     async function setupSubmitted() {
       const created = await createBounty(aliceKey, "alice");
       const id = created.bounty_id;
-      await claimPOST(jsonReq(`/api/bounties/${id}/claim`, { agent_id: "bob" }, bobKey), routeParams(id));
-      await submitPOST(jsonReq(`/api/bounties/${id}/submit`, { agent_id: "bob", evidence: "Done: https://github.com/pr/1" }, bobKey), routeParams(id));
+      await claimPOST(
+        jsonReq(`/api/bounties/${id}/claim`, { agent_id: "bob" }, bobKey),
+        routeParams(id),
+      );
+      await submitPOST(
+        jsonReq(
+          `/api/bounties/${id}/submit`,
+          { agent_id: "bob", evidence: "Done: https://github.com/pr/1" },
+          bobKey,
+        ),
+        routeParams(id),
+      );
       return id;
     }
 
     it("creator can approve completion", async () => {
       const id = await setupSubmitted();
-      const res = await verifyPOST(jsonReq(`/api/bounties/${id}/verify`, { agent_id: "alice", approved: true }, aliceKey), routeParams(id));
+      const res = await verifyPOST(
+        jsonReq(`/api/bounties/${id}/verify`, { agent_id: "alice", approved: true }, aliceKey),
+        routeParams(id),
+      );
       const data = await res.json();
       expect(data.status).toBe("completed");
     });
 
     it("creator can reject and claimer can resubmit", async () => {
       const id = await setupSubmitted();
-      const res1 = await verifyPOST(jsonReq(`/api/bounties/${id}/verify`, { agent_id: "alice", approved: false }, aliceKey), routeParams(id));
+      const res1 = await verifyPOST(
+        jsonReq(`/api/bounties/${id}/verify`, { agent_id: "alice", approved: false }, aliceKey),
+        routeParams(id),
+      );
       expect((await res1.json()).status).toBe("claimed");
-      const res2 = await submitPOST(jsonReq(`/api/bounties/${id}/submit`, { agent_id: "bob", evidence: "Fixed: https://github.com/pr/2" }, bobKey), routeParams(id));
+      const res2 = await submitPOST(
+        jsonReq(
+          `/api/bounties/${id}/submit`,
+          { agent_id: "bob", evidence: "Fixed: https://github.com/pr/2" },
+          bobKey,
+        ),
+        routeParams(id),
+      );
       expect((await res2.json()).status).toBe("submitted");
     });
 
     it("non-creator cannot verify", async () => {
       const id = await setupSubmitted();
-      const res = await verifyPOST(jsonReq(`/api/bounties/${id}/verify`, { agent_id: "bob", approved: true }, bobKey), routeParams(id));
+      const res = await verifyPOST(
+        jsonReq(`/api/bounties/${id}/verify`, { agent_id: "bob", approved: true }, bobKey),
+        routeParams(id),
+      );
       expect(res.status).toBe(403);
     });
   });
 
   describe("Full lifecycle", () => {
     it("open -> claimed -> submitted -> completed", async () => {
-      const created = await createBounty(aliceKey, "alice", { title: "Fix login bug", reward_amount: 50 });
+      const created = await createBounty(aliceKey, "alice", {
+        title: "Fix login bug",
+        reward_amount: 50,
+      });
       const id = created.bounty_id;
 
       // Listed
@@ -207,19 +287,58 @@ describe("Bounties", () => {
       expect(list.bounties[0].reward_amount).toBe(50);
 
       // Claim
-      expect((await (await claimPOST(jsonReq(`/api/bounties/${id}/claim`, { agent_id: "bob" }, bobKey), routeParams(id))).json()).status).toBe("claimed");
+      expect(
+        (
+          await (
+            await claimPOST(
+              jsonReq(`/api/bounties/${id}/claim`, { agent_id: "bob" }, bobKey),
+              routeParams(id),
+            )
+          ).json()
+        ).status,
+      ).toBe("claimed");
 
       // Not in open list
-      expect((await (await bountiesGET(jsonReq("/api/bounties?status=open"))).json()).bounties).toHaveLength(0);
+      expect(
+        (await (await bountiesGET(jsonReq("/api/bounties?status=open"))).json()).bounties,
+      ).toHaveLength(0);
 
       // Submit
-      expect((await (await submitPOST(jsonReq(`/api/bounties/${id}/submit`, { agent_id: "bob", evidence: "Fixed in commit abc123" }, bobKey), routeParams(id))).json()).status).toBe("submitted");
+      expect(
+        (
+          await (
+            await submitPOST(
+              jsonReq(
+                `/api/bounties/${id}/submit`,
+                { agent_id: "bob", evidence: "Fixed in commit abc123" },
+                bobKey,
+              ),
+              routeParams(id),
+            )
+          ).json()
+        ).status,
+      ).toBe("submitted");
 
       // Verify
-      expect((await (await verifyPOST(jsonReq(`/api/bounties/${id}/verify`, { agent_id: "alice", approved: true }, aliceKey), routeParams(id))).json()).status).toBe("completed");
+      expect(
+        (
+          await (
+            await verifyPOST(
+              jsonReq(
+                `/api/bounties/${id}/verify`,
+                { agent_id: "alice", approved: true },
+                aliceKey,
+              ),
+              routeParams(id),
+            )
+          ).json()
+        ).status,
+      ).toBe("completed");
 
       // Final state
-      const detail = await (await bountyDetailGET(jsonReq(`/api/bounties/${id}`), routeParams(id))).json();
+      const detail = await (
+        await bountyDetailGET(jsonReq(`/api/bounties/${id}`), routeParams(id))
+      ).json();
       expect(detail.status).toBe("completed");
       expect(detail.completed_at).toBeDefined();
     });

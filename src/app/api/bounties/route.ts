@@ -52,7 +52,16 @@ export async function POST(req: NextRequest) {
 
   const db = await ensureDb();
   const body = await req.json();
-  const { agent_id, title, description, category, skills, reward_amount, reward_currency, deadline } = body;
+  const {
+    agent_id,
+    title,
+    description,
+    category,
+    skills,
+    reward_amount,
+    reward_currency,
+    deadline,
+  } = body;
 
   if (!agent_id || !title || !description || !category) {
     return NextResponse.json(
@@ -62,7 +71,10 @@ export async function POST(req: NextRequest) {
   }
 
   if (auth.agent_id !== agent_id) {
-    return NextResponse.json({ error: "agent_id does not match authenticated user" }, { status: 403 });
+    return NextResponse.json(
+      { error: "agent_id does not match authenticated user" },
+      { status: 403 },
+    );
   }
 
   const id = randomUUID();
@@ -82,5 +94,8 @@ export async function POST(req: NextRequest) {
     ],
   });
 
-  return NextResponse.json({ bounty_id: id, status: "open", message: "Bounty created" }, { status: 201 });
+  return NextResponse.json(
+    { bounty_id: id, status: "open", message: "Bounty created" },
+    { status: 201 },
+  );
 }

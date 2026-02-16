@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ bountyId: string }> }) {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ bountyId: string }> },
+) {
   const { bountyId } = await params;
   const db = await ensureDb();
 
