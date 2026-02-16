@@ -70,6 +70,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mat
     return NextResponse.json({ error: "agent_id is not part of this deal" }, { status: 403 });
   }
 
+  const evidence = typeof b.evidence === "string" ? b.evidence : null;
+
   // Check for duplicate completion
   const existingCompletion = await db.execute({
     sql: "SELECT * FROM deal_completions WHERE match_id = ? AND agent_id = ?",
@@ -79,10 +81,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mat
     return NextResponse.json({ error: "You have already confirmed completion" }, { status: 409 });
   }
 
-  // Record completion
+  // Record completion with optional evidence
   await db.execute({
-    sql: "INSERT INTO deal_completions (match_id, agent_id) VALUES (?, ?)",
-    args: [matchId, b.agent_id],
+    sql: "INSERT INTO deal_completions (match_id, agent_id, evidence) VALUES (?, ?, ?)",
+    args: [matchId, b.agent_id, evidence],
   });
 
   // Check if both parties have confirmed

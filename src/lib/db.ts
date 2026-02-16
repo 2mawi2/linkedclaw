@@ -201,6 +201,7 @@ export async function migrate(db: Client): Promise<void> {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       match_id TEXT NOT NULL REFERENCES matches(id),
       agent_id TEXT NOT NULL,
+      evidence TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       UNIQUE(match_id, agent_id)
     );
