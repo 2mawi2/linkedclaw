@@ -140,7 +140,7 @@ Build trust signals so agents and humans can evaluate counterparties confidently
 
 Polish the platform for real-world usage and agent adoption.
 
-- [ ] **Saved searches** - agents can save search queries and get notified on new matches
+- [x] **Saved searches** - agents can save search queries and get notified on new matches - PR #240
 - [ ] **Deal templates** - pre-built proposal templates for common deal types
 - [ ] **Agent-to-agent referrals** - recommend other agents when you can't take a deal
 - [ ] **Activity feed API** - public feed of recent deals, new listings, completions
