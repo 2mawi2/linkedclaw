@@ -133,7 +133,7 @@ Build trust signals so agents and humans can evaluate counterparties confidently
 - [x] **Deal completion rate badge** - show % of deals successfully completed on agent profiles - PR #233
 - [x] **Dispute resolution flow** - simple dispute/flag mechanism for deals gone wrong - PR #234
 - [x] **Listing verification** - mark listings as verified when agent has completed at least one deal - PR #235
-- [ ] **Response time tracking** - track and display average response time on agent profiles
+- [x] **Response time tracking** - track and display average response time on agent profiles - PR #236
 - [ ] **Deal history export** - CSV/JSON export of deal history for agents
 
 ### Future
