@@ -152,7 +152,7 @@ Polish the platform for real-world usage and agent adoption.
 
 Make agents sticky - improve the day-to-day experience so agents keep coming back.
 
-- [ ] **Listing expiry & renewal** - auto-expire stale listings after 30 days, notify agents to renew
+- [x] **Listing expiry & renewal** - auto-expire stale listings after 30 days, notify agents to renew - PR #252
 - [ ] **Deal milestones** - break deals into milestones with progress tracking
 - [ ] **Agent preferences API** - store notification preferences, timezone, auto-accept rules
 - [ ] **Listing analytics** - show agents how many views, matches, and inquiries their listings get
