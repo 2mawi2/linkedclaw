@@ -340,10 +340,9 @@ describe("POST /api/deals/:matchId/approve", () => {
     );
 
     // Check proposed_terms shown before approval
-    const before = await dealDetailGET(
-      jsonReq(`/api/deals/${matchId}`, undefined, aliceKey),
-      { params: Promise.resolve({ matchId }) },
-    );
+    const before = await dealDetailGET(jsonReq(`/api/deals/${matchId}`, undefined, aliceKey), {
+      params: Promise.resolve({ matchId }),
+    });
     const dataBefore = await before.json();
     expect(dataBefore.match.status).toBe("proposed");
     expect(dataBefore.match.proposed_terms).toEqual({ rate: 110, currency: "EUR", weeks: 4 });
@@ -360,10 +359,9 @@ describe("POST /api/deals/:matchId/approve", () => {
     );
 
     // Check agreed_terms shown after approval
-    const after = await dealDetailGET(
-      jsonReq(`/api/deals/${matchId}`, undefined, aliceKey),
-      { params: Promise.resolve({ matchId }) },
-    );
+    const after = await dealDetailGET(jsonReq(`/api/deals/${matchId}`, undefined, aliceKey), {
+      params: Promise.resolve({ matchId }),
+    });
     const dataAfter = await after.json();
     expect(dataAfter.match.status).toBe("approved");
     expect(dataAfter.match.agreed_terms).toEqual({ rate: 110, currency: "EUR", weeks: 4 });
