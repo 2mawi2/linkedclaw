@@ -1150,10 +1150,7 @@ export default function DealDetailPage() {
                             ? "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20"
                             : "border-gray-200 dark:border-gray-800";
                     return (
-                      <div
-                        key={m.id}
-                        className={`p-3 border rounded-lg ${statusColor}`}
-                      >
+                      <div key={m.id} className={`p-3 border rounded-lg ${statusColor}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span>{statusIcon}</span>
@@ -1209,64 +1206,68 @@ export default function DealDetailPage() {
               )}
 
               {/* Add milestone form */}
-              {agentId && data && ["negotiating", "proposed", "approved", "in_progress"].includes(data.match.status) && (
-                <div className="p-3 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900/50">
-                  <h4 className="text-xs font-medium mb-2">Add milestone</h4>
-                  <input
-                    type="text"
-                    value={newMilestoneTitle}
-                    onChange={(e) => setNewMilestoneTitle(e.target.value)}
-                    placeholder="Milestone title"
-                    maxLength={200}
-                    className="w-full px-3 py-1.5 mb-2 border border-gray-300 dark:border-gray-700 rounded bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
-                  />
-                  <input
-                    type="text"
-                    value={newMilestoneDesc}
-                    onChange={(e) => setNewMilestoneDesc(e.target.value)}
-                    placeholder="Description (optional)"
-                    maxLength={500}
-                    className="w-full px-3 py-1.5 mb-2 border border-gray-300 dark:border-gray-700 rounded bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
-                  />
-                  <button
-                    onClick={async () => {
-                      if (!newMilestoneTitle.trim()) return;
-                      setMilestoneAdding(true);
-                      try {
-                        const apiKey = localStorage.getItem("lc_api_key");
-                        if (!apiKey) return;
-                        const res = await fetch(`/api/deals/${matchId}/milestones`, {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${apiKey}`,
-                          },
-                          body: JSON.stringify({
-                            agent_id: agentId,
-                            milestones: [
-                              {
-                                title: newMilestoneTitle.trim(),
-                                description: newMilestoneDesc.trim() || undefined,
-                              },
-                            ],
-                          }),
-                        });
-                        if (res.ok) {
-                          setNewMilestoneTitle("");
-                          setNewMilestoneDesc("");
-                          fetchMilestones();
+              {agentId &&
+                data &&
+                ["negotiating", "proposed", "approved", "in_progress"].includes(
+                  data.match.status,
+                ) && (
+                  <div className="p-3 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                    <h4 className="text-xs font-medium mb-2">Add milestone</h4>
+                    <input
+                      type="text"
+                      value={newMilestoneTitle}
+                      onChange={(e) => setNewMilestoneTitle(e.target.value)}
+                      placeholder="Milestone title"
+                      maxLength={200}
+                      className="w-full px-3 py-1.5 mb-2 border border-gray-300 dark:border-gray-700 rounded bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
+                    />
+                    <input
+                      type="text"
+                      value={newMilestoneDesc}
+                      onChange={(e) => setNewMilestoneDesc(e.target.value)}
+                      placeholder="Description (optional)"
+                      maxLength={500}
+                      className="w-full px-3 py-1.5 mb-2 border border-gray-300 dark:border-gray-700 rounded bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
+                    />
+                    <button
+                      onClick={async () => {
+                        if (!newMilestoneTitle.trim()) return;
+                        setMilestoneAdding(true);
+                        try {
+                          const apiKey = localStorage.getItem("lc_api_key");
+                          if (!apiKey) return;
+                          const res = await fetch(`/api/deals/${matchId}/milestones`, {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${apiKey}`,
+                            },
+                            body: JSON.stringify({
+                              agent_id: agentId,
+                              milestones: [
+                                {
+                                  title: newMilestoneTitle.trim(),
+                                  description: newMilestoneDesc.trim() || undefined,
+                                },
+                              ],
+                            }),
+                          });
+                          if (res.ok) {
+                            setNewMilestoneTitle("");
+                            setNewMilestoneDesc("");
+                            fetchMilestones();
+                          }
+                        } finally {
+                          setMilestoneAdding(false);
                         }
-                      } finally {
-                        setMilestoneAdding(false);
-                      }
-                    }}
-                    disabled={milestoneAdding || !newMilestoneTitle.trim()}
-                    className="px-3 py-1.5 bg-foreground text-background rounded text-xs font-medium hover:opacity-90 disabled:opacity-50"
-                  >
-                    {milestoneAdding ? "Adding..." : "Add"}
-                  </button>
-                </div>
-              )}
+                      }}
+                      disabled={milestoneAdding || !newMilestoneTitle.trim()}
+                      className="px-3 py-1.5 bg-foreground text-background rounded text-xs font-medium hover:opacity-90 disabled:opacity-50"
+                    >
+                      {milestoneAdding ? "Adding..." : "Add"}
+                    </button>
+                  </div>
+                )}
             </div>
           )}
         </div>
