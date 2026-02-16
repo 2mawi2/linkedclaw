@@ -106,7 +106,17 @@ interface RateLimitInfo {
   resetsAt: number | null;
 }
 
-type Tab = "overview" | "listings" | "bounties" | "deals" | "activity" | "rate-limits";
+interface Webhook {
+  id: string;
+  url: string;
+  events: string | string[];
+  active: boolean;
+  failure_count: number;
+  last_triggered_at: string | null;
+  created_at: string;
+}
+
+type Tab = "overview" | "listings" | "bounties" | "deals" | "activity" | "rate-limits" | "webhooks";
 
 export default function DashboardPage() {
   const [username, setUsername] = useState<string | null>(null);
@@ -118,6 +128,7 @@ export default function DashboardPage() {
   const [bounties, setBounties] = useState<Bounty[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [rateLimits, setRateLimits] = useState<RateLimitInfo[]>([]);
+  const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("overview");
@@ -188,6 +199,17 @@ export default function DashboardPage() {
           // ignore - rate limits are optional
         }
 
+        // Fetch webhooks
+        try {
+          const whRes = await fetch("/api/webhooks", { headers });
+          if (whRes.ok) {
+            const whData = await whRes.json();
+            setWebhooks(whData.webhooks || []);
+          }
+        } catch {
+          // ignore - webhooks are optional
+        }
+
         // Fetch match counts per profile
         const counts: Record<string, number> = {};
         for (const p of profilesData.profiles || []) {
@@ -244,6 +266,7 @@ export default function DashboardPage() {
     { id: "deals", label: "Deals", count: activeDeals.length },
     { id: "activity", label: "Activity" },
     { id: "rate-limits", label: "Rate Limits" },
+    { id: "webhooks", label: "Webhooks", count: webhooks.filter((w) => w.active).length },
   ];
 
   return (
@@ -338,6 +361,9 @@ export default function DashboardPage() {
             {activeTab === "deals" && <DealsTab deals={deals} username={username} />}
             {activeTab === "activity" && <ActivityTab activity={activity} />}
             {activeTab === "rate-limits" && <RateLimitsTab limits={rateLimits} />}
+            {activeTab === "webhooks" && (
+              <WebhooksTab webhooks={webhooks} setWebhooks={setWebhooks} apiKey={apiKey!} />
+            )}
 
             {/* Reputation */}
             {summary && summary.reputation.total_reviews > 0 && (
@@ -808,6 +834,331 @@ function RateLimitsTab({ limits }: { limits: RateLimitInfo[] }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/* ---------- Webhooks Tab ---------- */
+
+const WEBHOOK_EVENT_TYPES = [
+  "new_match",
+  "message_received",
+  "deal_proposed",
+  "deal_approved",
+  "deal_rejected",
+  "deal_expired",
+  "deal_cancelled",
+  "deal_started",
+  "deal_completed",
+  "deal_completion_requested",
+  "milestone_updated",
+  "milestone_created",
+];
+
+function WebhooksTab({
+  webhooks,
+  setWebhooks,
+  apiKey,
+}: {
+  webhooks: Webhook[];
+  setWebhooks: React.Dispatch<React.SetStateAction<Webhook[]>>;
+  apiKey: string;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [newUrl, setNewUrl] = useState("");
+  const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
+  const [allEvents, setAllEvents] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [newSecret, setNewSecret] = useState<string | null>(null);
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<Record<string, { ok: boolean; msg: string }>>({});
+  const headers = { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" };
+
+  async function createWebhook() {
+    setCreating(true);
+    setFormError("");
+    setNewSecret(null);
+    try {
+      const body: Record<string, unknown> = { url: newUrl };
+      if (!allEvents && selectedEvents.length > 0) {
+        body.events = selectedEvents;
+      }
+      const res = await fetch("/api/webhooks", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFormError(data.error || "Failed to create webhook");
+        return;
+      }
+      setNewSecret(data.secret);
+      // Refresh list
+      const listRes = await fetch("/api/webhooks", { headers });
+      if (listRes.ok) {
+        const listData = await listRes.json();
+        setWebhooks(listData.webhooks || []);
+      }
+      setNewUrl("");
+      setSelectedEvents([]);
+      setAllEvents(true);
+    } catch {
+      setFormError("Network error");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function deleteWebhook(id: string) {
+    try {
+      await fetch(`/api/webhooks/${id}`, { method: "DELETE", headers });
+      setWebhooks((prev) => prev.filter((w) => w.id !== id));
+    } catch {
+      // ignore
+    }
+  }
+
+  async function toggleActive(id: string, active: boolean) {
+    try {
+      await fetch(`/api/webhooks/${id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ active }),
+      });
+      setWebhooks((prev) =>
+        prev.map((w) =>
+          w.id === id ? { ...w, active, failure_count: active ? 0 : w.failure_count } : w,
+        ),
+      );
+    } catch {
+      // ignore
+    }
+  }
+
+  async function testWebhook(id: string) {
+    setTestingId(id);
+    setTestResult((prev) => ({ ...prev, [id]: { ok: false, msg: "Sending..." } }));
+    try {
+      const res = await fetch(`/api/webhooks/${id}/test`, { method: "POST", headers });
+      const data = await res.json();
+      setTestResult((prev) => ({
+        ...prev,
+        [id]: {
+          ok: data.delivered,
+          msg: data.delivered
+            ? `Delivered (HTTP ${data.status_code})`
+            : `Failed: ${data.error || "Unknown error"}`,
+        },
+      }));
+    } catch {
+      setTestResult((prev) => ({ ...prev, [id]: { ok: false, msg: "Network error" } }));
+    } finally {
+      setTestingId(null);
+    }
+  }
+
+  function toggleEvent(event: string) {
+    setSelectedEvents((prev) =>
+      prev.includes(event) ? prev.filter((e) => e !== event) : [...prev, event],
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-500">
+          Receive HTTP callbacks when events happen on your account. Max 5 active webhooks.
+        </p>
+        {!showForm && (
+          <button
+            onClick={() => {
+              setShowForm(true);
+              setNewSecret(null);
+            }}
+            className="px-4 py-2 bg-foreground text-background rounded-lg text-sm font-medium hover:opacity-90"
+          >
+            + Add webhook
+          </button>
+        )}
+      </div>
+
+      {/* Create form */}
+      {showForm && (
+        <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 space-y-4">
+          <h3 className="font-medium">New webhook</h3>
+          <div>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+              Endpoint URL
+            </label>
+            <input
+              type="url"
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+              placeholder="https://your-server.com/webhook"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">Events</label>
+            <label className="flex items-center gap-2 mb-2 text-sm">
+              <input
+                type="checkbox"
+                checked={allEvents}
+                onChange={(e) => {
+                  setAllEvents(e.target.checked);
+                  if (e.target.checked) setSelectedEvents([]);
+                }}
+              />
+              All events
+            </label>
+            {!allEvents && (
+              <div className="grid grid-cols-2 gap-1">
+                {WEBHOOK_EVENT_TYPES.map((evt) => (
+                  <label
+                    key={evt}
+                    className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedEvents.includes(evt)}
+                      onChange={() => toggleEvent(evt)}
+                    />
+                    {evt.replace(/_/g, " ")}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {formError && <p className="text-sm text-red-500">{formError}</p>}
+
+          {newSecret && (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+              <p className="text-sm font-medium text-green-700 dark:text-green-400 mb-1">
+                Webhook created! Save this secret - it won&apos;t be shown again:
+              </p>
+              <code className="block text-xs bg-white dark:bg-gray-900 p-2 rounded font-mono break-all select-all">
+                {newSecret}
+              </code>
+              <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+                Use this to verify X-LinkedClaw-Signature headers on incoming requests.
+              </p>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              onClick={createWebhook}
+              disabled={creating || !newUrl}
+              className="px-4 py-2 bg-foreground text-background rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
+            >
+              {creating ? "Creating..." : "Create webhook"}
+            </button>
+            <button
+              onClick={() => {
+                setShowForm(false);
+                setFormError("");
+                setNewSecret(null);
+              }}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-900"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Webhook list */}
+      {webhooks.length === 0 && !showForm ? (
+        <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center">
+          <p className="text-gray-500 mb-2">No webhooks configured yet.</p>
+          <p className="text-sm text-gray-400">
+            Add a webhook to receive real-time notifications when matches, messages, and deals
+            happen.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {webhooks.map((wh) => {
+            const events = Array.isArray(wh.events) ? wh.events.join(", ") : wh.events;
+            const result = testResult[wh.id];
+
+            return (
+              <div
+                key={wh.id}
+                className={`border rounded-lg p-4 ${
+                  wh.active
+                    ? "border-gray-200 dark:border-gray-800"
+                    : "border-gray-200 dark:border-gray-800 opacity-60"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className={`inline-block w-2 h-2 rounded-full ${
+                          wh.active ? "bg-green-500" : "bg-gray-400"
+                        }`}
+                      />
+                      <code className="text-sm font-mono truncate block">{wh.url}</code>
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                      <span>Events: {events === "all" ? "All" : events}</span>
+                      {wh.failure_count > 0 && (
+                        <span className="text-yellow-600 dark:text-yellow-400">
+                          {wh.failure_count} failure{wh.failure_count !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {wh.last_triggered_at && (
+                        <span>Last fired: {timeAgo(wh.last_triggered_at)}</span>
+                      )}
+                      <span>Created: {timeAgo(wh.created_at)}</span>
+                    </div>
+                    {result && (
+                      <p
+                        className={`text-xs mt-1 ${result.ok ? "text-green-600 dark:text-green-400" : "text-red-500"}`}
+                      >
+                        Test: {result.msg}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      onClick={() => testWebhook(wh.id)}
+                      disabled={testingId === wh.id}
+                      className="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-50"
+                      title="Send test event"
+                    >
+                      {testingId === wh.id ? "..." : "Test"}
+                    </button>
+                    <button
+                      onClick={() => toggleActive(wh.id, !wh.active)}
+                      className={`px-3 py-1.5 text-xs border rounded-lg ${
+                        wh.active
+                          ? "border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+                          : "border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                      }`}
+                      title={wh.active ? "Pause webhook" : "Reactivate webhook"}
+                    >
+                      {wh.active ? "Pause" : "Enable"}
+                    </button>
+                    <button
+                      onClick={() => deleteWebhook(wh.id)}
+                      className="px-3 py-1.5 text-xs border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                      title="Delete webhook"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
