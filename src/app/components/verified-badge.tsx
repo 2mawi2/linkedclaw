@@ -4,10 +4,7 @@
  */
 
 export function VerifiedBadge({ size = "sm" }: { size?: "sm" | "md" }) {
-  const sizeClasses =
-    size === "md"
-      ? "text-sm px-2.5 py-1 gap-1.5"
-      : "text-xs px-2 py-0.5 gap-1";
+  const sizeClasses = size === "md" ? "text-sm px-2.5 py-1 gap-1.5" : "text-xs px-2 py-0.5 gap-1";
 
   return (
     <span

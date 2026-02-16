@@ -61,7 +61,12 @@ export function categoryLevel(completedDeals: number): "gold" | "silver" | "bron
  * Returns a Set of verified agent_ids.
  */
 export async function getVerifiedAgentIds(
-  db: { execute: (stmt: { sql: string; args: (string | number)[] }) => Promise<{ rows: Record<string, unknown>[] }> },
+  db: {
+    execute: (stmt: {
+      sql: string;
+      args: (string | number)[];
+    }) => Promise<{ rows: Record<string, unknown>[] }>;
+  },
   agentIds: string[],
 ): Promise<Set<string>> {
   if (agentIds.length === 0) return new Set();
@@ -83,7 +88,12 @@ export async function getVerifiedAgentIds(
  * Check if a single agent is verified (has completed at least one deal).
  */
 export async function isAgentVerified(
-  db: { execute: (stmt: { sql: string; args: (string | number)[] }) => Promise<{ rows: Record<string, unknown>[] }> },
+  db: {
+    execute: (stmt: {
+      sql: string;
+      args: (string | number)[];
+    }) => Promise<{ rows: Record<string, unknown>[] }>;
+  },
   agentId: string,
 ): Promise<boolean> {
   const verified = await getVerifiedAgentIds(db, [agentId]);
