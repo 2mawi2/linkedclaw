@@ -41,31 +41,38 @@ function jsonReq(url: string, body?: unknown, apiKey?: string): NextRequest {
 async function setupDeal() {
   // Alice offers, Bob seeks
   const aliceConnect = await connectPOST(
-    jsonReq("/api/connect", {
-      agent_id: "alice",
-      side: "offering",
-      category: "development",
-      description: "React developer",
-      params: { skills: ["React", "TypeScript"], rate_min: 80, rate_max: 120, currency: "EUR" },
-    }, aliceKey),
+    jsonReq(
+      "/api/connect",
+      {
+        agent_id: "alice",
+        side: "offering",
+        category: "development",
+        description: "React developer",
+        params: { skills: ["React", "TypeScript"], rate_min: 80, rate_max: 120, currency: "EUR" },
+      },
+      aliceKey,
+    ),
   );
   const { profile_id: aliceProfile } = await aliceConnect.json();
 
   await connectPOST(
-    jsonReq("/api/connect", {
-      agent_id: "bob",
-      side: "seeking",
-      category: "development",
-      description: "Need a React dev",
-      params: { skills: ["React"], rate_min: 70, rate_max: 110, currency: "EUR" },
-    }, bobKey),
+    jsonReq(
+      "/api/connect",
+      {
+        agent_id: "bob",
+        side: "seeking",
+        category: "development",
+        description: "Need a React dev",
+        params: { skills: ["React"], rate_min: 70, rate_max: 110, currency: "EUR" },
+      },
+      bobKey,
+    ),
   );
 
   // Get match
-  const matchRes = await matchesGET(
-    jsonReq(`/api/matches/${aliceProfile}`, undefined, aliceKey),
-    { params: Promise.resolve({ profileId: aliceProfile }) },
-  );
+  const matchRes = await matchesGET(jsonReq(`/api/matches/${aliceProfile}`, undefined, aliceKey), {
+    params: Promise.resolve({ profileId: aliceProfile }),
+  });
   const { matches } = await matchRes.json();
   return matches[0].match_id as string;
 }
@@ -87,7 +94,9 @@ describe("Deal History Export", () => {
   });
 
   it("rejects invalid format", async () => {
-    const res = await exportGET(jsonReq("/api/deals/export?agent_id=alice&format=xml", undefined, aliceKey));
+    const res = await exportGET(
+      jsonReq("/api/deals/export?agent_id=alice&format=xml", undefined, aliceKey),
+    );
     expect(res.status).toBe(400);
   });
 
@@ -104,10 +113,14 @@ describe("Deal History Export", () => {
 
     // Send a message
     await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice",
-        content: "Let's discuss terms",
-      }, aliceKey),
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Let's discuss terms",
+        },
+        aliceKey,
+      ),
       { params: Promise.resolve({ matchId }) },
     );
 
@@ -127,14 +140,20 @@ describe("Deal History Export", () => {
     const matchId = await setupDeal();
 
     await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice",
-        content: "Hello",
-      }, aliceKey),
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Hello",
+        },
+        aliceKey,
+      ),
       { params: Promise.resolve({ matchId }) },
     );
 
-    const res = await exportGET(jsonReq("/api/deals/export?agent_id=alice&format=csv", undefined, aliceKey));
+    const res = await exportGET(
+      jsonReq("/api/deals/export?agent_id=alice&format=csv", undefined, aliceKey),
+    );
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("text/csv");
     expect(res.headers.get("Content-Disposition")).toContain("alice-deals.csv");
@@ -155,12 +174,16 @@ describe("Deal History Export", () => {
 
     // Send a proposal
     await messagesPOST(
-      jsonReq(`/api/deals/${matchId}/messages`, {
-        agent_id: "alice",
-        content: "Proposing: 100 EUR/hr",
-        message_type: "proposal",
-        proposed_terms: { rate: 100, currency: "EUR", hours_per_week: 30 },
-      }, aliceKey),
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "Proposing: 100 EUR/hr",
+          message_type: "proposal",
+          proposed_terms: { rate: 100, currency: "EUR", hours_per_week: 30 },
+        },
+        aliceKey,
+      ),
       { params: Promise.resolve({ matchId }) },
     );
 
@@ -172,7 +195,9 @@ describe("Deal History Export", () => {
   });
 
   it("returns empty CSV for agent with no profiles", async () => {
-    const res = await exportGET(jsonReq("/api/deals/export?agent_id=alice&format=csv", undefined, aliceKey));
+    const res = await exportGET(
+      jsonReq("/api/deals/export?agent_id=alice&format=csv", undefined, aliceKey),
+    );
     expect(res.status).toBe(200);
     const text = await res.text();
     expect(text).toBe("No deals found");
@@ -185,13 +210,17 @@ describe("Deal History Export", () => {
     // Create second deal with a different agent
     const charlieKey = await createApiKey("charlie");
     await connectPOST(
-      jsonReq("/api/connect", {
-        agent_id: "charlie",
-        side: "seeking",
-        category: "development",
-        description: "Need a TypeScript expert",
-        params: { skills: ["TypeScript"], rate_min: 90, rate_max: 130, currency: "EUR" },
-      }, charlieKey),
+      jsonReq(
+        "/api/connect",
+        {
+          agent_id: "charlie",
+          side: "seeking",
+          category: "development",
+          description: "Need a TypeScript expert",
+          params: { skills: ["TypeScript"], rate_min: 90, rate_max: 130, currency: "EUR" },
+        },
+        charlieKey,
+      ),
     );
 
     // Alice should have 2 matches now

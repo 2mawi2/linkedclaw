@@ -52,10 +52,7 @@ export async function GET(req: NextRequest) {
   const format = searchParams.get("format") ?? "json";
 
   if (!agentId || agentId.trim().length === 0) {
-    return NextResponse.json(
-      { error: "agent_id query parameter is required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "agent_id query parameter is required" }, { status: 400 });
   }
 
   // Only allow exporting your own deals
@@ -67,10 +64,7 @@ export async function GET(req: NextRequest) {
   }
 
   if (format !== "csv" && format !== "json") {
-    return NextResponse.json(
-      { error: "format must be 'csv' or 'json'" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "format must be 'csv' or 'json'" }, { status: 400 });
   }
 
   const db = await ensureDb();
