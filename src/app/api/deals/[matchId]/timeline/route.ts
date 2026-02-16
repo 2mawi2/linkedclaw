@@ -108,9 +108,7 @@ export async function GET(
       id: `approval-${a.id}`,
       type: approved ? "approval" : "rejection",
       actor: a.agent_id as string,
-      summary: approved
-        ? `${a.agent_id} approved the deal`
-        : `${a.agent_id} rejected the deal`,
+      summary: approved ? `${a.agent_id} approved the deal` : `${a.agent_id} rejected the deal`,
       detail: null,
       timestamp: a.created_at as string,
     });

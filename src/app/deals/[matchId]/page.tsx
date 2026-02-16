@@ -1080,7 +1080,11 @@ export default function DealDetailPage() {
                 <p className="text-sm text-gray-500 dark:text-gray-400 py-2">Loading...</p>
               )}
               {timelineEvents.map((event, idx) => (
-                <TimelineItem key={event.id} event={event} isLast={idx === timelineEvents.length - 1} />
+                <TimelineItem
+                  key={event.id}
+                  event={event}
+                  isLast={idx === timelineEvents.length - 1}
+                />
               ))}
             </div>
           )}
@@ -1163,13 +1167,13 @@ function TimelineItem({ event, isLast }: { event: TimelineEvent; isLast: boolean
 
       {/* Content */}
       <div className={`min-w-0 flex-1 ${isMinor ? "opacity-70" : ""}`}>
-        <p className={`text-sm ${isMinor ? "text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-gray-200"}`}>
+        <p
+          className={`text-sm ${isMinor ? "text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-gray-200"}`}
+        >
           {event.summary}
         </p>
         {event.detail && !isMinor && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-            {event.detail}
-          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{event.detail}</p>
         )}
         <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
           {new Date(event.timestamp).toLocaleString(undefined, {
