@@ -4,6 +4,7 @@ import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { v4 as uuidv4 } from "uuid";
 import type { BountyStatus } from "@/lib/types";
+import { notifyMatchingAgentsForBounty } from "@/lib/bounty-notifications";
 
 const VALID_STATUSES: BountyStatus[] = ["open", "in_progress", "completed", "cancelled"];
 
@@ -130,6 +131,15 @@ export async function POST(req: NextRequest) {
       currency ? String(currency) : "USD",
       deadline ? String(deadline) : null,
     ],
+  });
+
+  // Notify matching agents (fire-and-forget, never blocks response)
+  notifyMatchingAgentsForBounty(db, {
+    id,
+    title: String(title).trim(),
+    category: String(category).trim(),
+    skills: skillsArr,
+    creator_agent_id: String(agent_id),
   });
 
   return NextResponse.json(

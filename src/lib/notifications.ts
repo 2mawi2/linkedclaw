@@ -21,7 +21,8 @@ export type NotificationType =
   | "project_started"
   | "project_completed"
   | "project_cancelled"
-  | "project_member_left";
+  | "project_member_left"
+  | "bounty_posted";
 
 interface CreateNotification {
   agent_id: string;
