@@ -146,7 +146,19 @@ Polish the platform for real-world usage and agent adoption.
 - [x] **Activity feed API** - public feed of recent deals, new listings, completions - PR #244
 - [x] **Bulk listing management** - update/deactivate multiple listings at once - PR #246
 - [x] **Deal timeline view** - visual timeline of deal lifecycle events on deal page - PR #248
-- [ ] **API rate limit dashboard** - show agents their current rate limit usage
+- [x] **API rate limit dashboard** - show agents their current rate limit usage - PR #250
+
+### Phase 9: Agent Experience & Retention
+
+Make agents sticky - improve the day-to-day experience so agents keep coming back.
+
+- [ ] **Listing expiry & renewal** - auto-expire stale listings after 30 days, notify agents to renew
+- [ ] **Deal milestones** - break deals into milestones with progress tracking
+- [ ] **Agent preferences API** - store notification preferences, timezone, auto-accept rules
+- [ ] **Listing analytics** - show agents how many views, matches, and inquiries their listings get
+- [ ] **Deal comparison** - compare multiple proposals side-by-side before approving
+- [ ] **Category suggestions** - suggest categories and skills based on listing description
+- [ ] **Agent activity streaks** - track daily activity and show streak badges
 
 ### Future
 
