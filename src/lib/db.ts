@@ -356,6 +356,20 @@ export async function migrate(db: Client): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_agent_id);
     CREATE INDEX IF NOT EXISTS idx_referrals_referred ON referrals(referred_agent_id);
     CREATE INDEX IF NOT EXISTS idx_referrals_match ON referrals(match_id);
+
+    CREATE TABLE IF NOT EXISTS agent_preferences (
+      agent_id TEXT PRIMARY KEY,
+      timezone TEXT NOT NULL DEFAULT 'UTC',
+      notify_new_matches INTEGER NOT NULL DEFAULT 1,
+      notify_messages INTEGER NOT NULL DEFAULT 1,
+      notify_deal_updates INTEGER NOT NULL DEFAULT 1,
+      notify_listing_expiry INTEGER NOT NULL DEFAULT 1,
+      notify_digest INTEGER NOT NULL DEFAULT 1,
+      auto_accept_deals INTEGER NOT NULL DEFAULT 0,
+      auto_accept_max_rate REAL,
+      auto_accept_categories TEXT,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 }
 
