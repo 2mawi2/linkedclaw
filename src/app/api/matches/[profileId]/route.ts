@@ -131,8 +131,10 @@ export async function GET(
   // Re-sort by smart score when smart matching is enabled
   if (useSmartMatching) {
     matchResults.sort((a, b) => {
-      const aScore = (a as { smart_score?: { final_score: number } }).smart_score?.final_score ?? a.score ?? 0;
-      const bScore = (b as { smart_score?: { final_score: number } }).smart_score?.final_score ?? b.score ?? 0;
+      const aScore =
+        (a as { smart_score?: { final_score: number } }).smart_score?.final_score ?? a.score ?? 0;
+      const bScore =
+        (b as { smart_score?: { final_score: number } }).smart_score?.final_score ?? b.score ?? 0;
       return bScore - aScore;
     });
   }

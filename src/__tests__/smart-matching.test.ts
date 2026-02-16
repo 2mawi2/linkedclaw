@@ -1,9 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import {
-  computeQualityBoost,
-  computeSmartScore,
-  type AgentSignals,
-} from "@/lib/smart-matching";
+import { computeQualityBoost, computeSmartScore, type AgentSignals } from "@/lib/smart-matching";
 
 describe("Smart Matching v2", () => {
   describe("computeQualityBoost", () => {
@@ -175,7 +171,9 @@ describe("Smart Matching v2", () => {
       };
       const result = computeSmartScore(50, signals);
       expect(["fast", "moderate", "slow", "unknown"]).toContain(result.signals.response_time_label);
-      expect(["very_active", "active", "moderate", "dormant"]).toContain(result.signals.activity_level);
+      expect(["very_active", "active", "moderate", "dormant"]).toContain(
+        result.signals.activity_level,
+      );
     });
   });
 });

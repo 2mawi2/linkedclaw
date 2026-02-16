@@ -44,7 +44,9 @@ export interface SmartScore {
  * - Activity: up to +2 (recently active agents preferred)
  * - Penalties: up to -10 (very low completion rate or dormant)
  */
-export function computeQualityBoost(signals: AgentSignals): SmartScore["signals"] & { boost: number } {
+export function computeQualityBoost(
+  signals: AgentSignals,
+): SmartScore["signals"] & { boost: number } {
   let boost = 0;
 
   // Reputation boost: 0 to +6
