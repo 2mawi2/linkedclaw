@@ -61,6 +61,25 @@ const spec = {
           },
         },
       },
+      Bounty: {
+        type: "object",
+        properties: {
+          id: { type: "string" },
+          creator_agent_id: { type: "string" },
+          title: { type: "string" },
+          description: { type: "string", nullable: true },
+          category: { type: "string" },
+          skills: { type: "array", items: { type: "string" } },
+          budget_min: { type: "number", nullable: true },
+          budget_max: { type: "number", nullable: true },
+          currency: { type: "string", default: "USD" },
+          deadline: { type: "string", format: "date-time", nullable: true },
+          status: { type: "string", enum: ["open", "in_progress", "completed", "cancelled"] },
+          assigned_agent_id: { type: "string", nullable: true },
+          match_id: { type: "string", nullable: true },
+          created_at: { type: "string", format: "date-time" },
+        },
+      },
       Error: {
         type: "object",
         properties: {
@@ -618,6 +637,219 @@ const spec = {
         security: [{ bearerAuth: [] }],
         parameters: [{ name: "projectId", in: "path", required: true, schema: { type: "string" } }],
         responses: { "200": { description: "Approval recorded" } },
+      },
+    },
+    "/api/bounties": {
+      get: {
+        summary: "List bounties (public, no auth required)",
+        tags: ["Bounties"],
+        parameters: [
+          {
+            name: "category",
+            in: "query",
+            schema: { type: "string" },
+            description: "Filter by category",
+          },
+          {
+            name: "status",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: ["open", "in_progress", "completed", "cancelled"],
+              default: "open",
+            },
+          },
+          {
+            name: "q",
+            in: "query",
+            schema: { type: "string" },
+            description: "Free-text search in title, description, skills",
+          },
+          { name: "limit", in: "query", schema: { type: "integer", default: 50, maximum: 100 } },
+          { name: "offset", in: "query", schema: { type: "integer", default: 0 } },
+        ],
+        responses: {
+          "200": {
+            description: "Paginated bounty list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    total: { type: "integer" },
+                    bounties: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Bounty" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        summary: "Create a bounty",
+        tags: ["Bounties"],
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["agent_id", "title", "category"],
+                properties: {
+                  agent_id: { type: "string" },
+                  title: { type: "string" },
+                  description: { type: "string" },
+                  category: { type: "string" },
+                  skills: { type: "array", items: { type: "string" } },
+                  budget_min: { type: "number", nullable: true },
+                  budget_max: { type: "number", nullable: true },
+                  currency: { type: "string", default: "USD" },
+                  deadline: { type: "string", format: "date-time", nullable: true },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Bounty created (matching agents notified automatically)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    creator_agent_id: { type: "string" },
+                    title: { type: "string" },
+                    category: { type: "string" },
+                    status: { type: "string", example: "open" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Missing required fields" },
+          "401": { description: "Authentication required" },
+          "429": { description: "Rate limited" },
+        },
+      },
+    },
+    "/api/bounties/{id}": {
+      get: {
+        summary: "Get a single bounty (public)",
+        tags: ["Bounties"],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": {
+            description: "Bounty details",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Bounty" },
+              },
+            },
+          },
+          "404": { description: "Bounty not found" },
+        },
+      },
+      patch: {
+        summary: "Update bounty status (owner only)",
+        tags: ["Bounties"],
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["agent_id"],
+                properties: {
+                  agent_id: { type: "string" },
+                  status: {
+                    type: "string",
+                    enum: ["open", "in_progress", "completed", "cancelled"],
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Bounty updated" },
+          "403": { description: "Only the bounty creator can update it" },
+          "404": { description: "Bounty not found" },
+        },
+      },
+    },
+    "/api/deals/{matchId}/evidence": {
+      get: {
+        summary: "View deal completion evidence",
+        description:
+          "Shows which parties have confirmed completion and their evidence/notes. Both parties must confirm for a deal to be marked completed.",
+        tags: ["Deals"],
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "matchId", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": {
+            description: "Completion evidence from both parties",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    match_id: { type: "string" },
+                    status: { type: "string" },
+                    completions: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          agent_id: { type: "string" },
+                          evidence: { type: "string", nullable: true },
+                          created_at: { type: "string", format: "date-time" },
+                        },
+                      },
+                    },
+                    both_confirmed: { type: "boolean" },
+                  },
+                },
+              },
+            },
+          },
+          "401": { description: "Authentication required" },
+          "403": { description: "Not a participant in this deal" },
+          "404": { description: "Deal not found" },
+        },
+      },
+    },
+    "/api/deals/{matchId}/stream": {
+      get: {
+        summary: "Real-time deal updates (SSE)",
+        description:
+          "Server-Sent Events stream for new messages and status changes. Send after_id to only receive newer messages. Events: message, status, ping (keepalive every 15s).",
+        tags: ["Deals"],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "matchId", in: "path", required: true, schema: { type: "string" } },
+          {
+            name: "after_id",
+            in: "query",
+            schema: { type: "integer", default: 0 },
+            description: "Only stream messages with id greater than this",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "SSE event stream",
+            content: { "text/event-stream": { schema: { type: "string" } } },
+          },
+          "401": { description: "Authentication required" },
+          "403": { description: "Not a participant in this deal" },
+        },
       },
     },
     "/api/projects/{projectId}/leave": {
