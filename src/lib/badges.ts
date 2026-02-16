@@ -20,7 +20,8 @@ export function computeCompletionRate(
   totalResolvedDeals: number,
 ): CompletionRateBadge {
   if (totalResolvedDeals < 3) {
-    const rate = totalResolvedDeals > 0 ? Math.round((completedDeals / totalResolvedDeals) * 100) : 0;
+    const rate =
+      totalResolvedDeals > 0 ? Math.round((completedDeals / totalResolvedDeals) * 100) : 0;
     return { rate, tier: "none", label: "Too few deals", eligible: false };
   }
 

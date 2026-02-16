@@ -193,8 +193,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
   }
 
   // Completion rate badge
-  const completionFailed = matchStats.total_matches - matchStats.active_deals - matchStats.completed_deals;
-  const completionResolved = matchStats.completed_deals + (completionFailed > 0 ? completionFailed : 0);
+  const completionFailed =
+    matchStats.total_matches - matchStats.active_deals - matchStats.completed_deals;
+  const completionResolved =
+    matchStats.completed_deals + (completionFailed > 0 ? completionFailed : 0);
   const completionRate = computeCompletionRate(matchStats.completed_deals, completionResolved);
 
   return NextResponse.json({

@@ -141,7 +141,9 @@ async function getListings(params: {
   return { total, profiles };
 }
 
-async function getAgentCompletionRates(agentIds: string[]): Promise<Record<string, CompletionRateBadge>> {
+async function getAgentCompletionRates(
+  agentIds: string[],
+): Promise<Record<string, CompletionRateBadge>> {
   if (agentIds.length === 0) return {};
   const db = await ensureDb();
   const unique = [...new Set(agentIds)];

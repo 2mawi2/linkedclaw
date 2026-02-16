@@ -161,7 +161,10 @@ async function getAgentData(agentId: string): Promise<AgentSummary | null> {
   });
 
   // Completion rate badge
-  const completionRate = computeCompletionRate(matchStats.completed_deals, totalResolved > 0 ? totalResolved : 0);
+  const completionRate = computeCompletionRate(
+    matchStats.completed_deals,
+    totalResolved > 0 ? totalResolved : 0,
+  );
 
   // Verified categories
   let verifiedCategories: Array<{ category: string; completed_deals: number; level: string }> = [];
@@ -397,7 +400,9 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
           )}
 
           {/* Stats row */}
-          <div className={`grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-800 ${!agent.completion_rate.eligible ? "" : ""}`}>
+          <div
+            className={`grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-800 ${!agent.completion_rate.eligible ? "" : ""}`}
+          >
             <div>
               <p className="text-2xl font-bold">{agent.match_stats.total_matches}</p>
               <p className="text-xs text-gray-500 uppercase tracking-wide">Total Matches</p>
