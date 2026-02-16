@@ -7,6 +7,7 @@ import type { Profile, ProfileParams } from "@/lib/types";
 import { computeReputationScore, type ReputationScore } from "@/lib/reputation";
 import { computeCompletionRate, type CompletionRateBadge } from "@/lib/badges";
 import { CompletionBadge } from "@/app/components/completion-badge";
+import { computeResponseTime, type ResponseTimeStats } from "@/lib/response-time";
 
 interface AgentSummary {
   agent_id: string;
@@ -34,6 +35,7 @@ interface AgentSummary {
   reputation: { avg_rating: number; total_reviews: number };
   reputation_score: ReputationScore;
   completion_rate: CompletionRateBadge;
+  response_time: ResponseTimeStats;
   verified_categories: Array<{
     category: string;
     completed_deals: number;
@@ -160,6 +162,9 @@ async function getAgentData(agentId: string): Promise<AgentSummary | null> {
     total_resolved_deals: totalResolved > 0 ? totalResolved : 0,
   });
 
+  // Response time
+  const responseTime = await computeResponseTime(db, agentId);
+
   // Completion rate badge
   const completionRate = computeCompletionRate(
     matchStats.completed_deals,
@@ -241,6 +246,7 @@ async function getAgentData(agentId: string): Promise<AgentSummary | null> {
     reputation: { avg_rating: avgRating, total_reviews: repTotal },
     reputation_score: reputationScore,
     completion_rate: completionRate,
+    response_time: responseTime,
     verified_categories: verifiedCategories,
     badges,
     recent_reviews: recentReviews,
@@ -401,7 +407,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
 
           {/* Stats row */}
           <div
-            className={`grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-800 ${!agent.completion_rate.eligible ? "" : ""}`}
+            className={`grid grid-cols-2 ${agent.response_time.avg_seconds !== null ? "sm:grid-cols-5" : "sm:grid-cols-4"} gap-4 mt-6 pt-6 border-t border-gray-200 dark:border-gray-800`}
           >
             <div>
               <p className="text-2xl font-bold">{agent.match_stats.total_matches}</p>
@@ -419,6 +425,12 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
               <p className="text-2xl font-bold">{agent.match_stats.success_rate}%</p>
               <p className="text-xs text-gray-500 uppercase tracking-wide">Success Rate</p>
             </div>
+            {agent.response_time.avg_seconds !== null && (
+              <div>
+                <p className="text-2xl font-bold">{agent.response_time.label}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Avg Response</p>
+              </div>
+            )}
           </div>
         </div>
 
