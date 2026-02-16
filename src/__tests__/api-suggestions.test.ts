@@ -1,9 +1,9 @@
-import { describe, test, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import { suggestFromDescription } from "@/lib/category-suggestions";
 
 describe("Category Suggestions", () => {
   describe("suggestFromDescription", () => {
-    test("suggests freelance-dev for a TypeScript/React description", () => {
+    it("suggests freelance-dev for a TypeScript/React description", () => {
       const result = suggestFromDescription(
         "Full-stack TypeScript developer specializing in React and Node.js applications",
       );
@@ -18,7 +18,7 @@ describe("Category Suggestions", () => {
       expect(skillNames).toContain("Node.js");
     });
 
-    test("suggests devops for infrastructure description", () => {
+    it("suggests devops for infrastructure description", () => {
       const result = suggestFromDescription(
         "DevOps engineer experienced with Docker, Kubernetes, and AWS cloud deployments. CI/CD pipeline setup.",
       );
@@ -30,7 +30,7 @@ describe("Category Suggestions", () => {
       expect(skillNames).toContain("AWS");
     });
 
-    test("suggests ai-ml for machine learning description", () => {
+    it("suggests ai-ml for machine learning description", () => {
       const result = suggestFromDescription(
         "Machine learning specialist with NLP and deep learning experience. Fine-tuning LLMs and building RAG systems.",
       );
@@ -41,7 +41,7 @@ describe("Category Suggestions", () => {
       expect(skillNames).toContain("NLP");
     });
 
-    test("suggests content-writing for documentation description", () => {
+    it("suggests content-writing for documentation description", () => {
       const result = suggestFromDescription(
         "Technical writer creating API documentation, tutorials, and blog posts. Experienced with OpenAPI specs.",
       );
@@ -52,7 +52,7 @@ describe("Category Suggestions", () => {
       expect(skillNames).toContain("API Documentation");
     });
 
-    test("suggests design for UI/UX description", () => {
+    it("suggests design for UI/UX description", () => {
       const result = suggestFromDescription(
         "UI/UX designer creating wireframes and mockups in Figma. Responsive design for web and mobile.",
       );
@@ -62,7 +62,7 @@ describe("Category Suggestions", () => {
       expect(skillNames).toContain("Figma");
     });
 
-    test("suggests data-processing for data description", () => {
+    it("suggests data-processing for data description", () => {
       const result = suggestFromDescription(
         "Data analyst working with SQL databases and pandas for ETL pipelines and visualization dashboards.",
       );
@@ -73,7 +73,7 @@ describe("Category Suggestions", () => {
       expect(skillNames).toContain("Pandas");
     });
 
-    test("suggests mobile-dev for mobile app description", () => {
+    it("suggests mobile-dev for mobile app description", () => {
       const result = suggestFromDescription(
         "Mobile app developer building iOS and Android apps with React Native and Flutter.",
       );
@@ -84,7 +84,7 @@ describe("Category Suggestions", () => {
       expect(skillNames).toContain("Flutter");
     });
 
-    test("suggests blockchain for Web3 description", () => {
+    it("suggests blockchain for Web3 description", () => {
       const result = suggestFromDescription(
         "Smart contract developer working with Solidity on Ethereum. Building DeFi protocols and dApps.",
       );
@@ -94,7 +94,7 @@ describe("Category Suggestions", () => {
       expect(skillNames).toContain("Solidity");
     });
 
-    test("respects maxCategories limit", () => {
+    it("respects maxCategories limit", () => {
       const result = suggestFromDescription(
         "Full-stack developer doing DevOps, data analysis, and writing documentation",
         1,
@@ -102,7 +102,7 @@ describe("Category Suggestions", () => {
       expect(result.categories.length).toBeLessThanOrEqual(1);
     });
 
-    test("respects maxSkills limit", () => {
+    it("respects maxSkills limit", () => {
       const result = suggestFromDescription(
         "TypeScript React Node.js Python Docker Kubernetes AWS PostgreSQL Redis GraphQL",
         3,
@@ -111,19 +111,19 @@ describe("Category Suggestions", () => {
       expect(result.skills.length).toBeLessThanOrEqual(2);
     });
 
-    test("returns empty arrays for empty description", () => {
+    it("returns empty arrays for empty description", () => {
       const result = suggestFromDescription("");
       expect(result.categories).toEqual([]);
       expect(result.skills).toEqual([]);
     });
 
-    test("returns empty arrays for irrelevant text", () => {
+    it("returns empty arrays for irrelevant text", () => {
       const result = suggestFromDescription("I enjoy hiking and cooking pasta");
       expect(result.categories).toEqual([]);
       expect(result.skills).toEqual([]);
     });
 
-    test("categories are sorted by confidence descending", () => {
+    it("categories are sorted by confidence descending", () => {
       const result = suggestFromDescription(
         "Software developer who also writes documentation and blog posts about coding",
       );
@@ -134,7 +134,7 @@ describe("Category Suggestions", () => {
       }
     });
 
-    test("confidence values are between 0 and 1", () => {
+    it("confidence values are between 0 and 1", () => {
       const result = suggestFromDescription(
         "Full-stack TypeScript developer doing DevOps with Docker and AWS",
       );
@@ -148,7 +148,7 @@ describe("Category Suggestions", () => {
       }
     });
 
-    test("skill suggestions include matched_term", () => {
+    it("skill suggestions include matched_term", () => {
       const result = suggestFromDescription("Building apps with React and TypeScript");
       for (const sk of result.skills) {
         expect(sk.matched_term).toBeTruthy();
