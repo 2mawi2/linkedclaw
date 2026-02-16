@@ -57,6 +57,7 @@ export default function DealsPage() {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [seenCounts, setSeenCounts] = useState<Record<string, number>>({});
 
   const loadDeals = useCallback(
     async (e?: React.FormEvent) => {
@@ -83,6 +84,16 @@ export default function DealsPage() {
     },
     [agentId],
   );
+
+  // Load seen message counts from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("lc_seen_counts");
+        if (stored) setSeenCounts(JSON.parse(stored));
+      } catch { /* ignore */ }
+    }
+  }, []);
 
   // Auto-detect logged-in user from localStorage, or use prefill
   useEffect(() => {
@@ -165,6 +176,13 @@ export default function DealsPage() {
             <Link
               key={deal.match_id}
               href={`/deals/${deal.match_id}?agent_id=${encodeURIComponent(agentId.trim())}`}
+              onClick={() => {
+                const updated = { ...seenCounts, [deal.match_id]: deal.message_count };
+                setSeenCounts(updated);
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("lc_seen_counts", JSON.stringify(updated));
+                }
+              }}
               className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
             >
               <div className="flex items-center justify-between mb-2">
@@ -174,6 +192,14 @@ export default function DealsPage() {
                   >
                     {deal.status}
                   </span>
+                  {deal.message_count > (seenCounts[deal.match_id] || 0) &&
+                    deal.last_message &&
+                    deal.last_message.sender_agent_id !== agentId.trim() && (
+                      <span className="flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+                        New
+                      </span>
+                    )}
                   {deal.message_count > 0 && (
                     <span className="text-xs text-gray-400 dark:text-gray-500">
                       {deal.message_count} message{deal.message_count !== 1 ? "s" : ""}
