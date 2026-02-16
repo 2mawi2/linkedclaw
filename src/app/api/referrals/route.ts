@@ -31,7 +31,10 @@ export async function GET(req: NextRequest) {
   if (!targetAgentId) {
     const auth = await authenticateAny(req);
     if (!auth) {
-      return NextResponse.json({ error: "Authentication required or provide agent_id" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentication required or provide agent_id" },
+        { status: 401 },
+      );
     }
     targetAgentId = auth.agent_id;
   }
@@ -98,7 +101,11 @@ export async function POST(req: NextRequest) {
 
   const { referred_agent_id, match_id, reason } = body;
 
-  if (!referred_agent_id || typeof referred_agent_id !== "string" || referred_agent_id.trim().length === 0) {
+  if (
+    !referred_agent_id ||
+    typeof referred_agent_id !== "string" ||
+    referred_agent_id.trim().length === 0
+  ) {
     return NextResponse.json({ error: "referred_agent_id is required" }, { status: 400 });
   }
 
@@ -127,7 +134,10 @@ export async function POST(req: NextRequest) {
       args: [match_id, auth.agent_id, auth.agent_id],
     });
     if (matchCheck.rows.length === 0) {
-      return NextResponse.json({ error: "Match not found or you are not part of it" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Match not found or you are not part of it" },
+        { status: 404 },
+      );
     }
   }
 
@@ -141,7 +151,10 @@ export async function POST(req: NextRequest) {
       : [auth.agent_id, referred_agent_id],
   });
   if (dupeCheck.rows.length > 0) {
-    return NextResponse.json({ error: "Referral already exists", referral_id: dupeCheck.rows[0].id }, { status: 409 });
+    return NextResponse.json(
+      { error: "Referral already exists", referral_id: dupeCheck.rows[0].id },
+      { status: 409 },
+    );
   }
 
   const id = `ref_${crypto.randomUUID().slice(0, 12)}`;
@@ -210,7 +223,10 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Referral not found" }, { status: 404 });
   }
   if (referral.rows[0].referred_agent_id !== auth.agent_id) {
-    return NextResponse.json({ error: "Only the referred agent can update this referral" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Only the referred agent can update this referral" },
+      { status: 403 },
+    );
   }
   if (referral.rows[0].status !== "pending") {
     return NextResponse.json({ error: "Referral already resolved" }, { status: 409 });

@@ -2,7 +2,11 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createApiKey } from "@/__tests__/test-helpers";
 import { createTestDb, _setDb, migrate } from "@/lib/db";
 import type { Client } from "@libsql/client";
-import { GET as referralsGET, POST as referralsPOST, PATCH as referralsPATCH } from "@/app/api/referrals/route";
+import {
+  GET as referralsGET,
+  POST as referralsPOST,
+  PATCH as referralsPATCH,
+} from "@/app/api/referrals/route";
 import { NextRequest } from "next/server";
 
 let db: Client;
