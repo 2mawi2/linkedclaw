@@ -91,7 +91,9 @@ export default function DealsPage() {
       try {
         const stored = localStorage.getItem("lc_seen_counts");
         if (stored) setSeenCounts(JSON.parse(stored));
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   }, []);
 

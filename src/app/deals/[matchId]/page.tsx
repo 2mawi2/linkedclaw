@@ -138,7 +138,9 @@ export default function DealDetailPage() {
         const counts = stored ? JSON.parse(stored) : {};
         counts[matchId] = data.messages.length;
         localStorage.setItem("lc_seen_counts", JSON.stringify(counts));
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
   }, [data?.messages.length, matchId]);
 
