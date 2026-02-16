@@ -42,6 +42,15 @@ interface ApprovalInfo {
   created_at: string;
 }
 
+interface ReviewInfo {
+  id: string;
+  reviewer_agent_id: string;
+  reviewed_agent_id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+}
+
 interface DealData {
   match: MatchInfo;
   messages: MessageInfo[];
@@ -85,6 +94,12 @@ export default function DealDetailPage() {
   const [sendError, setSendError] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [actionResult, setActionResult] = useState("");
+  const [reviews, setReviews] = useState<ReviewInfo[]>([]);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const [reviewSuccess, setReviewSuccess] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastActivityRef = useRef(Date.now());
 
@@ -110,9 +125,22 @@ export default function DealDetailPage() {
     }
   }, [matchId]);
 
+  const fetchReviews = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/deals/${matchId}/reviews`);
+      if (res.ok) {
+        const json = await res.json();
+        setReviews(json.reviews || []);
+      }
+    } catch {
+      // Non-critical - silently fail
+    }
+  }, [matchId]);
+
   useEffect(() => {
     fetchDeal();
-  }, [fetchDeal]);
+    fetchReviews();
+  }, [fetchDeal, fetchReviews]);
 
   // Real-time updates via SSE, with polling fallback
   useEffect(() => {
@@ -221,6 +249,46 @@ export default function DealDetailPage() {
       }
     }
   }, [data?.messages.length, matchId]);
+
+  async function handleSubmitReview() {
+    if (!agentId || !data) return;
+    setReviewSubmitting(true);
+    setReviewError("");
+    setReviewSuccess("");
+
+    // Determine who the counterparty is
+    const profiles = data.match.profiles;
+    const counterpartyId =
+      profiles.a.agent_id === agentId ? profiles.b.agent_id : profiles.a.agent_id;
+
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("lc_api_key") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const res = await fetch(`/api/reputation/${counterpartyId}/review`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          match_id: matchId,
+          rating: reviewRating,
+          comment: reviewComment.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setReviewError(json.error || "Failed to submit review");
+      } else {
+        setReviewSuccess("Review submitted!");
+        setReviewComment("");
+        fetchReviews();
+      }
+    } catch {
+      setReviewError("Failed to submit review");
+    } finally {
+      setReviewSubmitting(false);
+    }
+  }
 
   async function handleApproval(approved: boolean) {
     if (!agentId) {
@@ -688,6 +756,118 @@ export default function DealDetailPage() {
               Deal completed!
             </h3>
             <p className="text-sm">Both parties confirmed completion. Great work!</p>
+          </div>
+        )}
+
+        {/* Reviews section - show for completed/approved/in_progress deals */}
+        {(match.status === "completed" || match.status === "approved" || match.status === "in_progress") && (
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold mb-3">Reviews</h3>
+
+            {/* Existing reviews */}
+            {reviews.length > 0 && (
+              <div className="space-y-3 mb-4">
+                {reviews.map((r) => (
+                  <div
+                    key={r.id}
+                    className="p-3 border border-gray-200 dark:border-gray-800 rounded-lg"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-yellow-500">
+                        {"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        by{" "}
+                        <Link
+                          href={`/agents/${r.reviewer_agent_id}`}
+                          className="underline hover:text-gray-700 dark:hover:text-gray-300"
+                        >
+                          {r.reviewer_agent_id}
+                        </Link>
+                        {" "}for{" "}
+                        <Link
+                          href={`/agents/${r.reviewed_agent_id}`}
+                          className="underline hover:text-gray-700 dark:hover:text-gray-300"
+                        >
+                          {r.reviewed_agent_id}
+                        </Link>
+                      </span>
+                    </div>
+                    {r.comment && (
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{r.comment}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Review form - show if logged in and haven't reviewed yet */}
+            {agentId && !reviews.some((r) => r.reviewer_agent_id === agentId) && (
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                <h4 className="text-sm font-medium mb-3">Leave a review</h4>
+                <div className="mb-3">
+                  <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
+                    Rating
+                  </label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewRating(star)}
+                        className={`text-2xl transition-colors ${
+                          star <= reviewRating
+                            ? "text-yellow-500"
+                            : "text-gray-300 dark:text-gray-600"
+                        } hover:text-yellow-400`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
+                    Comment (optional)
+                  </label>
+                  <textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="How was working with this agent?"
+                    rows={2}
+                    maxLength={500}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm resize-none"
+                  />
+                </div>
+                <button
+                  onClick={handleSubmitReview}
+                  disabled={reviewSubmitting}
+                  className="px-4 py-2 bg-foreground text-background rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                >
+                  {reviewSubmitting ? "Submitting..." : "Submit review"}
+                </button>
+                {reviewError && (
+                  <p className="text-xs text-red-500 dark:text-red-400 mt-2">{reviewError}</p>
+                )}
+                {reviewSuccess && (
+                  <p className="text-xs text-emerald-500 dark:text-emerald-400 mt-2">{reviewSuccess}</p>
+                )}
+              </div>
+            )}
+
+            {/* Already reviewed message */}
+            {agentId && reviews.some((r) => r.reviewer_agent_id === agentId) && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                You have already reviewed this deal.
+              </p>
+            )}
+
+            {/* Not logged in */}
+            {!agentId && reviews.length === 0 && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                No reviews yet. Log in to leave a review.
+              </p>
+            )}
           </div>
         )}
 
