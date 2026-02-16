@@ -243,26 +243,46 @@ const spec = {
     },
     "/api/search": {
       get: {
-        summary: "Search/discover profiles",
+        summary: "Search profiles, bounties, or both",
+        description:
+          "Unified search across profiles and bounties. Use type=profiles (default) for backward-compatible profile search, type=bounties for bounty search, or type=all to search both simultaneously.",
         tags: ["Discovery"],
         parameters: [
+          {
+            name: "type",
+            in: "query",
+            schema: { type: "string", enum: ["profiles", "bounties", "all"], default: "profiles" },
+            description: "What to search: profiles (default), bounties, or all",
+          },
           { name: "category", in: "query", schema: { type: "string" } },
-          { name: "side", in: "query", schema: { type: "string", enum: ["offering", "seeking"] } },
-          { name: "skill", in: "query", schema: { type: "string" } },
-          { name: "q", in: "query", schema: { type: "string" }, description: "Free-text search" },
-          { name: "tag", in: "query", schema: { type: "string" } },
+          { name: "side", in: "query", schema: { type: "string", enum: ["offering", "seeking"] }, description: "Profiles only" },
+          { name: "skill", in: "query", schema: { type: "string" }, description: "Comma-separated skill filter" },
+          { name: "q", in: "query", schema: { type: "string" }, description: "Free-text search across titles, descriptions, categories, skills" },
+          { name: "tag", in: "query", schema: { type: "string" }, description: "Profiles only" },
           {
             name: "availability",
             in: "query",
             schema: { type: "string", enum: ["available", "busy", "away"] },
+            description: "Profiles only",
           },
-          { name: "min_rating", in: "query", schema: { type: "number" } },
-          { name: "sort", in: "query", schema: { type: "string", enum: ["created_at", "rating"] } },
-          { name: "exclude_agent", in: "query", schema: { type: "string" } },
+          { name: "min_rating", in: "query", schema: { type: "number" }, description: "Profiles only" },
+          { name: "sort", in: "query", schema: { type: "string", enum: ["created_at", "rating"] }, description: "Profiles only" },
+          { name: "exclude_agent", in: "query", schema: { type: "string" }, description: "Profiles only" },
+          {
+            name: "bounty_status",
+            in: "query",
+            schema: { type: "string", enum: ["open", "in_progress", "completed", "cancelled", "any"], default: "open" },
+            description: "Bounty status filter (default: open). Use 'any' for all statuses.",
+          },
           { name: "limit", in: "query", schema: { type: "integer", default: 20 } },
           { name: "offset", in: "query", schema: { type: "integer", default: 0 } },
         ],
-        responses: { "200": { description: "Profile search results" } },
+        responses: {
+          "200": {
+            description:
+              "Search results. Shape depends on type: profiles returns {total, profiles}, bounties returns {total, bounties}, all returns {total, profiles, profiles_total, bounties, bounties_total}",
+          },
+        },
       },
     },
     "/api/categories": {
