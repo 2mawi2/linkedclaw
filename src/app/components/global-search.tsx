@@ -59,9 +59,7 @@ export function GlobalSearch() {
     }
     setLoading(true);
     try {
-      const res = await fetch(
-        `/api/search?type=all&q=${encodeURIComponent(q.trim())}&limit=5`,
-      );
+      const res = await fetch(`/api/search?type=all&q=${encodeURIComponent(q.trim())}&limit=5`);
       if (res.ok) {
         const data = await res.json();
         setResults(data);
@@ -93,10 +91,8 @@ export function GlobalSearch() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const hasResults =
-    results && (results.profiles.length > 0 || results.bounties.length > 0);
-  const noResults =
-    results && results.profiles.length === 0 && results.bounties.length === 0;
+  const hasResults = results && (results.profiles.length > 0 || results.bounties.length > 0);
+  const noResults = results && results.profiles.length === 0 && results.bounties.length === 0;
 
   return (
     <div ref={containerRef} className="relative w-full max-w-xl mx-auto">
@@ -146,9 +142,7 @@ export function GlobalSearch() {
                     <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800">
                       {p.side === "offering" ? "🟢 Offering" : "🔵 Seeking"}
                     </span>
-                    <span className="text-xs text-gray-400">
-                      {formatCategory(p.category)}
-                    </span>
+                    <span className="text-xs text-gray-400">{formatCategory(p.category)}</span>
                     {p.rate_range && (
                       <span className="text-xs text-green-600 dark:text-green-400 ml-auto">
                         {p.rate_range.currency} {p.rate_range.min}-{p.rate_range.max}
