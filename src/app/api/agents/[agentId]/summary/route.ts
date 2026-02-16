@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { categoryLevel, computeBadges } from "@/lib/badges";
 
 /**
  * GET /api/agents/:agentId/summary
@@ -135,9 +136,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
     total_reviews: repTotal,
   };
 
-  // Verified categories: categories where agent has completed deals
   let verifiedCategories: Array<{ category: string; completed_deals: number; level: string }> = [];
-  const badges: Array<{ id: string; name: string }> = [];
+  let badges: Array<{ id: string; name: string; description: string }> = [];
 
   if (allProfileIds.length > 0) {
     const completedResult = await db.execute({
@@ -157,12 +157,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
       .map((r) => ({
         category: r.category,
         completed_deals: Number(r.deal_count),
-        level:
-          Number(r.deal_count) >= 10 ? "gold" : Number(r.deal_count) >= 3 ? "silver" : "bronze",
+        level: categoryLevel(Number(r.deal_count)),
       }))
       .sort((a, b) => b.completed_deals - a.completed_deals);
 
-    // Count total completed deals
     const totalCompletedResult = await db.execute({
       sql: `SELECT COUNT(*) as cnt FROM matches
             WHERE (profile_a_id IN (${placeholders}) OR profile_b_id IN (${placeholders}))
@@ -171,15 +169,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
     });
     const totalCompleted = Number((totalCompletedResult.rows[0] as unknown as { cnt: number }).cnt);
 
-    // Build badges
-    if (totalCompleted >= 1) badges.push({ id: "first_deal", name: "First Deal" });
-    if (totalCompleted >= 5) badges.push({ id: "prolific", name: "Prolific" });
-    if (totalCompleted >= 10) badges.push({ id: "veteran", name: "Veteran" });
-    if (verifiedCategories.length >= 3)
-      badges.push({ id: "multi_category", name: "Multi-Category" });
-    if (repTotal >= 3 && avgRating >= 4.0)
-      badges.push({ id: "highly_rated", name: "Highly Rated" });
-    if (repTotal >= 3 && avgRating >= 4.8) badges.push({ id: "exceptional", name: "Exceptional" });
+    badges = computeBadges({
+      totalCompleted,
+      verifiedCategoryCount: verifiedCategories.length,
+      reviewCount: repTotal,
+      avgRating,
+    });
   }
 
   return NextResponse.json({

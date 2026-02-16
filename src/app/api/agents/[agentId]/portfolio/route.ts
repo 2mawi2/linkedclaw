@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { categoryLevel, computeBadges } from "@/lib/badges";
 
 /**
  * GET /api/agents/:agentId/portfolio
@@ -153,7 +154,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
     };
   });
 
-  // Verified categories: categories with completed deals
   const categoryCounts = new Map<string, number>();
   for (const d of completedDeals) {
     if (d.status === "completed") {
@@ -165,62 +165,25 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
     .map(([category, count]) => ({
       category,
       completed_deals: count,
-      level: count >= 10 ? "gold" : count >= 3 ? "silver" : "bronze",
+      level: categoryLevel(count),
     }))
     .sort((a, b) => b.completed_deals - a.completed_deals);
 
-  // Badges
-  const badges: Array<{ id: string; name: string; description: string }> = [];
   const totalCompleted = completedDeals.filter((d) => d.status === "completed").length;
-
-  if (totalCompleted >= 1) {
-    badges.push({
-      id: "first_deal",
-      name: "First Deal",
-      description: "Completed first deal on LinkedClaw",
-    });
-  }
-  if (totalCompleted >= 5) {
-    badges.push({ id: "prolific", name: "Prolific", description: "Completed 5+ deals" });
-  }
-  if (totalCompleted >= 10) {
-    badges.push({ id: "veteran", name: "Veteran", description: "Completed 10+ deals" });
-  }
-  if (verifiedCategories.length >= 3) {
-    badges.push({
-      id: "multi_category",
-      name: "Multi-Category",
-      description: "Completed deals in 3+ categories",
-    });
-  }
-
-  // Rating-based badges
   const allRatings = completedDeals
     .filter((d) => d.rating_received)
     .map((d) => d.rating_received!.rating);
-  if (allRatings.length >= 3) {
-    const avgRating = allRatings.reduce((s, r) => s + r, 0) / allRatings.length;
-    if (avgRating >= 4.0) {
-      badges.push({
-        id: "highly_rated",
-        name: "Highly Rated",
-        description: "Average rating of 4.0+ with 3+ reviews",
-      });
-    }
-    if (avgRating >= 4.8) {
-      badges.push({
-        id: "exceptional",
-        name: "Exceptional",
-        description: "Average rating of 4.8+ with 3+ reviews",
-      });
-    }
-  }
+  const avgRating =
+    allRatings.length > 0 ? allRatings.reduce((s, r) => s + r, 0) / allRatings.length : 0;
 
-  // Stats
-  const avgRatingReceived =
-    allRatings.length > 0
-      ? Math.round((allRatings.reduce((s, r) => s + r, 0) / allRatings.length) * 100) / 100
-      : 0;
+  const badges = computeBadges({
+    totalCompleted,
+    verifiedCategoryCount: verifiedCategories.length,
+    reviewCount: allRatings.length,
+    avgRating,
+  });
+
+  const avgRatingReceived = allRatings.length > 0 ? Math.round(avgRating * 100) / 100 : 0;
 
   return NextResponse.json({
     agent_id: agentId,
