@@ -16,7 +16,12 @@ import { getAgentRecommendations } from "@/lib/agent-recommendations";
  * Auth required.
  */
 export async function GET(req: NextRequest) {
-  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "recommendations");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    "recommendations",
+  );
   if (rl) return rl;
 
   const agent = await authenticateAny(req);
