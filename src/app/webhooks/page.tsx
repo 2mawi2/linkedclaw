@@ -56,13 +56,20 @@ function EventBadge({ event }: { event: string }) {
 }
 
 function RelativeTime({ iso }: { iso: string | null }) {
+  const [label, setLabel] = useState<string>("never");
+  useEffect(() => {
+    if (!iso) return;
+    function compute() {
+      const diff = Date.now() - new Date(iso).getTime();
+      if (diff < 60_000) return "just now";
+      if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
+      if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
+      return `${Math.floor(diff / 86_400_000)}d ago`;
+    }
+    setLabel(compute());
+  }, [iso]);
   if (!iso) return <span className="text-gray-400">never</span>;
-  const d = new Date(iso);
-  const diff = Date.now() - d.getTime();
-  if (diff < 60_000) return <span>just now</span>;
-  if (diff < 3_600_000) return <span>{Math.floor(diff / 60_000)}m ago</span>;
-  if (diff < 86_400_000) return <span>{Math.floor(diff / 3_600_000)}h ago</span>;
-  return <span>{Math.floor(diff / 86_400_000)}d ago</span>;
+  return <span>{label}</span>;
 }
 
 export default function WebhooksPage() {
