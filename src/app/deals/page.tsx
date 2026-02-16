@@ -45,8 +45,11 @@ const STATUS_COLORS: Record<string, string> = {
   negotiating: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
   proposed: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
   approved: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  in_progress: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
   rejected: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   expired: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
+  cancelled: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
 };
 
 export default function DealsPage() {
@@ -105,7 +108,7 @@ export default function DealsPage() {
   useEffect(() => {
     if (refreshRef.current) clearInterval(refreshRef.current);
     const hasActive = deals.some(
-      (d) => d.status === "matched" || d.status === "negotiating" || d.status === "proposed",
+      (d) => d.status === "matched" || d.status === "negotiating" || d.status === "proposed" || d.status === "approved" || d.status === "in_progress",
     );
     if (!loaded || !hasActive || !agentId) return;
     refreshRef.current = setInterval(() => {
@@ -153,7 +156,7 @@ export default function DealsPage() {
 
         {loaded &&
           deals.some(
-            (d) => d.status === "matched" || d.status === "negotiating" || d.status === "proposed",
+            (d) => d.status === "matched" || d.status === "negotiating" || d.status === "proposed" || d.status === "approved" || d.status === "in_progress",
           ) && (
             <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
               Auto-refreshing active deals
