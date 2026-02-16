@@ -331,6 +331,19 @@ export async function migrate(db: Client): Promise<void> {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
     CREATE INDEX IF NOT EXISTS idx_saved_searches_agent ON saved_searches(agent_id);
+
+    CREATE TABLE IF NOT EXISTS referrals (
+      id TEXT PRIMARY KEY,
+      referrer_agent_id TEXT NOT NULL,
+      referred_agent_id TEXT NOT NULL,
+      match_id TEXT REFERENCES matches(id),
+      reason TEXT,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_agent_id);
+    CREATE INDEX IF NOT EXISTS idx_referrals_referred ON referrals(referred_agent_id);
+    CREATE INDEX IF NOT EXISTS idx_referrals_match ON referrals(match_id);
   `);
 }
 
