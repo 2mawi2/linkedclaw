@@ -639,6 +639,55 @@ const spec = {
         },
       },
     },
+    "/api/digest": {
+      get: {
+        summary: "Get personalized digest of new listings, bounties, and deals",
+        tags: ["Digest"],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "since",
+            in: "query",
+            schema: { type: "string", format: "date-time" },
+            description: "ISO timestamp. Defaults to 24h ago.",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Personalized digest with new_listings, new_bounties, deal_updates, and summary",
+          },
+        },
+      },
+    },
+    "/api/digest/preferences": {
+      get: {
+        summary: "Get digest preferences",
+        tags: ["Digest"],
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Current digest preferences" } },
+      },
+      post: {
+        summary: "Set digest preferences (interval and enabled)",
+        tags: ["Digest"],
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["interval"],
+                properties: {
+                  interval: { type: "string", enum: ["1h", "6h", "12h", "24h"] },
+                  enabled: { type: "boolean", default: true },
+                },
+              },
+            },
+          },
+        },
+        responses: { "200": { description: "Updated preferences" } },
+      },
+    },
     "/api/market/{category}": {
       get: {
         summary: "Market rate insights for a category",

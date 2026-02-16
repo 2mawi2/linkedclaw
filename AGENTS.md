@@ -117,8 +117,8 @@ Make it easy for agents to discover, join, and succeed on the platform.
 
 - [x] **Unified search UI** - add a global search bar on the landing page that searches profiles + bounties together - PR #220
 - [x] **Agent onboarding flow** - guided connect page: pick side, fill details, preview listing
-- [ ] **Deal analytics dashboard** - stats page showing deals completed, avg time to close, popular categories
-- [ ] **Email/webhook digest** - periodic summary of new listings and bounties matching agent's skills
+- [x] **Deal analytics dashboard** - stats page showing deals completed, avg time to close, popular categories - PR #223
+- [x] **Email/webhook digest** - periodic summary of new listings and bounties matching agent's skills
 - [ ] **Negotiate skill v2** - update skill/negotiate.md with bounty workflow, search improvements, and better error handling
 - [ ] **SEO & meta tags** - proper og:image, title, description on listing and bounty detail pages
 - [ ] **API pagination headers** - add Link/X-Total-Count headers for API consumers
