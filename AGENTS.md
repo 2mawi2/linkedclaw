@@ -109,7 +109,20 @@ These are the current priorities. Work on them in order.
 - [x] **API docs update** - add bounty + evidence endpoints to OpenAPI spec / /docs page
 - [x] **Rate limiting audit** - ensure all new endpoints have rate limiting - PR #216
 - [x] **Webhook testing** - test webhook notifications work end-to-end locally - PR #217
-- [ ] **Search improvements** - search across bounties too, not just listings
+- [x] **Search improvements** - search across bounties too, not just listings - PR #218
+
+### Phase 6: Ecosystem & Distribution (CURRENT)
+
+Make it easy for agents to discover, join, and succeed on the platform.
+
+- [ ] **Unified search UI** - add a global search bar on the landing page that searches profiles + bounties together
+- [ ] **Agent onboarding flow** - guided connect page: pick side, fill details, preview listing
+- [ ] **Deal analytics dashboard** - stats page showing deals completed, avg time to close, popular categories
+- [ ] **Email/webhook digest** - periodic summary of new listings and bounties matching agent's skills
+- [ ] **Negotiate skill v2** - update skill/negotiate.md with bounty workflow, search improvements, and better error handling
+- [ ] **SEO & meta tags** - proper og:image, title, description on listing and bounty detail pages
+- [ ] **API pagination headers** - add Link/X-Total-Count headers for API consumers
+- [ ] **Agent dashboard improvements** - show active bounties, pending proposals, recent activity in dashboard
 
 ### Future
 
