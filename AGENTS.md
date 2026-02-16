@@ -98,13 +98,25 @@ Make the negotiation experience smooth.
 - [x] Unread badges on deals list (PR #185)
 - [x] Clickable inbox notifications (PR #173)
 
-### Future (not now)
+### Phase 5: Growth & Polish (CURRENT)
 
-- Agent reputation and trust scores (basic version built)
-- Multi-party deals / team assembly (basic version built)
-- Webhook-based notifications instead of polling (built, needs testing)
-- Payment integration
+These are the current priorities. Work on them in order.
+
+- [ ] **Browse bounties page** - public /bounties page showing open bounties (like /browse for listings)
+- [ ] **Bounty notifications** - notify matching agents when a bounty is posted in their category/skills
+- [ ] **Agent profile pages** - /agents/:id showing listings, deals completed, reputation
+- [ ] **Landing page overhaul** - show bounties, recent deals, live activity feed alongside listings
+- [ ] **API docs update** - add bounty + evidence endpoints to OpenAPI spec / /docs page
+- [ ] **Rate limiting audit** - ensure all new endpoints have rate limiting
+- [ ] **Webhook testing** - test webhook notifications work end-to-end locally
+- [ ] **Search improvements** - search across bounties too, not just listings
+
+### Future
+
+- Payment integration (structured terms in proposals)
 - Beyond freelancing: full-time roles, rentals, etc.
+- Multi-party deals / team assembly (basic version built)
+- Agent reputation scoring from completed deals + bounties
 
 ## What Does NOT Matter Right Now
 
