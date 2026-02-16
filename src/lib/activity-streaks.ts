@@ -23,7 +23,15 @@ export interface DailyActivity {
   types: Record<string, number>;
 }
 
-const ACTIVITY_TYPES = ["listing", "message", "deal", "proposal", "review", "login", "search"] as const;
+const ACTIVITY_TYPES = [
+  "listing",
+  "message",
+  "deal",
+  "proposal",
+  "review",
+  "login",
+  "search",
+] as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 
 export function isValidActivityType(t: string): t is ActivityType {
@@ -55,7 +63,13 @@ export async function recordActivity(
  */
 export function computeStreaks(activeDates: string[], today: string): StreakInfo {
   if (activeDates.length === 0) {
-    return { current_streak: 0, longest_streak: 0, total_active_days: 0, last_active_date: null, badges: [] };
+    return {
+      current_streak: 0,
+      longest_streak: 0,
+      total_active_days: 0,
+      last_active_date: null,
+      badges: [],
+    };
   }
 
   const sorted = [...activeDates].sort();
@@ -111,17 +125,71 @@ export function computeStreaks(activeDates: string[], today: string): StreakInfo
 function computeStreakBadges(current: number, longest: number, totalDays: number): StreakBadge[] {
   const badges: StreakBadge[] = [];
 
-  if (current >= 3) badges.push({ id: "streak_3", name: "On Fire", description: "3-day activity streak", tier: "bronze" });
-  if (current >= 7) badges.push({ id: "streak_7", name: "Weekly Warrior", description: "7-day activity streak", tier: "silver" });
-  if (current >= 14) badges.push({ id: "streak_14", name: "Fortnight Force", description: "14-day activity streak", tier: "gold" });
-  if (current >= 30) badges.push({ id: "streak_30", name: "Monthly Master", description: "30-day activity streak", tier: "platinum" });
+  if (current >= 3)
+    badges.push({
+      id: "streak_3",
+      name: "On Fire",
+      description: "3-day activity streak",
+      tier: "bronze",
+    });
+  if (current >= 7)
+    badges.push({
+      id: "streak_7",
+      name: "Weekly Warrior",
+      description: "7-day activity streak",
+      tier: "silver",
+    });
+  if (current >= 14)
+    badges.push({
+      id: "streak_14",
+      name: "Fortnight Force",
+      description: "14-day activity streak",
+      tier: "gold",
+    });
+  if (current >= 30)
+    badges.push({
+      id: "streak_30",
+      name: "Monthly Master",
+      description: "30-day activity streak",
+      tier: "platinum",
+    });
 
-  if (longest >= 7 && current < 7) badges.push({ id: "best_7", name: "Past Weekly", description: "Had a 7-day streak", tier: "bronze" });
-  if (longest >= 30 && current < 30) badges.push({ id: "best_30", name: "Past Monthly", description: "Had a 30-day streak", tier: "silver" });
+  if (longest >= 7 && current < 7)
+    badges.push({
+      id: "best_7",
+      name: "Past Weekly",
+      description: "Had a 7-day streak",
+      tier: "bronze",
+    });
+  if (longest >= 30 && current < 30)
+    badges.push({
+      id: "best_30",
+      name: "Past Monthly",
+      description: "Had a 30-day streak",
+      tier: "silver",
+    });
 
-  if (totalDays >= 10) badges.push({ id: "active_10", name: "Regular", description: "Active for 10+ days total", tier: "bronze" });
-  if (totalDays >= 30) badges.push({ id: "active_30", name: "Dedicated", description: "Active for 30+ days total", tier: "silver" });
-  if (totalDays >= 100) badges.push({ id: "active_100", name: "Centurion", description: "Active for 100+ days total", tier: "gold" });
+  if (totalDays >= 10)
+    badges.push({
+      id: "active_10",
+      name: "Regular",
+      description: "Active for 10+ days total",
+      tier: "bronze",
+    });
+  if (totalDays >= 30)
+    badges.push({
+      id: "active_30",
+      name: "Dedicated",
+      description: "Active for 30+ days total",
+      tier: "silver",
+    });
+  if (totalDays >= 100)
+    badges.push({
+      id: "active_100",
+      name: "Centurion",
+      description: "Active for 100+ days total",
+      tier: "gold",
+    });
 
   return badges;
 }
@@ -130,7 +198,12 @@ function computeStreakBadges(current: number, longest: number, totalDays: number
  * Get streak info for an agent from the database.
  */
 export async function getAgentStreaks(
-  db: { execute: (stmt: { sql: string; args: (string | number)[] }) => Promise<{ rows: Record<string, unknown>[] }> },
+  db: {
+    execute: (stmt: {
+      sql: string;
+      args: (string | number)[];
+    }) => Promise<{ rows: Record<string, unknown>[] }>;
+  },
   agentId: string,
   today?: string,
 ): Promise<StreakInfo> {
@@ -149,7 +222,12 @@ export async function getAgentStreaks(
  * Get daily activity breakdown for an agent over a date range.
  */
 export async function getActivityHistory(
-  db: { execute: (stmt: { sql: string; args: (string | number)[] }) => Promise<{ rows: Record<string, unknown>[] }> },
+  db: {
+    execute: (stmt: {
+      sql: string;
+      args: (string | number)[];
+    }) => Promise<{ rows: Record<string, unknown>[] }>;
+  },
   agentId: string,
   days: number = 30,
 ): Promise<DailyActivity[]> {

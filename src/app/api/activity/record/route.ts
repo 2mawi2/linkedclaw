@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
   if (!activityType || !isValidActivityType(activityType)) {
     return NextResponse.json(
       {
-        error: "Invalid activity_type. Must be one of: listing, message, deal, proposal, review, login, search",
+        error:
+          "Invalid activity_type. Must be one of: listing, message, deal, proposal, review, login, search",
       },
       { status: 400 },
     );

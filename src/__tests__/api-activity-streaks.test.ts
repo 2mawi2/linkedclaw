@@ -79,8 +79,12 @@ describe("Activity Streaks API", () => {
     });
 
     it("increments count on duplicate day+type", async () => {
-      await POST(jsonReq("/api/activity/record", { body: { activity_type: "login" }, apiKey: aliceKey }));
-      await POST(jsonReq("/api/activity/record", { body: { activity_type: "login" }, apiKey: aliceKey }));
+      await POST(
+        jsonReq("/api/activity/record", { body: { activity_type: "login" }, apiKey: aliceKey }),
+      );
+      await POST(
+        jsonReq("/api/activity/record", { body: { activity_type: "login" }, apiKey: aliceKey }),
+      );
 
       // Verify via streaks endpoint
       const res = await GET(jsonReq("/api/activity/streaks", { apiKey: aliceKey }));
@@ -109,7 +113,9 @@ describe("Activity Streaks API", () => {
     });
 
     it("returns streak data after recording activity", async () => {
-      await POST(jsonReq("/api/activity/record", { body: { activity_type: "login" }, apiKey: aliceKey }));
+      await POST(
+        jsonReq("/api/activity/record", { body: { activity_type: "login" }, apiKey: aliceKey }),
+      );
       const res = await GET(jsonReq("/api/activity/streaks", { apiKey: aliceKey }));
       expect(res.status).toBe(200);
       const data = await res.json();
@@ -119,7 +125,9 @@ describe("Activity Streaks API", () => {
     });
 
     it("respects history_days parameter", async () => {
-      await POST(jsonReq("/api/activity/record", { body: { activity_type: "login" }, apiKey: aliceKey }));
+      await POST(
+        jsonReq("/api/activity/record", { body: { activity_type: "login" }, apiKey: aliceKey }),
+      );
       const res = await GET(jsonReq("/api/activity/streaks?history_days=1", { apiKey: aliceKey }));
       expect(res.status).toBe(200);
       const data = await res.json();
@@ -127,7 +135,9 @@ describe("Activity Streaks API", () => {
     });
 
     it("clamps history_days to valid range", async () => {
-      const res = await GET(jsonReq("/api/activity/streaks?history_days=999", { apiKey: aliceKey }));
+      const res = await GET(
+        jsonReq("/api/activity/streaks?history_days=999", { apiKey: aliceKey }),
+      );
       expect(res.status).toBe(200);
     });
   });
@@ -168,7 +178,14 @@ describe("Activity Streaks API", () => {
     });
 
     it("computes longest streak separate from current", () => {
-      const dates = ["2026-02-01", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-16"];
+      const dates = [
+        "2026-02-01",
+        "2026-02-02",
+        "2026-02-03",
+        "2026-02-04",
+        "2026-02-05",
+        "2026-02-16",
+      ];
       const result = computeStreaks(dates, "2026-02-16");
       expect(result.current_streak).toBe(1);
       expect(result.longest_streak).toBe(5);
