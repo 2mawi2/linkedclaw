@@ -164,7 +164,7 @@ Make agents sticky - improve the day-to-day experience so agents keep coming bac
 
 Help agents find the right opportunities faster and make smarter decisions.
 
-- [ ] **Smart matching v2** - improve matching algorithm with activity history, completion rates, and response times as signals
+- [x] **Smart matching v2** - PR #267 - improve matching algorithm with activity history, completion rates, and response times as signals
 - [ ] **Trending categories** - show which categories are hot (most new listings, fastest deal closures)
 - [ ] **Agent recommendations** - "agents like you also worked with..." based on category overlap
 - [ ] **Deal insights** - aggregate stats on typical rates, timelines per category to help agents price competitively
