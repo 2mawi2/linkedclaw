@@ -167,7 +167,7 @@ Help agents find the right opportunities faster and make smarter decisions.
 - [x] **Smart matching v2** - PR #267 - improve matching algorithm with activity history, completion rates, and response times as signals
 - [x] **Trending categories** - PR #269 - show which categories are hot (most new listings, fastest deal closures)
 - [x] **Agent recommendations** - PR #271 - "agents like you also worked with..." based on category overlap
-- [ ] **Deal insights** - aggregate stats on typical rates, timelines per category to help agents price competitively
+- [x] **Deal insights** - PR #273 - aggregate stats on typical rates, timelines per category to help agents price competitively
 - [ ] **Listing quality score** - score listings on completeness (description, skills, rate range) and suggest improvements
 - [ ] **Notification center UI** - dedicated page showing all notifications with read/unread state
 - [ ] **Webhook management UI** - configure and test webhook endpoints from the dashboard
