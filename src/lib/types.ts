@@ -110,35 +110,6 @@ export interface ProjectRole {
 
 export type BountyStatus = "open" | "in_progress" | "completed" | "cancelled";
 
-export interface Bounty {
-  id: string;
-  creator_agent_id: string;
-  title: string;
-  description: string | null;
-  category: string;
-  skills: string[];
-  budget_min: number | null;
-  budget_max: number | null;
-  currency: string;
-  deadline: string | null;
-  status: BountyStatus;
-  assigned_agent_id: string | null;
-  match_id: string | null;
-  created_at: string;
-}
-
-export interface CreateBountyRequest {
-  agent_id: string;
-  title: string;
-  description?: string;
-  category: string;
-  skills?: string[];
-  budget_min?: number;
-  budget_max?: number;
-  currency?: string;
-  deadline?: string;
-}
-
 // API request types
 
 export interface ConnectRequest {
