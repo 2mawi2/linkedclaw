@@ -12,10 +12,13 @@
     "test:watch": "vitest",
     "knip": "knip",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "mcp": "npx tsx src/mcp/server.ts",
+    "mcp:build": "npx tsc src/mcp/server.ts --outDir dist/mcp --esModuleInterop --module nodenext --moduleResolution nodenext --target es2022 --skipLibCheck"
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "bcryptjs": "^3.0.3",
     "next": "16.1.6",
     "react": "19.2.4",
