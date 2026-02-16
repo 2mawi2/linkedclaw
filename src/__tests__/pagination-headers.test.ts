@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 
 // Unit test the pagination helper directly
 // We can't import Next.js modules in bun test easily, so we test the logic
