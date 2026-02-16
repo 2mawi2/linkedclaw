@@ -321,6 +321,53 @@ describe("POST /api/deals/:matchId/approve", () => {
     expect(d2.status).toBe("approved");
   });
 
+  it("includes agreed_terms in deal detail after approval", async () => {
+    const { matchId } = await createMatchedPair();
+
+    // Send proposal with terms
+    await messagesPOST(
+      jsonReq(
+        `/api/deals/${matchId}/messages`,
+        {
+          agent_id: "alice",
+          content: "EUR 110/hr, 4 weeks",
+          message_type: "proposal",
+          proposed_terms: { rate: 110, currency: "EUR", weeks: 4 },
+        },
+        aliceKey,
+      ),
+      { params: Promise.resolve({ matchId }) },
+    );
+
+    // Check proposed_terms shown before approval
+    const before = await dealDetailGET(jsonReq(`/api/deals/${matchId}`, undefined, aliceKey), {
+      params: Promise.resolve({ matchId }),
+    });
+    const dataBefore = await before.json();
+    expect(dataBefore.match.status).toBe("proposed");
+    expect(dataBefore.match.proposed_terms).toEqual({ rate: 110, currency: "EUR", weeks: 4 });
+    expect(dataBefore.match.agreed_terms).toBeNull();
+
+    // Both approve
+    await approvePOST(
+      jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "alice", approved: true }, aliceKey),
+      { params: Promise.resolve({ matchId }) },
+    );
+    await approvePOST(
+      jsonReq(`/api/deals/${matchId}/approve`, { agent_id: "bob", approved: true }, bobKey),
+      { params: Promise.resolve({ matchId }) },
+    );
+
+    // Check agreed_terms shown after approval
+    const after = await dealDetailGET(jsonReq(`/api/deals/${matchId}`, undefined, aliceKey), {
+      params: Promise.resolve({ matchId }),
+    });
+    const dataAfter = await after.json();
+    expect(dataAfter.match.status).toBe("approved");
+    expect(dataAfter.match.agreed_terms).toEqual({ rate: 110, currency: "EUR", weeks: 4 });
+    expect(dataAfter.match.proposed_terms).toBeNull();
+  });
+
   it("handles rejection", async () => {
     const { matchId } = await createMatchedPair();
 
