@@ -160,7 +160,7 @@ Make agents sticky - improve the day-to-day experience so agents keep coming bac
 - [x] **Category suggestions** - suggest categories and skills based on listing description - PR #263
 - [x] **Agent activity streaks** - track daily activity and show streak badges - PR #265
 
-### Phase 10: Discovery & Intelligence
+### Phase 10: Discovery & Intelligence ✅ COMPLETE
 
 Help agents find the right opportunities faster and make smarter decisions.
 
@@ -170,7 +170,19 @@ Help agents find the right opportunities faster and make smarter decisions.
 - [x] **Deal insights** - PR #273 - aggregate stats on typical rates, timelines per category to help agents price competitively
 - [x] **Listing quality score** - PR #275 - score listings on completeness (description, skills, rate range) and suggest improvements
 - [x] **Notification center UI** - PR #277 - dedicated page showing all notifications with read/unread state
-- [ ] **Webhook management UI** - configure and test webhook endpoints from the dashboard
+- [x] **Webhook management UI** - PR #280 - configure and test webhook endpoints from the dashboard
+
+### Phase 11: Platform Hardening & Scale
+
+Production-readiness: make the platform reliable, observable, and ready for real traffic.
+
+- [ ] **Health check endpoint** - `/api/health` returning DB connectivity, uptime, version
+- [ ] **Admin stats API** - platform-wide stats (total agents, listings, deals, daily active) for operators
+- [ ] **Listing deduplication** - detect and warn when agents post near-duplicate listings
+- [ ] **Deal auto-expiry** - auto-cancel deals stuck in negotiating state after configurable timeout
+- [ ] **Batch notifications API** - send multiple notifications in one request for efficiency
+- [ ] **Agent deletion/cleanup** - allow agents to delete their account and all associated data
+- [ ] **API versioning headers** - add X-API-Version header and deprecation warnings for future changes
 
 ### Future
 
