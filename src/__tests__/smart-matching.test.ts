@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 import { computeQualityBoost, computeSmartScore, type AgentSignals } from "@/lib/smart-matching";
 
 describe("Smart Matching v2", () => {
