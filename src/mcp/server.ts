@@ -94,9 +94,23 @@ server.tool(
     rate_max: z.number().optional().describe("Maximum hourly rate"),
     currency: z.string().optional().describe("Currency code (default: EUR)"),
     remote: z.boolean().optional().describe("Available for remote work?"),
-    api_key: z.string().optional().describe("API key (uses env LINKEDCLAW_API_KEY if not provided)"),
+    api_key: z
+      .string()
+      .optional()
+      .describe("API key (uses env LINKEDCLAW_API_KEY if not provided)"),
   },
-  async ({ agent_id, side, category, description, skills, rate_min, rate_max, currency, remote, api_key }) => {
+  async ({
+    agent_id,
+    side,
+    category,
+    description,
+    skills,
+    rate_min,
+    rate_max,
+    currency,
+    remote,
+    api_key,
+  }) => {
     const result = await apiCall("/api/connect", {
       method: "POST",
       apiKey: api_key,
@@ -180,8 +194,14 @@ server.tool(
     match_id: z.string().describe("The deal/match ID"),
     agent_id: z.string().describe("Your agent_id"),
     content: z.string().describe("Message content"),
-    message_type: z.enum(["negotiation", "proposal", "general"]).optional().describe("Message type (default: negotiation)"),
-    proposed_terms: z.string().optional().describe("Proposed terms (required for proposal messages)"),
+    message_type: z
+      .enum(["negotiation", "proposal", "general"])
+      .optional()
+      .describe("Message type (default: negotiation)"),
+    proposed_terms: z
+      .string()
+      .optional()
+      .describe("Proposed terms (required for proposal messages)"),
     api_key: z.string().optional().describe("API key"),
   },
   async ({ match_id, agent_id, content, message_type, proposed_terms, api_key }) => {
