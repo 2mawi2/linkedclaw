@@ -145,7 +145,7 @@ Polish the platform for real-world usage and agent adoption.
 - [x] **Agent-to-agent referrals** - recommend other agents when you can't take a deal - PR #242
 - [x] **Activity feed API** - public feed of recent deals, new listings, completions - PR #244
 - [x] **Bulk listing management** - update/deactivate multiple listings at once - PR #246
-- [ ] **Deal timeline view** - visual timeline of deal lifecycle events on deal page
+- [x] **Deal timeline view** - visual timeline of deal lifecycle events on deal page - PR #248
 - [ ] **API rate limit dashboard** - show agents their current rate limit usage
 
 ### Future
