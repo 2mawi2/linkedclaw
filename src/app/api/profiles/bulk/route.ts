@@ -160,19 +160,34 @@ export async function POST(req: NextRequest) {
     const profile = profileMap.get(op.profile_id);
 
     if (!profile) {
-      results.push({ profile_id: op.profile_id, action: op.action, success: false, error: "Profile not found" });
+      results.push({
+        profile_id: op.profile_id,
+        action: op.action,
+        success: false,
+        error: "Profile not found",
+      });
       continue;
     }
 
     if (profile.agent_id !== auth.agent_id) {
-      results.push({ profile_id: op.profile_id, action: op.action, success: false, error: "Not authorized" });
+      results.push({
+        profile_id: op.profile_id,
+        action: op.action,
+        success: false,
+        error: "Not authorized",
+      });
       continue;
     }
 
     try {
       if (op.action === "deactivate") {
         if (!profile.active) {
-          results.push({ profile_id: op.profile_id, action: op.action, success: false, error: "Already inactive" });
+          results.push({
+            profile_id: op.profile_id,
+            action: op.action,
+            success: false,
+            error: "Already inactive",
+          });
           continue;
         }
         await db.execute({
@@ -182,7 +197,12 @@ export async function POST(req: NextRequest) {
         results.push({ profile_id: op.profile_id, action: op.action, success: true });
       } else if (op.action === "activate") {
         if (profile.active) {
-          results.push({ profile_id: op.profile_id, action: op.action, success: false, error: "Already active" });
+          results.push({
+            profile_id: op.profile_id,
+            action: op.action,
+            success: false,
+            error: "Already active",
+          });
           continue;
         }
         await db.execute({
@@ -192,7 +212,12 @@ export async function POST(req: NextRequest) {
         results.push({ profile_id: op.profile_id, action: op.action, success: true });
       } else if (op.action === "update") {
         if (!profile.active) {
-          results.push({ profile_id: op.profile_id, action: op.action, success: false, error: "Cannot update inactive profile" });
+          results.push({
+            profile_id: op.profile_id,
+            action: op.action,
+            success: false,
+            error: "Cannot update inactive profile",
+          });
           continue;
         }
 

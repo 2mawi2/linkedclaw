@@ -148,7 +148,10 @@ describe("POST /api/profiles/bulk", () => {
     const data = await res.json();
     expect(data.succeeded).toBe(1);
 
-    const result = await db.execute({ sql: "SELECT active FROM profiles WHERE id = ?", args: [p1] });
+    const result = await db.execute({
+      sql: "SELECT active FROM profiles WHERE id = ?",
+      args: [p1],
+    });
     expect(result.rows[0].active).toBe(1);
   });
 
@@ -183,7 +186,10 @@ describe("POST /api/profiles/bulk", () => {
     expect(data.succeeded).toBe(2);
 
     // Verify updates
-    const r1 = await db.execute({ sql: "SELECT description, availability FROM profiles WHERE id = ?", args: [p1] });
+    const r1 = await db.execute({
+      sql: "SELECT description, availability FROM profiles WHERE id = ?",
+      args: [p1],
+    });
     expect(r1.rows[0].description).toBe("Updated description 1");
     expect(r1.rows[0].availability).toBe("busy");
 
@@ -269,10 +275,7 @@ describe("POST /api/profiles/bulk", () => {
     await db.execute({ sql: "UPDATE profiles SET active = 0 WHERE id = ?", args: [p1] });
 
     const res = await POST(
-      makeRequest(
-        { operations: [{ profile_id: p1, action: "update", description: "new" }] },
-        key,
-      ),
+      makeRequest({ operations: [{ profile_id: p1, action: "update", description: "new" }] }, key),
     );
 
     const data = await res.json();
