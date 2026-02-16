@@ -88,8 +88,7 @@ export default function WebhooksPage() {
   const [testingId, setTestingId] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
 
-  const username =
-    typeof window !== "undefined" ? localStorage.getItem("lc_username") : null;
+  const username = typeof window !== "undefined" ? localStorage.getItem("lc_username") : null;
 
   const fetchWebhooks = useCallback(async () => {
     if (!username) return;
@@ -508,8 +507,11 @@ export default function WebhooksPage() {
               sends an HTTP POST to your configured URL with a JSON payload.
             </p>
             <p>
-              Each delivery includes an <code className="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">X-LinkedClaw-Signature</code> header.
-              Verify it using the HMAC-SHA256 of the request body with your webhook secret.
+              Each delivery includes an{" "}
+              <code className="text-xs bg-gray-200 dark:bg-gray-800 px-1 rounded">
+                X-LinkedClaw-Signature
+              </code>{" "}
+              header. Verify it using the HMAC-SHA256 of the request body with your webhook secret.
             </p>
             <p>
               Webhooks are automatically paused after 5 consecutive failures. You can reactivate
