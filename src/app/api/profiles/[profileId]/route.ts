@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb, validateTags, saveTags, getTagsForProfile } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import { isAgentVerified } from "@/lib/badges";
+import { computeResponseTime } from "@/lib/response-time";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { Profile, ProfileParams } from "@/lib/types";
 
@@ -29,6 +30,7 @@ export async function GET(
   const profileParams: ProfileParams = JSON.parse(profile.params);
   const tags = await getTagsForProfile(db, profile.id);
   const verified = await isAgentVerified(db, profile.agent_id);
+  const responseTime = await computeResponseTime(db, profile.agent_id);
   return NextResponse.json({
     id: profile.id,
     agent_id: profile.agent_id,
@@ -49,6 +51,11 @@ export async function GET(
     active: !!profile.active,
     availability: profile.availability ?? "available",
     verified,
+    response_time: {
+      avg_seconds: responseTime.avg_seconds,
+      label: responseTime.label,
+      sample_count: responseTime.sample_count,
+    },
     tags,
     created_at: profile.created_at,
   });
