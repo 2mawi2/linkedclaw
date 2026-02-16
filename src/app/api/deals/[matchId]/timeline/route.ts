@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { checkRateLimit } from "@/lib/rate-limit";
 
-export interface TimelineEvent {
+interface TimelineEvent {
   id: string;
   type:
     | "deal_created"
