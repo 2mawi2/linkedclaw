@@ -210,7 +210,9 @@ export default function DashboardPage() {
     );
   }
 
-  const pendingDeals = deals.filter((d) => d.status === "negotiating" && d.last_message?.message_type === "proposal");
+  const pendingDeals = deals.filter(
+    (d) => d.status === "negotiating" && d.last_message?.message_type === "proposal",
+  );
   const activeDeals = deals.filter((d) => d.status === "negotiating" || d.status === "approved");
   const activeBounties = bounties.filter((b) => b.status === "open" || b.status === "in_progress");
 
@@ -386,7 +388,10 @@ function OverviewTab({
                     <span className="text-sm font-medium">Deal with {d.counterpart_agent_id}</span>
                     {d.last_message && (
                       <p className="text-xs text-gray-500 mt-0.5 truncate max-w-md">
-                        {d.last_message.sender_agent_id === username ? "You proposed" : "Proposal from"}: {d.last_message.content.slice(0, 80)}
+                        {d.last_message.sender_agent_id === username
+                          ? "You proposed"
+                          : "Proposal from"}
+                        : {d.last_message.content.slice(0, 80)}
                         {d.last_message.content.length > 80 ? "..." : ""}
                       </p>
                     )}
@@ -451,7 +456,9 @@ function OverviewTab({
               >
                 <span>{ACTIVITY_ICONS[e.type] || "📌"}</span>
                 <span className="flex-1 text-gray-600 dark:text-gray-400">{e.summary}</span>
-                <span className="text-xs text-gray-400 whitespace-nowrap">{timeAgo(e.timestamp)}</span>
+                <span className="text-xs text-gray-400 whitespace-nowrap">
+                  {timeAgo(e.timestamp)}
+                </span>
               </div>
             ))}
           </div>
@@ -494,10 +501,7 @@ function ListingsTab({
   return (
     <div className="space-y-3">
       {profiles.map((p) => (
-        <div
-          key={p.id}
-          className="border border-gray-200 dark:border-gray-800 rounded-lg p-4"
-        >
+        <div key={p.id} className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
               <span
@@ -571,7 +575,9 @@ function BountiesTab({ bounties }: { bounties: Bounty[] }) {
               <h3 className="text-sm font-semibold">{b.title}</h3>
               <span className="text-xs text-gray-500">{b.category}</span>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded font-medium ${STATUS_COLORS[b.status] || ""}`}>
+            <span
+              className={`text-xs px-2 py-0.5 rounded font-medium ${STATUS_COLORS[b.status] || ""}`}
+            >
               {b.status}
             </span>
           </div>
@@ -635,17 +641,23 @@ function DealsTab({ deals, username }: { deals: Deal[]; username: string }) {
                 </p>
               )}
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded font-medium ${STATUS_COLORS[d.status] || ""}`}>
+            <span
+              className={`text-xs px-2 py-0.5 rounded font-medium ${STATUS_COLORS[d.status] || ""}`}
+            >
               {d.status}
             </span>
           </div>
           <div className="flex items-center gap-4 text-xs text-gray-400">
-            <span>{d.message_count} message{d.message_count !== 1 ? "s" : ""}</span>
+            <span>
+              {d.message_count} message{d.message_count !== 1 ? "s" : ""}
+            </span>
             {d.overlap?.score !== undefined && <span>Score: {d.overlap.score}</span>}
             {d.last_message && (
               <span className="truncate max-w-xs">
-                {d.last_message.sender_agent_id === username ? "You" : d.last_message.sender_agent_id}:{" "}
-                {d.last_message.content.slice(0, 50)}
+                {d.last_message.sender_agent_id === username
+                  ? "You"
+                  : d.last_message.sender_agent_id}
+                : {d.last_message.content.slice(0, 50)}
               </span>
             )}
             <span className="ml-auto">{timeAgo(d.last_message?.created_at || d.created_at)}</span>
@@ -678,10 +690,7 @@ function ActivityTab({ activity }: { activity: ActivityEvent[] }) {
           <div className="flex-1 min-w-0">
             <p className="text-sm text-gray-700 dark:text-gray-300">{e.summary}</p>
             {e.match_id && (
-              <Link
-                href={`/deals/${e.match_id}`}
-                className="text-xs text-blue-600 hover:underline"
-              >
+              <Link href={`/deals/${e.match_id}`} className="text-xs text-blue-600 hover:underline">
                 View deal
               </Link>
             )}
