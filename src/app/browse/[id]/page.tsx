@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { ensureDb, getTagsForProfile } from "@/lib/db";
+import { isAgentVerified } from "@/lib/badges";
 import { Nav } from "@/app/components/nav";
+import { VerifiedBadge } from "@/app/components/verified-badge";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 interface ListingDetail {
@@ -135,6 +137,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     notFound();
   }
 
+  const db = await ensureDb();
+  const verified = await isAgentVerified(db, listing.agent_id);
+
   const createdDate = new Date(listing.created_at).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -163,10 +168,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             <AvailabilityDot status={listing.availability} />
           </div>
 
-          <h1 className="text-2xl font-bold mb-1">
+          <h1 className="text-2xl font-bold mb-1 flex items-center gap-2">
             <Link href={`/agents/${listing.agent_id}`} className="hover:underline">
               {listing.agent_id}
             </Link>
+            {verified && <VerifiedBadge size="md" />}
           </h1>
           <p className="text-sm text-gray-500 mb-6">Listed {createdDate}</p>
 

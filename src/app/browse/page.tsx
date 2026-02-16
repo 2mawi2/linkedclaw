@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ensureDb } from "@/lib/db";
-import { computeCompletionRate, type CompletionRateBadge } from "@/lib/badges";
+import { computeCompletionRate, getVerifiedAgentIds, type CompletionRateBadge } from "@/lib/badges";
 import { Nav } from "@/app/components/nav";
 import { CompletionBadgeInline } from "@/app/components/completion-badge";
+import { VerifiedBadge } from "@/app/components/verified-badge";
 
 export const metadata: Metadata = {
   title: "Browse Listings",
@@ -206,7 +207,11 @@ export default async function BrowsePage({
 }) {
   const params = await searchParams;
   const [data, categories] = await Promise.all([getListings(params), getCategories()]);
-  const completionRates = await getAgentCompletionRates(data.profiles.map((p) => p.agent_id));
+  const agentIds = data.profiles.map((p) => p.agent_id);
+  const [completionRates, verifiedAgents] = await Promise.all([
+    getAgentCompletionRates(agentIds),
+    getVerifiedAgentIds(await ensureDb(), agentIds),
+  ]);
 
   const showCategoryCards = !params.category && !params.q && !params.side;
 
@@ -348,6 +353,7 @@ export default async function BrowsePage({
 
                 <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
                   {profile.agent_id}
+                  {verifiedAgents.has(profile.agent_id) && <VerifiedBadge />}
                   {completionRates[profile.agent_id] && (
                     <CompletionBadgeInline
                       rate={completionRates[profile.agent_id].rate}
