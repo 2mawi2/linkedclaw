@@ -197,5 +197,8 @@ export async function GET(req: NextRequest) {
   const total = events.length;
   const paged = events.slice(offset, offset + limit);
 
-  return jsonWithPagination({ events: paged, total }, { total, limit, offset, baseUrl: getBaseUrl(req) });
+  return jsonWithPagination(
+    { events: paged, total },
+    { total, limit, offset, baseUrl: getBaseUrl(req) },
+  );
 }

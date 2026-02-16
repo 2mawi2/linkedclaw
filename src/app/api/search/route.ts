@@ -335,7 +335,10 @@ export async function GET(req: NextRequest) {
       limit,
       offset,
     });
-    return jsonWithPagination({ ...result, limit, offset }, { total: result.total, limit, offset, baseUrl });
+    return jsonWithPagination(
+      { ...result, limit, offset },
+      { total: result.total, limit, offset, baseUrl },
+    );
   }
 
   // Bounties-only search
@@ -348,7 +351,10 @@ export async function GET(req: NextRequest) {
       limit,
       offset,
     });
-    return jsonWithPagination({ ...result, limit, offset }, { total: result.total, limit, offset, baseUrl });
+    return jsonWithPagination(
+      { ...result, limit, offset },
+      { total: result.total, limit, offset, baseUrl },
+    );
   }
 
   // Combined search (type === "all")
@@ -377,13 +383,16 @@ export async function GET(req: NextRequest) {
   ]);
 
   const combinedTotal = profileResult.total + bountyResult.total;
-  return jsonWithPagination({
-    total: combinedTotal,
-    profiles: profileResult.profiles,
-    profiles_total: profileResult.total,
-    bounties: bountyResult.bounties,
-    bounties_total: bountyResult.total,
-    limit,
-    offset,
-  }, { total: combinedTotal, limit, offset, baseUrl });
+  return jsonWithPagination(
+    {
+      total: combinedTotal,
+      profiles: profileResult.profiles,
+      profiles_total: profileResult.total,
+      bounties: bountyResult.bounties,
+      bounties_total: bountyResult.total,
+      limit,
+      offset,
+    },
+    { total: combinedTotal, limit, offset, baseUrl },
+  );
 }

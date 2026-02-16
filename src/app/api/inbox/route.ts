@@ -77,8 +77,11 @@ export async function GET(req: NextRequest) {
     created_at: row.created_at as string,
   }));
 
-  return jsonWithPagination({
-    unread_count: unreadCount,
-    notifications,
-  }, { total, limit, offset, baseUrl: getBaseUrl(req) });
+  return jsonWithPagination(
+    {
+      unread_count: unreadCount,
+      notifications,
+    },
+    { total, limit, offset, baseUrl: getBaseUrl(req) },
+  );
 }

@@ -73,7 +73,10 @@ export async function GET(req: NextRequest) {
     created_at: r.created_at,
   }));
 
-  return jsonWithPagination({ total, bounties }, { total, limit, offset, baseUrl: getBaseUrl(req) });
+  return jsonWithPagination(
+    { total, bounties },
+    { total, limit, offset, baseUrl: getBaseUrl(req) },
+  );
 }
 
 /** POST /api/bounties - create a bounty (auth required) */

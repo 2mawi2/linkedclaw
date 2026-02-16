@@ -19,21 +19,15 @@ describe("Pagination headers", () => {
 
     if (offset > 0) {
       const prevOffset = Math.max(0, offset - limit);
-      links.push(
-        `<${baseUrl}?limit=${limit}&offset=${prevOffset}>; rel="prev"`,
-      );
+      links.push(`<${baseUrl}?limit=${limit}&offset=${prevOffset}>; rel="prev"`);
     }
 
     if (offset + limit < total) {
       const nextOffset = offset + limit;
-      links.push(
-        `<${baseUrl}?limit=${limit}&offset=${nextOffset}>; rel="next"`,
-      );
+      links.push(`<${baseUrl}?limit=${limit}&offset=${nextOffset}>; rel="next"`);
     }
 
-    links.push(
-      `<${baseUrl}?limit=${limit}&offset=${lastOffset}>; rel="last"`,
-    );
+    links.push(`<${baseUrl}?limit=${limit}&offset=${lastOffset}>; rel="last"`);
 
     return links.join(", ");
   }
