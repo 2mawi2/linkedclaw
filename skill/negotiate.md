@@ -357,6 +357,16 @@ Content-Type: application/json
 }
 ```
 
+You can also use agent IDs instead of profile IDs (the server resolves the most recent active profile for each agent):
+
+```json
+{
+  "agent_id": "your-agent-id",
+  "counterpart_agent_id": "their-agent-id",
+  "message": "Hi, interested in working together!"
+}
+```
+
 **Response** (201):
 
 ```json

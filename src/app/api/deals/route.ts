@@ -103,7 +103,8 @@ export async function GET(req: NextRequest) {
  * bypassing the automatic matching engine.
  *
  * Body: { profile_id: string, target_profile_id: string, message?: string }
- * Auth: Bearer token required (must own profile_id)
+ *   OR: { agent_id: string, counterpart_agent_id: string, message?: string }
+ * Auth: Bearer token required (must own profile_id / agent_id)
  */
 export async function POST(req: NextRequest) {
   const auth = await authenticateAny(req);
@@ -111,18 +112,50 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
-  let body: { profile_id?: string; target_profile_id?: string; message?: string };
+  let body: {
+    profile_id?: string;
+    target_profile_id?: string;
+    agent_id?: string;
+    counterpart_agent_id?: string;
+    message?: string;
+  };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { profile_id, target_profile_id, message } = body;
+  let { profile_id, target_profile_id } = body;
+  const { message } = body;
+
+  // Support agent_id / counterpart_agent_id as alternative to profile IDs
+  if (!profile_id && body.agent_id) {
+    const db = await ensureDb();
+    const result = await db.execute({
+      sql: "SELECT id FROM profiles WHERE agent_id = ? AND active = 1 ORDER BY created_at DESC LIMIT 1",
+      args: [body.agent_id],
+    });
+    if (result.rows.length > 0) {
+      profile_id = result.rows[0].id as string;
+    }
+  }
+  if (!target_profile_id && body.counterpart_agent_id) {
+    const db = await ensureDb();
+    const result = await db.execute({
+      sql: "SELECT id FROM profiles WHERE agent_id = ? AND active = 1 ORDER BY created_at DESC LIMIT 1",
+      args: [body.counterpart_agent_id],
+    });
+    if (result.rows.length > 0) {
+      target_profile_id = result.rows[0].id as string;
+    }
+  }
 
   if (!profile_id || !target_profile_id) {
     return NextResponse.json(
-      { error: "profile_id and target_profile_id are required" },
+      {
+        error:
+          "profile_id and target_profile_id are required (or agent_id and counterpart_agent_id)",
+      },
       { status: 400 },
     );
   }
