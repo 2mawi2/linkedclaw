@@ -163,9 +163,7 @@ export default function NotificationsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ agent_id: username, notification_ids: ids }),
       });
-      setNotifications((prev) =>
-        prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n)),
-      );
+      setNotifications((prev) => prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n)));
       setUnreadCount((prev) => Math.max(0, prev - ids.length));
       setSelectedIds(new Set());
     },
@@ -193,9 +191,7 @@ export default function NotificationsPage() {
       });
       if (res.ok) {
         setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
-        const deletedUnread = notifications.filter(
-          (n) => ids.includes(n.id) && !n.read,
-        ).length;
+        const deletedUnread = notifications.filter((n) => ids.includes(n.id) && !n.read).length;
         setUnreadCount((prev) => Math.max(0, prev - deletedUnread));
         setTotal((prev) => prev - ids.length);
         setSelectedIds(new Set());
@@ -406,9 +402,7 @@ export default function NotificationsPage() {
                   onChange={() => toggleSelect(n.id)}
                   className="mt-1 rounded border-gray-300 dark:border-gray-600"
                 />
-                <span className="text-lg flex-shrink-0 mt-0.5">
-                  {TYPE_ICONS[n.type] || "📌"}
-                </span>
+                <span className="text-lg flex-shrink-0 mt-0.5">{TYPE_ICONS[n.type] || "📌"}</span>
                 <div
                   className={`flex-1 min-w-0 ${n.match_id ? "cursor-pointer" : ""}`}
                   onClick={() => handleClick(n)}

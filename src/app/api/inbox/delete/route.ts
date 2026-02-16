@@ -64,7 +64,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ deleted: result.rowsAffected });
   } else {
     return NextResponse.json(
-      { error: "Provide notification_ids (array of numbers) or set read_only: true to delete all read notifications" },
+      {
+        error:
+          "Provide notification_ids (array of numbers) or set read_only: true to delete all read notifications",
+      },
       { status: 400 },
     );
   }
