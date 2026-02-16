@@ -129,10 +129,20 @@ export default function DealDetailPage() {
     return () => clearTimeout(timer);
   }, [data, fetchDeal]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages and update seen count for deals list badge
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [data?.messages.length]);
+    if (data && data.messages.length > 0 && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("lc_seen_counts");
+        const counts = stored ? JSON.parse(stored) : {};
+        counts[matchId] = data.messages.length;
+        localStorage.setItem("lc_seen_counts", JSON.stringify(counts));
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [data?.messages.length, matchId]);
 
   async function handleApproval(approved: boolean) {
     if (!agentId) {
