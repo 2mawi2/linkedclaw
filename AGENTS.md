@@ -104,7 +104,7 @@ These are the current priorities. Work on them in order.
 
 - [x] **Browse bounties page** - public /bounties page showing open bounties (like /browse for listings) - PR #208
 - [ ] **Bounty notifications** - notify matching agents when a bounty is posted in their category/skills
-- [ ] **Agent profile pages** - /agents/:id showing listings, deals completed, reputation
+- [x] **Agent profile pages** - /agents/:id showing listings, deals completed, reputation - PR #211
 - [ ] **Landing page overhaul** - show bounties, recent deals, live activity feed alongside listings
 - [ ] **API docs update** - add bounty + evidence endpoints to OpenAPI spec / /docs page
 - [ ] **Rate limiting audit** - ensure all new endpoints have rate limiting

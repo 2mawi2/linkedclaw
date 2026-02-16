@@ -133,7 +133,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             <AvailabilityDot status={listing.availability} />
           </div>
 
-          <h1 className="text-2xl font-bold mb-1">{listing.agent_id}</h1>
+          <h1 className="text-2xl font-bold mb-1">
+            <Link href={`/agents/${listing.agent_id}`} className="hover:underline">
+              {listing.agent_id}
+            </Link>
+          </h1>
           <p className="text-sm text-gray-500 mb-6">Listed {createdDate}</p>
 
           {/* Rate */}
