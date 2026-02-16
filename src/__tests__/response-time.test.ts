@@ -1,45 +1,56 @@
-import { describe, test, expect } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { createTestDb, _setDb, migrate } from "@/lib/db";
+import type { Client } from "@libsql/client";
 import { formatResponseTime, computeResponseTime } from "@/lib/response-time";
-import { ensureDb } from "@/lib/db";
+
+let db: Client;
+let restore: () => void;
+
+beforeEach(async () => {
+  db = createTestDb();
+  restore = _setDb(db);
+  await migrate(db);
+});
+
+afterEach(() => {
+  restore();
+});
 
 describe("Response Time", () => {
   describe("formatResponseTime", () => {
-    test("under 1 minute", () => {
+    it("under 1 minute", () => {
       expect(formatResponseTime(0)).toBe("< 1 min");
       expect(formatResponseTime(30)).toBe("< 1 min");
       expect(formatResponseTime(59)).toBe("< 1 min");
     });
 
-    test("minutes", () => {
+    it("minutes", () => {
       expect(formatResponseTime(60)).toBe("1 min");
       expect(formatResponseTime(300)).toBe("5 mins");
       expect(formatResponseTime(3599)).toBe("60 mins");
     });
 
-    test("hours", () => {
+    it("hours", () => {
       expect(formatResponseTime(3600)).toBe("1 hr");
       expect(formatResponseTime(7200)).toBe("2 hrs");
       expect(formatResponseTime(43200)).toBe("12 hrs");
     });
 
-    test("days", () => {
+    it("days", () => {
       expect(formatResponseTime(86400)).toBe("1 day");
       expect(formatResponseTime(172800)).toBe("2 days");
     });
   });
 
   describe("computeResponseTime", () => {
-    test("returns N/A for agent with no messages", async () => {
-      const db = await ensureDb();
+    it("returns N/A for agent with no messages", async () => {
       const result = await computeResponseTime(db, "nonexistent-agent");
       expect(result.avg_seconds).toBeNull();
       expect(result.label).toBe("N/A");
       expect(result.sample_count).toBe(0);
     });
 
-    test("computes average from message pairs", async () => {
-      const db = await ensureDb();
-
+    it("computes average from message pairs", async () => {
       // Create two agents with profiles and a match
       await db.execute({
         sql: `INSERT INTO profiles (id, agent_id, side, category, params) VALUES (?, ?, ?, ?, ?)`,
@@ -81,9 +92,7 @@ describe("Response Time", () => {
       expect(result.label).toBe("8 mins");
     });
 
-    test("ignores system messages", async () => {
-      const db = await ensureDb();
-
+    it("ignores system messages", async () => {
       await db.execute({
         sql: `INSERT INTO profiles (id, agent_id, side, category, params) VALUES (?, ?, ?, ?, ?)`,
         args: ["rt-prof-c", "rt-agent-c", "offering", "design", "{}"],
@@ -108,14 +117,11 @@ describe("Response Time", () => {
       });
 
       const result = await computeResponseTime(db, "rt-agent-c");
-      // Only one message from agent-c, no prior non-system message from other agent
       expect(result.sample_count).toBe(0);
       expect(result.avg_seconds).toBeNull();
     });
 
-    test("handles multiple deals", async () => {
-      const db = await ensureDb();
-
+    it("handles multiple deals", async () => {
       await db.execute({
         sql: `INSERT INTO profiles (id, agent_id, side, category, params) VALUES (?, ?, ?, ?, ?)`,
         args: ["rt-prof-e", "rt-agent-e", "offering", "writing", "{}"],
@@ -164,9 +170,7 @@ describe("Response Time", () => {
       expect(result.label).toBe("5 mins");
     });
 
-    test("skips outliers over 7 days", async () => {
-      const db = await ensureDb();
-
+    it("skips outliers over 7 days", async () => {
       await db.execute({
         sql: `INSERT INTO profiles (id, agent_id, side, category, params) VALUES (?, ?, ?, ?, ?)`,
         args: ["rt-prof-h", "rt-agent-h", "offering", "marketing", "{}"],
@@ -193,6 +197,35 @@ describe("Response Time", () => {
       const result = await computeResponseTime(db, "rt-agent-h");
       expect(result.sample_count).toBe(0);
       expect(result.avg_seconds).toBeNull();
+    });
+
+    it("only counts replies, not initiations", async () => {
+      await db.execute({
+        sql: `INSERT INTO profiles (id, agent_id, side, category, params) VALUES (?, ?, ?, ?, ?)`,
+        args: ["rt-prof-j", "rt-agent-j", "offering", "dev", "{}"],
+      });
+      await db.execute({
+        sql: `INSERT INTO profiles (id, agent_id, side, category, params) VALUES (?, ?, ?, ?, ?)`,
+        args: ["rt-prof-k", "rt-agent-k", "seeking", "dev", "{}"],
+      });
+      await db.execute({
+        sql: `INSERT INTO matches (id, profile_a_id, profile_b_id, overlap_summary, status) VALUES (?, ?, ?, ?, ?)`,
+        args: ["rt-match-6", "rt-prof-j", "rt-prof-k", "overlap", "negotiating"],
+      });
+
+      // Agent J sends first (initiation, not a reply)
+      await db.execute({
+        sql: `INSERT INTO messages (match_id, sender_agent_id, content, created_at) VALUES (?, ?, ?, ?)`,
+        args: ["rt-match-6", "rt-agent-j", "Hey!", "2026-01-01T10:00:00"],
+      });
+      // Agent J sends again (consecutive, not a reply to K)
+      await db.execute({
+        sql: `INSERT INTO messages (match_id, sender_agent_id, content, created_at) VALUES (?, ?, ?, ?)`,
+        args: ["rt-match-6", "rt-agent-j", "Anyone there?", "2026-01-01T10:05:00"],
+      });
+
+      const result = await computeResponseTime(db, "rt-agent-j");
+      expect(result.sample_count).toBe(0);
     });
   });
 });
