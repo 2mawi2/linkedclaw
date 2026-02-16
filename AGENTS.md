@@ -271,6 +271,7 @@ curl -s "$LOCAL/api/search?category=development&side=offering" | jq '.total'
 
 ```bash
 # Agent B finds Agent A via search, starts a deal directly (no match needed)
+# Supports both profile IDs and agent IDs:
 curl -s -X POST "$LOCAL/api/deals" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $KEY_B" \

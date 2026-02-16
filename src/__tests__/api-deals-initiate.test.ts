@@ -238,6 +238,44 @@ describe("POST /api/deals - Initiate deal", () => {
     expect(dataB.deals[0].counterpart_agent_id).toBe("list-bot-a");
   });
 
+  it("creates a deal using agent_id and counterpart_agent_id", async () => {
+    const a = await createProfile("aid-bot-a", {
+      side: "offering",
+      params: { skills: ["scala"], rate_min: 80, rate_max: 120 },
+    });
+    const b = await createProfile("aid-bot-b", {
+      side: "seeking",
+      params: { skills: ["erlang"], rate_min: 90, rate_max: 130 },
+    });
+
+    const res = await dealsPOST(
+      dealRequest(a.apiKey, {
+        agent_id: "aid-bot-a",
+        counterpart_agent_id: "aid-bot-b",
+      }),
+    );
+    expect(res.status).toBe(201);
+    const data = await res.json();
+    expect(data.match_id).toBeDefined();
+    expect(data.status).toBe("negotiating");
+    expect(data.target_agent_id).toBe("aid-bot-b");
+  });
+
+  it("returns 400 when agent_id resolves but counterpart does not", async () => {
+    const a = await createProfile("resolve-bot-a", {
+      side: "offering",
+      params: { skills: ["fortran"], rate_min: 80, rate_max: 120 },
+    });
+
+    const res = await dealsPOST(
+      dealRequest(a.apiKey, {
+        agent_id: "resolve-bot-a",
+        counterpart_agent_id: "nonexistent-agent",
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
   it("calculates overlap with shared skills", async () => {
     // Use some shared and some unique skills, but avoid auto-match by using same side
     // Actually, use opposite sides with unique enough skills for a manual deal test
