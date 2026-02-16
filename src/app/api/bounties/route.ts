@@ -10,6 +10,8 @@ const VALID_STATUSES: BountyStatus[] = ["open", "in_progress", "completed", "can
 
 /** GET /api/bounties - list bounties (public, no auth required) */
 export async function GET(req: NextRequest) {
+  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "bounties-list");
+  if (rl) return rl;
   const db = await ensureDb();
   const url = new URL(req.url);
 

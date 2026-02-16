@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { ensureDb } from "@/lib/db";
 import type { ProfileParams } from "@/lib/types";
 
@@ -13,6 +14,8 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ category: string }> },
 ) {
+  const rl = checkRateLimit(_req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "market");
+  if (rl) return rl;
   const { category } = await params;
   const db = await ensureDb();
 

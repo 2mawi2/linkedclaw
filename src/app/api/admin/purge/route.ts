@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { ensureDb } from "@/lib/db";
 
 /**
@@ -11,6 +12,8 @@ import { ensureDb } from "@/lib/db";
  * Without body: purges accounts matching known test patterns.
  */
 export async function POST(req: NextRequest) {
+  const rl = checkRateLimit(req, RATE_LIMITS.KEY_GEN.limit, RATE_LIMITS.KEY_GEN.windowMs, "admin-purge");
+  if (rl) return rl;
   const secret = process.env.ADMIN_SECRET;
   if (!secret) {
     return NextResponse.json({ error: "Admin endpoint not configured" }, { status: 503 });

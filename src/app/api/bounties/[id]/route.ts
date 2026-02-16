@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { BountyStatus } from "@/lib/types";
 
 const VALID_STATUSES: BountyStatus[] = ["open", "in_progress", "completed", "cancelled"];
 
 /** GET /api/bounties/:id - get a single bounty (public) */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const rl = checkRateLimit(_req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "bounty-get");
+  if (rl) return rl;
   const { id } = await params;
   const db = await ensureDb();
 
@@ -40,6 +43,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
 /** PATCH /api/bounties/:id - update bounty status (auth required, owner only) */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const rl = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, "bounty-patch");
+  if (rl) return rl;
   const { id } = await params;
   const auth = await authenticateAny(req);
   if (!auth) {

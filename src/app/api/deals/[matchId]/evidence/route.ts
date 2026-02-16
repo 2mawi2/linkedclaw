@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import type { Match, Profile } from "@/lib/types";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
+  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "evidence-get");
+  if (rl) return rl;
   const auth = await authenticateAny(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

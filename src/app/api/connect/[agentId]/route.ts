@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { ensureDb, getTagsForProfiles } from "@/lib/db";
 import type { Profile, ProfileParams } from "@/lib/types";
 
@@ -6,6 +7,8 @@ import type { Profile, ProfileParams } from "@/lib/types";
  * GET /api/connect/:agentId - Get all profiles for an agent
  */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ agentId: string }> }) {
+  const rl = checkRateLimit(_req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "connect-get");
+  if (rl) return rl;
   const { agentId } = await params;
 
   if (!agentId || agentId.trim().length === 0) {

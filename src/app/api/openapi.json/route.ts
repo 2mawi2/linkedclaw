@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -864,7 +865,9 @@ const spec = {
   },
 };
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "openapi");
+  if (rl) return rl;
   return NextResponse.json(spec, {
     headers: { "Access-Control-Allow-Origin": "*" },
   });

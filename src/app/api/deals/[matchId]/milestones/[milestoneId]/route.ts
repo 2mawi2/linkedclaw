@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createNotification } from "@/lib/notifications";
 import type { Match, Profile } from "@/lib/types";
 
@@ -17,6 +18,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ matchId: string; milestoneId: string }> },
 ) {
+  const rl = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, "milestone-patch");
+  if (rl) return rl;
   const { matchId, milestoneId } = await params;
   const auth = await authenticateAny(req);
   if (!auth) {
