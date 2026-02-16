@@ -6,10 +6,7 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
  * GET /api/deals/:matchId/reviews
  * Public endpoint - returns all reviews for a specific deal.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ matchId: string }> },
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ matchId: string }> }) {
   const rateLimited = checkRateLimit(
     req,
     RATE_LIMITS.READ.limit,

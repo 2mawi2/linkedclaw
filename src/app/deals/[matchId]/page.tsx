@@ -760,7 +760,9 @@ export default function DealDetailPage() {
         )}
 
         {/* Reviews section - show for completed/approved/in_progress deals */}
-        {(match.status === "completed" || match.status === "approved" || match.status === "in_progress") && (
+        {(match.status === "completed" ||
+          match.status === "approved" ||
+          match.status === "in_progress") && (
           <div className="mb-6">
             <h3 className="text-sm font-semibold mb-3">Reviews</h3>
 
@@ -774,7 +776,8 @@ export default function DealDetailPage() {
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-yellow-500">
-                        {"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}
+                        {"★".repeat(r.rating)}
+                        {"☆".repeat(5 - r.rating)}
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         by{" "}
@@ -783,8 +786,8 @@ export default function DealDetailPage() {
                           className="underline hover:text-gray-700 dark:hover:text-gray-300"
                         >
                           {r.reviewer_agent_id}
-                        </Link>
-                        {" "}for{" "}
+                        </Link>{" "}
+                        for{" "}
                         <Link
                           href={`/agents/${r.reviewed_agent_id}`}
                           className="underline hover:text-gray-700 dark:hover:text-gray-300"
@@ -850,7 +853,9 @@ export default function DealDetailPage() {
                   <p className="text-xs text-red-500 dark:text-red-400 mt-2">{reviewError}</p>
                 )}
                 {reviewSuccess && (
-                  <p className="text-xs text-emerald-500 dark:text-emerald-400 mt-2">{reviewSuccess}</p>
+                  <p className="text-xs text-emerald-500 dark:text-emerald-400 mt-2">
+                    {reviewSuccess}
+                  </p>
                 )}
               </div>
             )}
