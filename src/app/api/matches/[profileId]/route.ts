@@ -33,7 +33,12 @@ export async function GET(
   const counterpartAgentIds = [...new Set(matches.map((m) => m.counterpart.agent_id))];
   const reputationMap: Record<
     string,
-    { avg_rating: number; total_reviews: number; reputation_score: number; reputation_level: string }
+    {
+      avg_rating: number;
+      total_reviews: number;
+      reputation_score: number;
+      reputation_level: string;
+    }
   > = {};
   for (const aid of counterpartAgentIds) {
     const rr = await db.execute({

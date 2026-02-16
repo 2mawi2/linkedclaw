@@ -53,7 +53,8 @@ export function computeReputationScore(input: ReputationInput): ReputationScore 
   const dealVolume = Math.min(volumeRaw, 1) * 100;
 
   // Success rate
-  const successRate = total_resolved_deals > 0 ? (completed_deals / total_resolved_deals) * 100 : 50; // neutral if no resolved
+  const successRate =
+    total_resolved_deals > 0 ? (completed_deals / total_resolved_deals) * 100 : 50; // neutral if no resolved
 
   // Weighted composite
   const rawScore =

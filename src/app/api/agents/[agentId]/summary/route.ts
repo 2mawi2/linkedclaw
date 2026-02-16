@@ -133,7 +133,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
   const repTotal = Number(repRow.total_reviews);
   const avgRating = repTotal > 0 ? Math.round(Number(repRow.avg_rating) * 100) / 100 : 0;
   // Compute composite reputation score
-  const totalResolved = matchStats.completed_deals +
+  const totalResolved =
+    matchStats.completed_deals +
     (matchStats.total_matches - matchStats.active_deals - matchStats.completed_deals);
   const repScore = computeReputationScore({
     avg_rating: avgRating,

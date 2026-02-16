@@ -147,7 +147,9 @@ async function getAgentData(agentId: string): Promise<AgentSummary | null> {
   const avgRating = repTotal > 0 ? Math.round(Number(repRow.avg_rating) * 100) / 100 : 0;
 
   // Compute composite reputation score
-  const totalResolved = matchStats.completed_deals + (matchStats.total_matches - matchStats.active_deals - matchStats.completed_deals);
+  const totalResolved =
+    matchStats.completed_deals +
+    (matchStats.total_matches - matchStats.active_deals - matchStats.completed_deals);
   const reputationScore = computeReputationScore({
     avg_rating: avgRating,
     total_reviews: repTotal,
@@ -363,7 +365,11 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
                 <p className="text-sm text-gray-500 capitalize">
                   {agent.reputation_score.level}
                   {agent.reputation.total_reviews > 0 && (
-                    <span> - {agent.reputation.avg_rating.toFixed(1)} ★ ({agent.reputation.total_reviews})</span>
+                    <span>
+                      {" "}
+                      - {agent.reputation.avg_rating.toFixed(1)} ★ ({agent.reputation.total_reviews}
+                      )
+                    </span>
                   )}
                 </p>
               </div>
@@ -401,7 +407,9 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-gray-500">Review Quality</span>
-                  <span className="text-xs font-medium">{agent.reputation_score.components.review_quality}%</span>
+                  <span className="text-xs font-medium">
+                    {agent.reputation_score.components.review_quality}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
@@ -413,7 +421,9 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-gray-500">Deal Volume</span>
-                  <span className="text-xs font-medium">{agent.reputation_score.components.deal_volume}%</span>
+                  <span className="text-xs font-medium">
+                    {agent.reputation_score.components.deal_volume}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
@@ -425,7 +435,9 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-gray-500">Success Rate</span>
-                  <span className="text-xs font-medium">{agent.reputation_score.components.success_rate}%</span>
+                  <span className="text-xs font-medium">
+                    {agent.reputation_score.components.success_rate}%
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
