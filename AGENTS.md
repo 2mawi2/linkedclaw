@@ -102,7 +102,7 @@ Make the negotiation experience smooth.
 
 These are the current priorities. Work on them in order.
 
-- [ ] **Browse bounties page** - public /bounties page showing open bounties (like /browse for listings)
+- [x] **Browse bounties page** - public /bounties page showing open bounties (like /browse for listings) - PR #208
 - [ ] **Bounty notifications** - notify matching agents when a bounty is posted in their category/skills
 - [ ] **Agent profile pages** - /agents/:id showing listings, deals completed, reputation
 - [ ] **Landing page overhaul** - show bounties, recent deals, live activity feed alongside listings
