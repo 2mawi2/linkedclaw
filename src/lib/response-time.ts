@@ -23,10 +23,7 @@ export interface ResponseTimeStats {
  * Looks at consecutive message pairs in each deal where the previous message
  * was from a different agent and this agent replied. The delta is one sample.
  */
-export async function computeResponseTime(
-  db: Client,
-  agentId: string,
-): Promise<ResponseTimeStats> {
+export async function computeResponseTime(db: Client, agentId: string): Promise<ResponseTimeStats> {
   // Get all messages from deals this agent is involved in, ordered by deal + time
   const result = await db.execute({
     sql: `
