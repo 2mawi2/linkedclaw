@@ -62,8 +62,11 @@ const STATUS_COLORS: Record<string, string> = {
   negotiating: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
   proposed: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
   approved: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  in_progress: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
   rejected: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   expired: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
+  cancelled: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
 };
 
 export default function DealDetailPage() {
@@ -80,6 +83,8 @@ export default function DealDetailPage() {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionResult, setActionResult] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastActivityRef = useRef(Date.now());
 
@@ -244,6 +249,30 @@ export default function DealDetailPage() {
     }
   }
 
+  async function handleLifecycleAction(action: "start" | "complete" | "cancel") {
+    if (!agentId) return;
+    setActionLoading(true);
+    setActionResult("");
+    try {
+      const res = await fetch(`/api/deals/${matchId}/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agent_id: agentId }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setActionResult(json.error || `Failed to ${action}`);
+      } else {
+        setActionResult(json.message || `Deal ${action}ed`);
+        fetchDeal();
+      }
+    } catch {
+      setActionResult(`Failed to ${action} deal`);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
     if (!agentId || !newMessage.trim()) return;
@@ -323,7 +352,11 @@ export default function DealDetailPage() {
   }
 
   const { match, messages, approvals } = data;
-  const isTerminal = match.status === "rejected" || match.status === "expired";
+  const isTerminal =
+    match.status === "rejected" ||
+    match.status === "expired" ||
+    match.status === "cancelled" ||
+    match.status === "completed";
   const isActive = !isTerminal;
 
   // Find the latest proposal
@@ -585,29 +618,84 @@ export default function DealDetailPage() {
           </div>
         )}
 
-        {/* Approved state */}
+        {/* Action result */}
+        {actionResult && (
+          <div className="mb-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-sm">
+            {actionResult}
+          </div>
+        )}
+
+        {/* Approved state - ready to start */}
         {match.status === "approved" && (
           <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <h3 className="font-semibold text-green-700 dark:text-green-400 mb-2">
               Deal approved!
             </h3>
-            <p className="text-sm mb-2">
-              Both parties have approved. You can continue messaging below to coordinate.
-            </p>
-            <div className="text-sm space-y-1">
-              <p>
-                Agent A:{" "}
-                <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">
-                  {match.profiles.a.agent_id}
-                </code>
-              </p>
-              <p>
-                Agent B:{" "}
-                <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">
-                  {match.profiles.b.agent_id}
-                </code>
-              </p>
-            </div>
+            <p className="text-sm mb-2">Both parties have approved. Ready to start work.</p>
+            {agentId && (
+              <div className="flex gap-3 mt-3">
+                <button
+                  onClick={() => handleLifecycleAction("start")}
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+                >
+                  Start work
+                </button>
+                <button
+                  onClick={() => handleLifecycleAction("cancel")}
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-700 disabled:opacity-50"
+                >
+                  Cancel deal
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* In-progress state */}
+        {match.status === "in_progress" && (
+          <div className="mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+            <h3 className="font-semibold text-orange-700 dark:text-orange-400 mb-2">
+              Work in progress
+            </h3>
+            <p className="text-sm mb-2">This deal is active. Continue coordinating via messages.</p>
+            {agentId && (
+              <div className="flex gap-3 mt-3">
+                <button
+                  onClick={() => handleLifecycleAction("complete")}
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  Mark complete
+                </button>
+                <button
+                  onClick={() => handleLifecycleAction("cancel")}
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-700 disabled:opacity-50"
+                >
+                  Cancel deal
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Completed state */}
+        {match.status === "completed" && (
+          <div className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+            <h3 className="font-semibold text-emerald-700 dark:text-emerald-400 mb-2">
+              Deal completed!
+            </h3>
+            <p className="text-sm">Both parties confirmed completion. Great work!</p>
+          </div>
+        )}
+
+        {/* Cancelled state */}
+        {match.status === "cancelled" && (
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
+            <h3 className="font-semibold text-gray-700 dark:text-gray-400 mb-2">Deal cancelled</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">This deal was cancelled.</p>
           </div>
         )}
 
