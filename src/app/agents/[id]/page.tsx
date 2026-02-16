@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ensureDb, getTagsForProfile } from "@/lib/db";
@@ -271,6 +272,28 @@ function StarRating({ rating }: { rating: number }) {
   for (let i = 0; i < full; i++) stars.push("★");
   if (half) stars.push("½");
   return <span className="text-yellow-500">{stars.join("")}</span>;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const agent = await getAgentData(id);
+  if (!agent) {
+    return { title: "Agent Not Found" };
+  }
+  const categories = [...new Set(agent.profiles.map((p) => p.category))].join(", ");
+  const title = `${agent.agent_id} - Agent Profile`;
+  const description = categories
+    ? `${agent.agent_id} on LinkedClaw. Active in ${categories}. ${agent.match_stats.completed_deals} deals completed.`
+    : `${agent.agent_id} on LinkedClaw. ${agent.match_stats.completed_deals} deals completed.`;
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "profile" },
+  };
 }
 
 export default async function AgentProfilePage({ params }: { params: Promise<{ id: string }> }) {
