@@ -11,6 +11,7 @@ const PUBLIC_GET_ONLY = [
   "/api/search",
   "/api/tags",
   "/api/templates",
+  "/api/referrals",
   "/api/projects",
   "/api/openapi.json",
   "/skill/negotiate.md",
