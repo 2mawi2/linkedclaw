@@ -51,8 +51,14 @@ async function seedStaleDeals() {
 
   // Create multiple profiles so each match can have a unique (profile_a_id, profile_b_id) pair
   for (const [id, agent, side] of [
-    ["p1a", "u1", "offering"], ["p1b", "u1", "offering"], ["p1c", "u1", "offering"], ["p1d", "u1", "offering"],
-    ["p2a", "u2", "seeking"], ["p2b", "u2", "seeking"], ["p2c", "u2", "seeking"], ["p2d", "u2", "seeking"],
+    ["p1a", "u1", "offering"],
+    ["p1b", "u1", "offering"],
+    ["p1c", "u1", "offering"],
+    ["p1d", "u1", "offering"],
+    ["p2a", "u2", "seeking"],
+    ["p2b", "u2", "seeking"],
+    ["p2c", "u2", "seeking"],
+    ["p2d", "u2", "seeking"],
   ] as const) {
     await db.execute({
       sql: `INSERT INTO profiles (id, agent_id, side, description, category, params, created_at)
@@ -149,7 +155,10 @@ describe("expireStaleDeals", () => {
     const config = validateExpiryConfig(168);
     await expireStaleDeals(db, config);
 
-    const notifs = await db.execute({ sql: "SELECT * FROM notifications WHERE type = 'deal_expired'", args: [] });
+    const notifs = await db.execute({
+      sql: "SELECT * FROM notifications WHERE type = 'deal_expired'",
+      args: [],
+    });
     // 2 deals expired, 2 parties each = 4 notifications
     expect(notifs.rows.length).toBe(4);
   });
@@ -226,7 +235,7 @@ describe("POST /api/deals/expiry", () => {
   it("supports dry_run", async () => {
     await seedStaleDeals();
     const res = await POST(
-      postReq("/api/deals/expiry", { timeout_hours: 168, dry_run: true }, ADMIN_SECRET)
+      postReq("/api/deals/expiry", { timeout_hours: 168, dry_run: true }, ADMIN_SECRET),
     );
     expect(res.status).toBe(200);
     const data = await res.json();
@@ -239,9 +248,7 @@ describe("POST /api/deals/expiry", () => {
   });
 
   it("rejects invalid timeout_hours", async () => {
-    const res = await POST(
-      postReq("/api/deals/expiry", { timeout_hours: 0 }, ADMIN_SECRET)
-    );
+    const res = await POST(postReq("/api/deals/expiry", { timeout_hours: 0 }, ADMIN_SECRET));
     expect(res.status).toBe(400);
   });
 });

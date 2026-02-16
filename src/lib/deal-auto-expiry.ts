@@ -47,10 +47,7 @@ export function validateExpiryConfig(timeoutHours?: number, limit?: number): Exp
  * Find and expire deals stuck in matched/negotiating status beyond the timeout.
  * Returns the list of expired deals.
  */
-export async function expireStaleDeals(
-  db: Client,
-  config: ExpiryConfig
-): Promise<ExpiryResult> {
+export async function expireStaleDeals(db: Client, config: ExpiryConfig): Promise<ExpiryResult> {
   const cutoff = new Date(Date.now() - config.timeoutHours * 60 * 60 * 1000).toISOString();
 
   // Find stale deals
@@ -141,7 +138,7 @@ export async function expireStaleDeals(
  */
 export async function previewStaleDeals(
   db: Client,
-  config: ExpiryConfig
+  config: ExpiryConfig,
 ): Promise<{ stale_count: number; stale_deals: ExpiredDeal[]; timeout_hours: number }> {
   const cutoff = new Date(Date.now() - config.timeoutHours * 60 * 60 * 1000).toISOString();
 

@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
-import {
-  expireStaleDeals,
-  previewStaleDeals,
-  validateExpiryConfig,
-} from "@/lib/deal-auto-expiry";
+import { expireStaleDeals, previewStaleDeals, validateExpiryConfig } from "@/lib/deal-auto-expiry";
 
 /**
  * GET /api/deals/expiry - Preview stale deals that would be expired.
@@ -16,7 +12,12 @@ import {
  *   limit - max deals to return (1-500, default 100)
  */
 export async function GET(req: NextRequest) {
-  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "deal-expiry-get");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    "deal-expiry-get",
+  );
   if (rl) return rl;
 
   const secret = process.env.ADMIN_SECRET;
@@ -56,7 +57,12 @@ export async function GET(req: NextRequest) {
  *   dry_run - if true, preview only without expiring (default false)
  */
 export async function POST(req: NextRequest) {
-  const rl = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, "deal-expiry-post");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    "deal-expiry-post",
+  );
   if (rl) return rl;
 
   const secret = process.env.ADMIN_SECRET;
