@@ -40,7 +40,10 @@ export async function GET(req: NextRequest) {
   const since = searchParams.get("since");
   const typeFilter = searchParams.get("type");
   const allowedTypes = typeFilter
-    ? typeFilter.split(",").map((t) => t.trim()).filter(Boolean)
+    ? typeFilter
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
     : null;
 
   const db = await ensureDb();
@@ -160,10 +163,10 @@ export async function GET(req: NextRequest) {
     for (const row of result.rows) {
       const budgetParts: string[] = [];
       if (row.budget_min) budgetParts.push(String(row.budget_min));
-      if (row.budget_max && row.budget_max !== row.budget_min) budgetParts.push(String(row.budget_max));
-      const reward = budgetParts.length > 0
-        ? ` (${budgetParts.join("-")} ${row.currency || "USD"})`
-        : "";
+      if (row.budget_max && row.budget_max !== row.budget_min)
+        budgetParts.push(String(row.budget_max));
+      const reward =
+        budgetParts.length > 0 ? ` (${budgetParts.join("-")} ${row.currency || "USD"})` : "";
       events.push({
         type: "new_bounty",
         timestamp: row.created_at as string,

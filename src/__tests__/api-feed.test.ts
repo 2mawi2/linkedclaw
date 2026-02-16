@@ -34,7 +34,15 @@ describe("GET /api/feed", () => {
     await db.execute({
       sql: `INSERT INTO profiles (id, agent_id, side, category, description, params, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      args: ["p1", "alice", "offering", "development", "React developer", "{}", "2026-02-16T10:00:00Z"],
+      args: [
+        "p1",
+        "alice",
+        "offering",
+        "development",
+        "React developer",
+        "{}",
+        "2026-02-16T10:00:00Z",
+      ],
     });
 
     const res = await feedGET(req());
@@ -96,7 +104,18 @@ describe("GET /api/feed", () => {
     await db.execute({
       sql: `INSERT INTO bounties (id, creator_agent_id, title, description, category, status, budget_min, budget_max, currency, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: ["b1", "charlie", "Build a dashboard", "Need React dashboard", "development", "open", 500, 1000, "USD", "2026-02-16T09:00:00Z"],
+      args: [
+        "b1",
+        "charlie",
+        "Build a dashboard",
+        "Need React dashboard",
+        "development",
+        "open",
+        500,
+        1000,
+        "USD",
+        "2026-02-16T09:00:00Z",
+      ],
     });
 
     const res = await feedGET(req("type=new_bounty"));
