@@ -6,7 +6,12 @@ import { ensureDb } from "@/lib/db";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
-  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "matches-batch");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    "matches-batch",
+  );
   if (rl) return rl;
   // Auth check
   const auth = await authenticateAny(req);

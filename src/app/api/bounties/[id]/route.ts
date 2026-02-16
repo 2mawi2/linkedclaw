@@ -43,7 +43,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
 /** PATCH /api/bounties/:id - update bounty status (auth required, owner only) */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const rl = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, "bounty-patch");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    "bounty-patch",
+  );
   if (rl) return rl;
   const { id } = await params;
   const auth = await authenticateAny(req);

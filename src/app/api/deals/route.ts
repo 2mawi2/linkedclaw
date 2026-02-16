@@ -110,7 +110,12 @@ export async function GET(req: NextRequest) {
  * Auth: Bearer token required (must own profile_id / agent_id)
  */
 export async function POST(req: NextRequest) {
-  const rlw = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, "deals-post");
+  const rlw = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    "deals-post",
+  );
   if (rlw) return rlw;
   const auth = await authenticateAny(req);
   if (!auth) {

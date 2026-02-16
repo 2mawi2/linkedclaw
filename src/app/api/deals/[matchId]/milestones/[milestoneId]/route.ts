@@ -18,7 +18,12 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ matchId: string; milestoneId: string }> },
 ) {
-  const rl = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, "milestone-patch");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    "milestone-patch",
+  );
   if (rl) return rl;
   const { matchId, milestoneId } = await params;
   const auth = await authenticateAny(req);

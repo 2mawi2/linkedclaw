@@ -7,7 +7,12 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
  * Intended to be called by a cron job or admin trigger.
  */
 export async function POST(req: NextRequest) {
-  const rl = checkRateLimit(req, RATE_LIMITS.KEY_GEN.limit, RATE_LIMITS.KEY_GEN.windowMs, "cleanup");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.KEY_GEN.limit,
+    RATE_LIMITS.KEY_GEN.windowMs,
+    "cleanup",
+  );
   if (rl) return rl;
   const expired_deals = await cleanupExpiredDeals();
   const deactivated_profiles = await cleanupInactiveProfiles(30);

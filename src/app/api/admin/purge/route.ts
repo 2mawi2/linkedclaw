@@ -12,7 +12,12 @@ import { ensureDb } from "@/lib/db";
  * Without body: purges accounts matching known test patterns.
  */
 export async function POST(req: NextRequest) {
-  const rl = checkRateLimit(req, RATE_LIMITS.KEY_GEN.limit, RATE_LIMITS.KEY_GEN.windowMs, "admin-purge");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.KEY_GEN.limit,
+    RATE_LIMITS.KEY_GEN.windowMs,
+    "admin-purge",
+  );
   if (rl) return rl;
   const secret = process.env.ADMIN_SECRET;
   if (!secret) {
