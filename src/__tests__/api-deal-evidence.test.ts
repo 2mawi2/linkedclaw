@@ -41,30 +41,67 @@ const rp = (matchId: string) => ({ params: Promise.resolve({ matchId }) });
 
 async function createInProgressDeal(): Promise<string> {
   // Create profiles
-  await connectPOST(jsonReq("/api/connect", {
-    agent_id: "alice", side: "offering", category: "development",
-    params: { skills: ["TypeScript"], rate_min: 50, rate_max: 100 },
-  }, aliceKey));
-  await connectPOST(jsonReq("/api/connect", {
-    agent_id: "bob", side: "seeking", category: "development",
-    params: { skills: ["TypeScript"], rate_min: 50, rate_max: 100 },
-  }, bobKey));
+  await connectPOST(
+    jsonReq(
+      "/api/connect",
+      {
+        agent_id: "alice",
+        side: "offering",
+        category: "development",
+        params: { skills: ["TypeScript"], rate_min: 50, rate_max: 100 },
+      },
+      aliceKey,
+    ),
+  );
+  await connectPOST(
+    jsonReq(
+      "/api/connect",
+      {
+        agent_id: "bob",
+        side: "seeking",
+        category: "development",
+        params: { skills: ["TypeScript"], rate_min: 50, rate_max: 100 },
+      },
+      bobKey,
+    ),
+  );
 
   // Start deal
-  const dealRes = await dealsPOST(jsonReq("/api/deals", { agent_id: "alice", counterpart_agent_id: "bob" }, aliceKey));
+  const dealRes = await dealsPOST(
+    jsonReq("/api/deals", { agent_id: "alice", counterpart_agent_id: "bob" }, aliceKey),
+  );
   const { match_id } = await dealRes.json();
 
   // Propose
-  await messagesPOST(jsonReq(`/api/deals/${match_id}/messages`, {
-    agent_id: "alice", content: "Let's do it", message_type: "proposal", proposed_terms: { rate: 75 },
-  }, aliceKey), rp(match_id));
+  await messagesPOST(
+    jsonReq(
+      `/api/deals/${match_id}/messages`,
+      {
+        agent_id: "alice",
+        content: "Let's do it",
+        message_type: "proposal",
+        proposed_terms: { rate: 75 },
+      },
+      aliceKey,
+    ),
+    rp(match_id),
+  );
 
   // Both approve
-  await approvePOST(jsonReq(`/api/deals/${match_id}/approve`, { agent_id: "alice", approved: true }, aliceKey), rp(match_id));
-  await approvePOST(jsonReq(`/api/deals/${match_id}/approve`, { agent_id: "bob", approved: true }, bobKey), rp(match_id));
+  await approvePOST(
+    jsonReq(`/api/deals/${match_id}/approve`, { agent_id: "alice", approved: true }, aliceKey),
+    rp(match_id),
+  );
+  await approvePOST(
+    jsonReq(`/api/deals/${match_id}/approve`, { agent_id: "bob", approved: true }, bobKey),
+    rp(match_id),
+  );
 
   // Start
-  await startPOST(jsonReq(`/api/deals/${match_id}/start`, { agent_id: "alice" }, aliceKey), rp(match_id));
+  await startPOST(
+    jsonReq(`/api/deals/${match_id}/start`, { agent_id: "alice" }, aliceKey),
+    rp(match_id),
+  );
 
   return match_id;
 }
@@ -73,10 +110,17 @@ describe("Deal evidence/completion", () => {
   it("accepts evidence with completion", async () => {
     const matchId = await createInProgressDeal();
 
-    const res = await completePOST(jsonReq(`/api/deals/${matchId}/complete`, {
-      agent_id: "alice",
-      evidence: "PR merged: https://github.com/repo/pull/42, deployed to production",
-    }, aliceKey), rp(matchId));
+    const res = await completePOST(
+      jsonReq(
+        `/api/deals/${matchId}/complete`,
+        {
+          agent_id: "alice",
+          evidence: "PR merged: https://github.com/repo/pull/42, deployed to production",
+        },
+        aliceKey,
+      ),
+      rp(matchId),
+    );
     const data = await res.json();
     expect(data.status).toBe("waiting");
   });
@@ -84,15 +128,29 @@ describe("Deal evidence/completion", () => {
   it("completes with evidence from both parties", async () => {
     const matchId = await createInProgressDeal();
 
-    await completePOST(jsonReq(`/api/deals/${matchId}/complete`, {
-      agent_id: "alice",
-      evidence: "Code delivered: https://github.com/repo/pull/42",
-    }, aliceKey), rp(matchId));
+    await completePOST(
+      jsonReq(
+        `/api/deals/${matchId}/complete`,
+        {
+          agent_id: "alice",
+          evidence: "Code delivered: https://github.com/repo/pull/42",
+        },
+        aliceKey,
+      ),
+      rp(matchId),
+    );
 
-    const res = await completePOST(jsonReq(`/api/deals/${matchId}/complete`, {
-      agent_id: "bob",
-      evidence: "Confirmed working, payment sent",
-    }, bobKey), rp(matchId));
+    const res = await completePOST(
+      jsonReq(
+        `/api/deals/${matchId}/complete`,
+        {
+          agent_id: "bob",
+          evidence: "Confirmed working, payment sent",
+        },
+        bobKey,
+      ),
+      rp(matchId),
+    );
     const data = await res.json();
     expect(data.status).toBe("completed");
   });
@@ -100,12 +158,22 @@ describe("Deal evidence/completion", () => {
   it("GET /evidence returns completion records", async () => {
     const matchId = await createInProgressDeal();
 
-    await completePOST(jsonReq(`/api/deals/${matchId}/complete`, {
-      agent_id: "alice",
-      evidence: "Work done: PR #42",
-    }, aliceKey), rp(matchId));
+    await completePOST(
+      jsonReq(
+        `/api/deals/${matchId}/complete`,
+        {
+          agent_id: "alice",
+          evidence: "Work done: PR #42",
+        },
+        aliceKey,
+      ),
+      rp(matchId),
+    );
 
-    const res = await evidenceGET(jsonReq(`/api/deals/${matchId}/evidence`, undefined, aliceKey), rp(matchId));
+    const res = await evidenceGET(
+      jsonReq(`/api/deals/${matchId}/evidence`, undefined, aliceKey),
+      rp(matchId),
+    );
     const data = await res.json();
     expect(data.completions).toHaveLength(1);
     expect(data.completions[0].evidence).toBe("Work done: PR #42");
@@ -115,14 +183,33 @@ describe("Deal evidence/completion", () => {
   it("shows both_confirmed after both complete", async () => {
     const matchId = await createInProgressDeal();
 
-    await completePOST(jsonReq(`/api/deals/${matchId}/complete`, {
-      agent_id: "alice", evidence: "Done",
-    }, aliceKey), rp(matchId));
-    await completePOST(jsonReq(`/api/deals/${matchId}/complete`, {
-      agent_id: "bob", evidence: "Confirmed",
-    }, bobKey), rp(matchId));
+    await completePOST(
+      jsonReq(
+        `/api/deals/${matchId}/complete`,
+        {
+          agent_id: "alice",
+          evidence: "Done",
+        },
+        aliceKey,
+      ),
+      rp(matchId),
+    );
+    await completePOST(
+      jsonReq(
+        `/api/deals/${matchId}/complete`,
+        {
+          agent_id: "bob",
+          evidence: "Confirmed",
+        },
+        bobKey,
+      ),
+      rp(matchId),
+    );
 
-    const res = await evidenceGET(jsonReq(`/api/deals/${matchId}/evidence`, undefined, bobKey), rp(matchId));
+    const res = await evidenceGET(
+      jsonReq(`/api/deals/${matchId}/evidence`, undefined, bobKey),
+      rp(matchId),
+    );
     const data = await res.json();
     expect(data.completions).toHaveLength(2);
     expect(data.both_confirmed).toBe(true);
@@ -132,7 +219,10 @@ describe("Deal evidence/completion", () => {
   it("rejects non-participant from viewing evidence", async () => {
     const matchId = await createInProgressDeal();
     const charlieKey = await createApiKey("charlie");
-    const res = await evidenceGET(jsonReq(`/api/deals/${matchId}/evidence`, undefined, charlieKey), rp(matchId));
+    const res = await evidenceGET(
+      jsonReq(`/api/deals/${matchId}/evidence`, undefined, charlieKey),
+      rp(matchId),
+    );
     expect(res.status).toBe(403);
   });
 });

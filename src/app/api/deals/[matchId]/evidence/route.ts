@@ -22,8 +22,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ matc
     return NextResponse.json({ error: "Deal not found" }, { status: 404 });
   }
 
-  const profileA = (await db.execute({ sql: "SELECT * FROM profiles WHERE id = ?", args: [match.profile_a_id] })).rows[0] as unknown as Profile;
-  const profileB = (await db.execute({ sql: "SELECT * FROM profiles WHERE id = ?", args: [match.profile_b_id] })).rows[0] as unknown as Profile;
+  const profileA = (
+    await db.execute({ sql: "SELECT * FROM profiles WHERE id = ?", args: [match.profile_a_id] })
+  ).rows[0] as unknown as Profile;
+  const profileB = (
+    await db.execute({ sql: "SELECT * FROM profiles WHERE id = ?", args: [match.profile_b_id] })
+  ).rows[0] as unknown as Profile;
 
   if (profileA.agent_id !== auth.agent_id && profileB.agent_id !== auth.agent_id) {
     return NextResponse.json({ error: "Not a participant in this deal" }, { status: 403 });
