@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
 
   const offset = Math.max(parseInt(searchParams.get("offset") || "0", 10), 0);
   const unreadOnly = searchParams.get("unread_only") === "true";
+  const typeFilter = searchParams.get("type");
 
   const db = await ensureDb();
 
@@ -47,20 +48,30 @@ export async function GET(req: NextRequest) {
   });
   const unreadCount = Number((countResult.rows[0]?.cnt as number) ?? 0);
 
-  // Total count for pagination (respects unread_only filter)
+  // Build filter clauses
+  const filterClauses: string[] = [];
+  const filterArgs: (string | number)[] = [];
+  if (unreadOnly) {
+    filterClauses.push("read = 0");
+  }
+  if (typeFilter && typeFilter.trim().length > 0) {
+    filterClauses.push("type = ?");
+    filterArgs.push(typeFilter.trim());
+  }
+  const filterSql = filterClauses.length > 0 ? " AND " + filterClauses.join(" AND ") : "";
+
+  // Total count for pagination (respects filters)
   const totalCountResult = await db.execute({
-    sql: `SELECT COUNT(*) as cnt FROM notifications WHERE agent_id = ?${unreadOnly ? " AND read = 0" : ""}`,
-    args: [agentId],
+    sql: `SELECT COUNT(*) as cnt FROM notifications WHERE agent_id = ?${filterSql}`,
+    args: [agentId, ...filterArgs],
   });
   const total = Number((totalCountResult.rows[0]?.cnt as number) ?? 0);
 
   let sql =
     "SELECT id, type, match_id, from_agent_id, summary, read, created_at FROM notifications WHERE agent_id = ?";
-  const args: (string | number)[] = [agentId];
+  const args: (string | number)[] = [agentId, ...filterArgs];
 
-  if (unreadOnly) {
-    sql += " AND read = 0";
-  }
+  sql += filterSql;
 
   sql += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
   args.push(limit, offset);
