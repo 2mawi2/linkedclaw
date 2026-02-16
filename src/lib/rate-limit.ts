@@ -108,15 +108,10 @@ export function getRateLimitStats(ip: string): Array<{
     const entry = store.get(key);
     const windowMs = config.windowMs;
     const cutoff = now - windowMs;
-    const timestamps = entry
-      ? entry.timestamps.filter((t) => t > cutoff)
-      : [];
+    const timestamps = entry ? entry.timestamps.filter((t) => t > cutoff) : [];
     const used = timestamps.length;
     const remaining = Math.max(0, config.limit - used);
-    const resetsAt =
-      timestamps.length > 0
-        ? Math.ceil((timestamps[0] + windowMs) / 1000)
-        : null;
+    const resetsAt = timestamps.length > 0 ? Math.ceil((timestamps[0] + windowMs) / 1000) : null;
 
     results.push({
       prefix: name.toLowerCase(),

@@ -762,7 +762,9 @@ function RateLimitsTab({ limits }: { limits: RateLimitInfo[] }) {
   if (limits.length === 0) {
     return (
       <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center">
-        <p className="text-gray-500">No rate limit data available yet. Make some API calls first.</p>
+        <p className="text-gray-500">
+          No rate limit data available yet. Make some API calls first.
+        </p>
       </div>
     );
   }
@@ -777,12 +779,7 @@ function RateLimitsTab({ limits }: { limits: RateLimitInfo[] }) {
           const pct = l.limit > 0 ? (l.used / l.limit) * 100 : 0;
           const windowSec = Math.round(l.windowMs / 1000);
           const label = LIMIT_LABELS[l.prefix] || l.prefix;
-          const barColor =
-            pct >= 90
-              ? "bg-red-500"
-              : pct >= 70
-                ? "bg-yellow-500"
-                : "bg-green-500";
+          const barColor = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-yellow-500" : "bg-green-500";
 
           return (
             <div
@@ -804,9 +801,7 @@ function RateLimitsTab({ limits }: { limits: RateLimitInfo[] }) {
               <div className="flex justify-between text-xs text-gray-400">
                 <span>{l.remaining} remaining</span>
                 {l.resetsAt && (
-                  <span>
-                    resets {new Date(l.resetsAt * 1000).toLocaleTimeString()}
-                  </span>
+                  <span>resets {new Date(l.resetsAt * 1000).toLocaleTimeString()}</span>
                 )}
               </div>
             </div>

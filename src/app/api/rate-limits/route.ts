@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateAny } from "@/lib/auth";
-import {
-  checkRateLimit,
-  getRateLimitStats,
-  RATE_LIMITS,
-} from "@/lib/rate-limit";
+import { checkRateLimit, getRateLimitStats, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   const rateLimited = checkRateLimit(
