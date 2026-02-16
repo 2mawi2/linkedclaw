@@ -343,7 +343,10 @@ export function suggestFromDescription(
     }
     if (matchCount > 0) {
       // Confidence: ratio of matched keywords, capped at 1.0
-      const confidence = Math.min(1.0, (matchCount / Math.min(cat.keywords.length, 5)) * cat.weight);
+      const confidence = Math.min(
+        1.0,
+        (matchCount / Math.min(cat.keywords.length, 5)) * cat.weight,
+      );
       categoryScores.push({
         category: cat.category,
         confidence: Math.round(confidence * 100) / 100,
