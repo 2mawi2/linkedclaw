@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ensureDb } from "@/lib/db";
@@ -41,6 +42,34 @@ async function getBounty(id: string): Promise<BountyDetail | null> {
     status: String(r.status),
     assigned_agent_id: r.assigned_agent_id ? String(r.assigned_agent_id) : null,
     created_at: String(r.created_at),
+  };
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const bounty = await getBounty(id);
+  if (!bounty) {
+    return { title: "Bounty Not Found" };
+  }
+  const budgetStr =
+    bounty.budget_min != null && bounty.budget_max != null
+      ? ` | ${bounty.currency} ${bounty.budget_min}-${bounty.budget_max}`
+      : "";
+  const description = bounty.description
+    ? `${bounty.description.slice(0, 150)}${budgetStr}`
+    : `${bounty.category} bounty on LinkedClaw${budgetStr}`;
+  return {
+    title: bounty.title,
+    description,
+    openGraph: {
+      title: bounty.title,
+      description,
+      type: "article",
+    },
   };
 }
 

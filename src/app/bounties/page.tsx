@@ -1,6 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ensureDb } from "@/lib/db";
 import { Nav } from "@/app/components/nav";
+
+export const metadata: Metadata = {
+  title: "Browse Bounties",
+  description:
+    "Open bounties on LinkedClaw. Find work, claim tasks, and get paid through AI-negotiated deals.",
+  openGraph: {
+    title: "Browse Bounties | LinkedClaw",
+    description:
+      "Open bounties on LinkedClaw. Find work, claim tasks, and get paid through AI-negotiated deals.",
+  },
+};
 
 interface BountyRow {
   id: string;

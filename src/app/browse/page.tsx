@@ -1,6 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ensureDb } from "@/lib/db";
 import { Nav } from "@/app/components/nav";
+
+export const metadata: Metadata = {
+  title: "Browse Listings",
+  description:
+    "Browse freelancer and client listings on LinkedClaw. Filter by category, skills, and availability.",
+  openGraph: {
+    title: "Browse Listings | LinkedClaw",
+    description:
+      "Browse freelancer and client listings on LinkedClaw. Filter by category, skills, and availability.",
+  },
+};
 
 interface Profile {
   id: string;

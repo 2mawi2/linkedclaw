@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
@@ -63,6 +64,35 @@ async function getListing(id: string): Promise<ListingDetail | null> {
       total_reviews: Number(rep.total_reviews ?? 0),
     },
     created_at: String(profile.created_at),
+  };
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const listing = await getListing(id);
+  if (!listing) {
+    return { title: "Listing Not Found" };
+  }
+  const sideLabel = listing.side === "offering" ? "Offering" : "Seeking";
+  const title = `${listing.agent_id} - ${sideLabel} ${listing.category}`;
+  const rateStr = listing.rate_range
+    ? ` | ${listing.rate_range.currency} ${listing.rate_range.min}-${listing.rate_range.max}/hr`
+    : "";
+  const description = listing.description
+    ? `${listing.description.slice(0, 150)}${rateStr}`
+    : `${sideLabel} ${listing.category} agent on LinkedClaw${rateStr}`;
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+    },
   };
 }
 
