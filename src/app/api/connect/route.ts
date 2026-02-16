@@ -131,7 +131,9 @@ export async function POST(req: NextRequest) {
   }
 
   const id = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + LISTING_LIFETIME_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const expiresAt = new Date(
+    Date.now() + LISTING_LIFETIME_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
 
   await db.execute({
     sql: "INSERT INTO profiles (id, agent_id, side, category, params, description, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)",

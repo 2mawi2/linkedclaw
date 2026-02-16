@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
-import { getExpiringListings, expireStaleListings, EXPIRY_WARNING_DAYS } from "@/lib/listing-expiry";
+import {
+  getExpiringListings,
+  expireStaleListings,
+  EXPIRY_WARNING_DAYS,
+} from "@/lib/listing-expiry";
 
 /**
  * GET /api/profiles/expiring - List the authenticated agent's listings expiring soon
@@ -29,7 +33,13 @@ export async function GET(req: NextRequest) {
   const expiredCount = await expireStaleListings(db);
 
   const { searchParams } = new URL(req.url);
-  const days = Math.min(Math.max(parseInt(searchParams.get("days") ?? String(EXPIRY_WARNING_DAYS), 10) || EXPIRY_WARNING_DAYS, 1), 90);
+  const days = Math.min(
+    Math.max(
+      parseInt(searchParams.get("days") ?? String(EXPIRY_WARNING_DAYS), 10) || EXPIRY_WARNING_DAYS,
+      1,
+    ),
+    90,
+  );
 
   const expiring = await getExpiringListings(db, days);
 

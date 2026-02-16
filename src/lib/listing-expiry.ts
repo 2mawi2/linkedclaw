@@ -105,7 +105,9 @@ export async function renewListing(
     };
   }
 
-  const newExpiry = new Date(Date.now() + LISTING_LIFETIME_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const newExpiry = new Date(
+    Date.now() + LISTING_LIFETIME_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
   const wasInactive = !(profile.active as number);
 
   await db.execute({

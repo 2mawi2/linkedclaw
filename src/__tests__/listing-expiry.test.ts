@@ -43,7 +43,10 @@ describe("Listing Expiry", () => {
     expect(count).toBe(1);
 
     // Profile should now be inactive
-    const result = await db.execute({ sql: "SELECT active FROM profiles WHERE id = 'p1'", args: [] });
+    const result = await db.execute({
+      sql: "SELECT active FROM profiles WHERE id = 'p1'",
+      args: [],
+    });
     expect(result.rows[0]!.active).toBe(0);
   });
 
@@ -57,7 +60,10 @@ describe("Listing Expiry", () => {
     const count = await expireStaleListings(db);
     expect(count).toBe(0);
 
-    const result = await db.execute({ sql: "SELECT active FROM profiles WHERE id = 'p2'", args: [] });
+    const result = await db.execute({
+      sql: "SELECT active FROM profiles WHERE id = 'p2'",
+      args: [],
+    });
     expect(result.rows[0]!.active).toBe(1);
   });
 
@@ -140,7 +146,10 @@ describe("Listing Expiry", () => {
     expect(result.reactivated).toBe(true);
 
     // Profile should be active again
-    const profile = await db.execute({ sql: "SELECT active FROM profiles WHERE id = 'p8'", args: [] });
+    const profile = await db.execute({
+      sql: "SELECT active FROM profiles WHERE id = 'p8'",
+      args: [],
+    });
     expect(profile.rows[0]!.active).toBe(1);
   });
 
@@ -173,7 +182,10 @@ describe("Listing Expiry", () => {
     const count = await expireStaleListings(db);
     expect(count).toBe(0);
 
-    const result = await db.execute({ sql: "SELECT active FROM profiles WHERE id = 'p10'", args: [] });
+    const result = await db.execute({
+      sql: "SELECT active FROM profiles WHERE id = 'p10'",
+      args: [],
+    });
     expect(result.rows[0]!.active).toBe(1);
   });
 });
