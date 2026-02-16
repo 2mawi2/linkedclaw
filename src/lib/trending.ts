@@ -13,10 +13,10 @@ export interface TrendingCategory {
 
 /**
  * Compute trending categories based on recent activity signals.
- * 
+ *
  * Trend score = weighted composite:
  *   - New listings (7d): 3x weight
- *   - Deals closed (7d): 5x weight  
+ *   - Deals closed (7d): 5x weight
  *   - Growth rate: 2x weight
  *   - Fast close time bonus: 1x weight
  */
@@ -90,7 +90,10 @@ export async function getTrendingCategories(
        GROUP BY p.category`,
     );
     closeMap = new Map(
-      (avgClose.rows as any[]).map((r) => [r.category as string, r.avg_hours != null ? Number(r.avg_hours) : null]),
+      (avgClose.rows as any[]).map((r) => [
+        r.category as string,
+        r.avg_hours != null ? Number(r.avg_hours) : null,
+      ]),
     );
   } catch {
     // deal_events table may not exist - close times will be null
@@ -119,13 +122,17 @@ export async function getTrendingCategories(
     if (newL30 < minListings) continue;
 
     // Growth rate: % change from prior 7d to current 7d
-    const growthRate = prior7 === 0 ? (newL7 > 0 ? 100 : 0) : Math.round(((newL7 - prior7) / prior7) * 100);
+    const growthRate =
+      prior7 === 0 ? (newL7 > 0 ? 100 : 0) : Math.round(((newL7 - prior7) / prior7) * 100);
 
     // Close time bonus: faster = higher score (cap at 168h = 1 week)
-    const closeBonus = avgHours != null && avgHours > 0 ? Math.max(0, 10 - Math.min(avgHours / 16.8, 10)) : 0;
+    const closeBonus =
+      avgHours != null && avgHours > 0 ? Math.max(0, 10 - Math.min(avgHours / 16.8, 10)) : 0;
 
     // Composite trend score
-    const trendScore = Math.round(newL7 * 3 + closed7 * 5 + Math.max(growthRate, 0) * 0.2 + closeBonus);
+    const trendScore = Math.round(
+      newL7 * 3 + closed7 * 5 + Math.max(growthRate, 0) * 0.2 + closeBonus,
+    );
 
     results.push({
       category: cat,

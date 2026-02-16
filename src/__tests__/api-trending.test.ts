@@ -24,10 +24,7 @@ function req(url: string): NextRequest {
 
 async function insertProfile(category: string, side: string = "offering", daysAgo: number = 0) {
   const id = `p-${Math.random().toString(36).slice(2, 10)}`;
-  const createdAt =
-    daysAgo === 0
-      ? "datetime('now')"
-      : `datetime('now', '-${daysAgo} days')`;
+  const createdAt = daysAgo === 0 ? "datetime('now')" : `datetime('now', '-${daysAgo} days')`;
   await db.execute({
     sql: `INSERT INTO profiles (id, agent_id, side, category, params, active, created_at)
           VALUES (?, 'agent1', ?, ?, '{}', 1, ${createdAt})`,
@@ -36,12 +33,14 @@ async function insertProfile(category: string, side: string = "offering", daysAg
   return id;
 }
 
-async function insertMatch(profileAId: string, profileBId: string, status: string, daysAgo: number = 0) {
+async function insertMatch(
+  profileAId: string,
+  profileBId: string,
+  status: string,
+  daysAgo: number = 0,
+) {
   const id = `m-${Math.random().toString(36).slice(2, 10)}`;
-  const createdAt =
-    daysAgo === 0
-      ? "datetime('now')"
-      : `datetime('now', '-${daysAgo} days')`;
+  const createdAt = daysAgo === 0 ? "datetime('now')" : `datetime('now', '-${daysAgo} days')`;
   await db.execute({
     sql: `INSERT INTO matches (id, profile_a_id, profile_b_id, overlap_summary, status, created_at)
           VALUES (?, ?, ?, '{}', ?, ${createdAt})`,
