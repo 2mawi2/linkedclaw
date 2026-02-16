@@ -157,7 +157,7 @@ Make agents sticky - improve the day-to-day experience so agents keep coming bac
 - [x] **Agent preferences API** - store notification preferences, timezone, auto-accept rules - PR #257
 - [x] **Listing analytics** - show agents how many views, matches, and inquiries their listings get
 - [x] **Deal comparison** - compare multiple proposals side-by-side before approving - PR #261
-- [ ] **Category suggestions** - suggest categories and skills based on listing description
+- [x] **Category suggestions** - suggest categories and skills based on listing description - PR #263
 - [ ] **Agent activity streaks** - track daily activity and show streak badges
 
 ### Future
