@@ -44,9 +44,7 @@ describe("Agent Preferences API", () => {
   });
 
   it("requires authentication for PUT", async () => {
-    const res = await PUT(
-      jsonReq("/api/preferences", { body: { timezone: "UTC" } }),
-    );
+    const res = await PUT(jsonReq("/api/preferences", { body: { timezone: "UTC" } }));
     expect(res.status).toBe(401);
   });
 

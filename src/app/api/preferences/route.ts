@@ -40,9 +40,7 @@ function formatPreferences(row: PreferencesRow) {
     auto_accept: {
       enabled: !!row.auto_accept_deals,
       max_rate: row.auto_accept_max_rate,
-      categories: row.auto_accept_categories
-        ? JSON.parse(row.auto_accept_categories)
-        : null,
+      categories: row.auto_accept_categories ? JSON.parse(row.auto_accept_categories) : null,
     },
     updated_at: row.updated_at,
   };
@@ -125,7 +123,10 @@ export async function PUT(req: NextRequest) {
   // Validate timezone
   const timezone = body.timezone as string | undefined;
   if (timezone !== undefined) {
-    if (typeof timezone !== "string" || (!VALID_TIMEZONES_PATTERN.test(timezone) && timezone !== "UTC")) {
+    if (
+      typeof timezone !== "string" ||
+      (!VALID_TIMEZONES_PATTERN.test(timezone) && timezone !== "UTC")
+    ) {
       return NextResponse.json(
         { error: "Invalid timezone. Use IANA format (e.g. 'America/New_York') or 'UTC'." },
         { status: 400 },
@@ -135,7 +136,10 @@ export async function PUT(req: NextRequest) {
 
   // Validate notifications
   const notifications = body.notifications as Record<string, unknown> | undefined;
-  if (notifications !== undefined && (typeof notifications !== "object" || notifications === null)) {
+  if (
+    notifications !== undefined &&
+    (typeof notifications !== "object" || notifications === null)
+  ) {
     return NextResponse.json({ error: "notifications must be an object" }, { status: 400 });
   }
 
@@ -147,12 +151,21 @@ export async function PUT(req: NextRequest) {
     }
     if (autoAccept.max_rate !== undefined && autoAccept.max_rate !== null) {
       if (typeof autoAccept.max_rate !== "number" || autoAccept.max_rate < 0) {
-        return NextResponse.json({ error: "auto_accept.max_rate must be a non-negative number" }, { status: 400 });
+        return NextResponse.json(
+          { error: "auto_accept.max_rate must be a non-negative number" },
+          { status: 400 },
+        );
       }
     }
     if (autoAccept.categories !== undefined && autoAccept.categories !== null) {
-      if (!Array.isArray(autoAccept.categories) || !autoAccept.categories.every((c: unknown) => typeof c === "string")) {
-        return NextResponse.json({ error: "auto_accept.categories must be an array of strings" }, { status: 400 });
+      if (
+        !Array.isArray(autoAccept.categories) ||
+        !autoAccept.categories.every((c: unknown) => typeof c === "string")
+      ) {
+        return NextResponse.json(
+          { error: "auto_accept.categories must be an array of strings" },
+          { status: 400 },
+        );
       }
     }
   }
@@ -165,17 +178,23 @@ export async function PUT(req: NextRequest) {
 
   if (timezone !== undefined) fields.timezone = timezone;
   if (notifications) {
-    if (notifications.new_matches !== undefined) fields.notify_new_matches = notifications.new_matches ? 1 : 0;
-    if (notifications.messages !== undefined) fields.notify_messages = notifications.messages ? 1 : 0;
-    if (notifications.deal_updates !== undefined) fields.notify_deal_updates = notifications.deal_updates ? 1 : 0;
-    if (notifications.listing_expiry !== undefined) fields.notify_listing_expiry = notifications.listing_expiry ? 1 : 0;
+    if (notifications.new_matches !== undefined)
+      fields.notify_new_matches = notifications.new_matches ? 1 : 0;
+    if (notifications.messages !== undefined)
+      fields.notify_messages = notifications.messages ? 1 : 0;
+    if (notifications.deal_updates !== undefined)
+      fields.notify_deal_updates = notifications.deal_updates ? 1 : 0;
+    if (notifications.listing_expiry !== undefined)
+      fields.notify_listing_expiry = notifications.listing_expiry ? 1 : 0;
     if (notifications.digest !== undefined) fields.notify_digest = notifications.digest ? 1 : 0;
   }
   if (autoAccept) {
     if (autoAccept.enabled !== undefined) fields.auto_accept_deals = autoAccept.enabled ? 1 : 0;
     if (autoAccept.max_rate !== undefined) fields.auto_accept_max_rate = autoAccept.max_rate;
     if (autoAccept.categories !== undefined) {
-      fields.auto_accept_categories = autoAccept.categories ? JSON.stringify(autoAccept.categories) : null;
+      fields.auto_accept_categories = autoAccept.categories
+        ? JSON.stringify(autoAccept.categories)
+        : null;
     }
   }
 
