@@ -3,7 +3,7 @@ import type { Client } from "@libsql/client";
 import type { NotificationType } from "./notifications";
 
 export interface WebhookPayload {
-  event: NotificationType;
+  event: NotificationType | "test";
   agent_id: string;
   match_id?: string;
   from_agent_id?: string;
@@ -11,23 +11,42 @@ export interface WebhookPayload {
   timestamp: string;
 }
 
+export interface DeliveryResult {
+  success: boolean;
+  statusCode?: number;
+  error?: string;
+  newFailureCount: number;
+}
+
 /** Sign a payload with HMAC-SHA256 */
-function signPayload(payload: string, secret: string): string {
+export function signPayload(payload: string, secret: string): string {
   return createHmac("sha256", secret).update(payload).digest("hex");
+}
+
+/** Verify an HMAC-SHA256 signature */
+export function verifySignature(payload: string, secret: string, signature: string): boolean {
+  const expected = signPayload(payload, secret);
+  if (expected.length !== signature.length) return false;
+  // Constant-time comparison
+  let mismatch = 0;
+  for (let i = 0; i < expected.length; i++) {
+    mismatch |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
+  }
+  return mismatch === 0;
 }
 
 /** Max consecutive failures before auto-disabling a webhook */
 const MAX_FAILURES = 5;
 
-/** Deliver webhook to a single URL. Fire-and-forget. */
-async function deliverWebhook(
+/** Deliver webhook to a single URL. Returns delivery result. */
+export async function deliverSingleWebhook(
   db: Client,
   webhookId: string,
   url: string,
   secret: string,
   payload: WebhookPayload,
   failureCount: number,
-): Promise<void> {
+): Promise<DeliveryResult> {
   const body = JSON.stringify(payload);
   const signature = signPayload(body, secret);
 
@@ -49,16 +68,29 @@ async function deliverWebhook(
     clearTimeout(timeout);
 
     if (res.ok) {
-      // Reset failure count on success
       await db.execute({
         sql: "UPDATE webhooks SET failure_count = 0, last_triggered_at = datetime('now') WHERE id = ?",
         args: [webhookId],
       });
+      return { success: true, statusCode: res.status, newFailureCount: 0 };
     } else {
-      await incrementFailure(db, webhookId, failureCount);
+      const newCount = await incrementFailure(db, webhookId, failureCount);
+      return {
+        success: false,
+        statusCode: res.status,
+        error: `HTTP ${res.status}`,
+        newFailureCount: newCount,
+      };
     }
-  } catch {
-    await incrementFailure(db, webhookId, failureCount);
+  } catch (err) {
+    const newCount = await incrementFailure(db, webhookId, failureCount);
+    const errorMsg =
+      err instanceof Error && err.name === "AbortError"
+        ? "Request timed out (10s)"
+        : err instanceof Error
+          ? err.message
+          : "Unknown error";
+    return { success: false, error: errorMsg, newFailureCount: newCount };
   }
 }
 
@@ -66,13 +98,21 @@ async function incrementFailure(
   db: Client,
   webhookId: string,
   currentCount: number,
-): Promise<void> {
+): Promise<number> {
   const newCount = currentCount + 1;
-  const disable = newCount >= MAX_FAILURES;
-  await db.execute({
-    sql: `UPDATE webhooks SET failure_count = ?, active = CASE WHEN ? THEN 0 ELSE active END, last_triggered_at = datetime('now') WHERE id = ?`,
-    args: [newCount, disable ? 1 : 0, webhookId],
-  });
+  const shouldDisable = newCount >= MAX_FAILURES;
+  if (shouldDisable) {
+    await db.execute({
+      sql: `UPDATE webhooks SET failure_count = ?, active = 0, last_triggered_at = datetime('now') WHERE id = ?`,
+      args: [newCount, webhookId],
+    });
+  } else {
+    await db.execute({
+      sql: `UPDATE webhooks SET failure_count = ?, last_triggered_at = datetime('now') WHERE id = ?`,
+      args: [newCount, webhookId],
+    });
+  }
+  return newCount;
 }
 
 /** Fire webhooks for an agent's notification. Non-blocking. */
@@ -109,8 +149,8 @@ export async function fireWebhooks(
         if (!eventList.includes(event)) continue;
       }
 
-      // Fire and forget - don't await all in sequence, use Promise.allSettled
-      deliverWebhook(
+      // Fire and forget
+      deliverSingleWebhook(
         db,
         row.id as string,
         row.url as string,

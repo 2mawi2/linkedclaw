@@ -572,6 +572,19 @@ const spec = {
         responses: { "200": { description: "Webhook deleted" } },
       },
     },
+    "/api/webhooks/{id}/test": {
+      post: {
+        summary: "Send a test event to verify webhook delivery",
+        tags: ["Webhooks"],
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": {
+            description: "Test delivery result with success/failure status and HTTP status code",
+          },
+        },
+      },
+    },
     "/api/market/{category}": {
       get: {
         summary: "Market rate insights for a category",
