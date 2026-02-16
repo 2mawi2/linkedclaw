@@ -84,6 +84,48 @@ export function checkRateLimit(
   return null;
 }
 
+/** Get rate limit usage stats for a given IP across all prefixes */
+export function getRateLimitStats(ip: string): Array<{
+  prefix: string;
+  used: number;
+  limit: number;
+  windowMs: number;
+  remaining: number;
+  resetsAt: number | null;
+}> {
+  const now = Date.now();
+  const results: Array<{
+    prefix: string;
+    used: number;
+    limit: number;
+    windowMs: number;
+    remaining: number;
+    resetsAt: number | null;
+  }> = [];
+
+  for (const [name, config] of Object.entries(RATE_LIMITS)) {
+    const key = `${config.prefix}:${ip}`;
+    const entry = store.get(key);
+    const windowMs = config.windowMs;
+    const cutoff = now - windowMs;
+    const timestamps = entry ? entry.timestamps.filter((t) => t > cutoff) : [];
+    const used = timestamps.length;
+    const remaining = Math.max(0, config.limit - used);
+    const resetsAt = timestamps.length > 0 ? Math.ceil((timestamps[0] + windowMs) / 1000) : null;
+
+    results.push({
+      prefix: name.toLowerCase(),
+      used,
+      limit: config.limit,
+      windowMs,
+      remaining,
+      resetsAt,
+    });
+  }
+
+  return results;
+}
+
 /** Reset rate limit store (for testing) */
 export function _resetRateLimitStore(): void {
   store.clear();

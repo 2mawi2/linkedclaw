@@ -97,7 +97,16 @@ const ACTIVITY_ICONS: Record<string, string> = {
   deal_expired: "⏰",
 };
 
-type Tab = "overview" | "listings" | "bounties" | "deals" | "activity";
+interface RateLimitInfo {
+  prefix: string;
+  used: number;
+  limit: number;
+  windowMs: number;
+  remaining: number;
+  resetsAt: number | null;
+}
+
+type Tab = "overview" | "listings" | "bounties" | "deals" | "activity" | "rate-limits";
 
 export default function DashboardPage() {
   const [username, setUsername] = useState<string | null>(null);
@@ -108,6 +117,7 @@ export default function DashboardPage() {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [bounties, setBounties] = useState<Bounty[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
+  const [rateLimits, setRateLimits] = useState<RateLimitInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("overview");
@@ -167,6 +177,17 @@ export default function DashboardPage() {
           setActivity(activityData.events || []);
         }
 
+        // Fetch rate limit stats
+        try {
+          const rlRes = await fetch("/api/rate-limits", { headers });
+          if (rlRes.ok) {
+            const rlData = await rlRes.json();
+            setRateLimits(rlData.limits || []);
+          }
+        } catch {
+          // ignore - rate limits are optional
+        }
+
         // Fetch match counts per profile
         const counts: Record<string, number> = {};
         for (const p of profilesData.profiles || []) {
@@ -222,6 +243,7 @@ export default function DashboardPage() {
     { id: "bounties", label: "Bounties", count: activeBounties.length },
     { id: "deals", label: "Deals", count: activeDeals.length },
     { id: "activity", label: "Activity" },
+    { id: "rate-limits", label: "Rate Limits" },
   ];
 
   return (
@@ -315,6 +337,7 @@ export default function DashboardPage() {
             {activeTab === "bounties" && <BountiesTab bounties={bounties} />}
             {activeTab === "deals" && <DealsTab deals={deals} username={username} />}
             {activeTab === "activity" && <ActivityTab activity={activity} />}
+            {activeTab === "rate-limits" && <RateLimitsTab limits={rateLimits} />}
 
             {/* Reputation */}
             {summary && summary.reputation.total_reviews > 0 && (
@@ -725,4 +748,66 @@ function timeAgo(dateStr: string): string {
   const diffDay = Math.floor(diffHr / 24);
   if (diffDay < 30) return `${diffDay}d ago`;
   return new Date(dateStr).toLocaleDateString();
+}
+
+/* ---------- Rate Limits Tab ---------- */
+
+const LIMIT_LABELS: Record<string, string> = {
+  key_gen: "Key Generation",
+  write: "Write Operations",
+  read: "Read Operations",
+};
+
+function RateLimitsTab({ limits }: { limits: RateLimitInfo[] }) {
+  if (limits.length === 0) {
+    return (
+      <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center">
+        <p className="text-gray-500">
+          No rate limit data available yet. Make some API calls first.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-500">
+        Your current API rate limit usage. Limits reset on a sliding window basis.
+      </p>
+      <div className="grid gap-4">
+        {limits.map((l) => {
+          const pct = l.limit > 0 ? (l.used / l.limit) * 100 : 0;
+          const windowSec = Math.round(l.windowMs / 1000);
+          const label = LIMIT_LABELS[l.prefix] || l.prefix;
+          const barColor = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-yellow-500" : "bg-green-500";
+
+          return (
+            <div
+              key={l.prefix}
+              className="border border-gray-200 dark:border-gray-800 rounded-lg p-4"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">{label}</span>
+                <span className="text-xs text-gray-500">
+                  {l.used} / {l.limit} per {windowSec}s
+                </span>
+              </div>
+              <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2 mb-2">
+                <div
+                  className={`h-2 rounded-full transition-all ${barColor}`}
+                  style={{ width: `${Math.min(pct, 100)}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>{l.remaining} remaining</span>
+                {l.resetsAt && (
+                  <span>resets {new Date(l.resetsAt * 1000).toLocaleTimeString()}</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
