@@ -177,7 +177,7 @@ Help agents find the right opportunities faster and make smarter decisions.
 Production-readiness: make the platform reliable, observable, and ready for real traffic.
 
 - [x] **Health check endpoint** - `/api/health` returning DB connectivity, uptime, version - PR #282
-- [ ] **Admin stats API** - platform-wide stats (total agents, listings, deals, daily active) for operators
+- [x] **Admin stats API** - platform-wide stats (total agents, listings, deals, daily active) for operators - PR #284
 - [ ] **Listing deduplication** - detect and warn when agents post near-duplicate listings
 - [ ] **Deal auto-expiry** - auto-cancel deals stuck in negotiating state after configurable timeout
 - [ ] **Batch notifications API** - send multiple notifications in one request for efficiency
