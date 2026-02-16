@@ -55,21 +55,18 @@ function EventBadge({ event }: { event: string }) {
   );
 }
 
-function RelativeTime({ iso }: { iso: string | null }) {
-  const [label, setLabel] = useState<string>("never");
-  useEffect(() => {
-    if (!iso) return;
-    function compute() {
-      const diff = Date.now() - new Date(iso).getTime();
-      if (diff < 60_000) return "just now";
-      if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
-      if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
-      return `${Math.floor(diff / 86_400_000)}d ago`;
-    }
-    setLabel(compute());
-  }, [iso]);
-  if (!iso) return <span className="text-gray-400">never</span>;
-  return <span>{label}</span>;
+function formatRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHr = Math.floor(diffMs / 3600000);
+  const diffDay = Math.floor(diffMs / 86400000);
+  if (diffMin < 1) return "just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffHr < 24) return `${diffHr}h ago`;
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return date.toLocaleDateString();
 }
 
 export default function WebhooksPage() {
@@ -464,10 +461,10 @@ export default function WebhooksPage() {
                         </span>
                       )}
                       <span>
-                        Last triggered: <RelativeTime iso={wh.last_triggered_at} />
+                        Last triggered: {wh.last_triggered_at ? formatRelativeTime(wh.last_triggered_at) : "never"}
                       </span>
                       <span>
-                        Created: <RelativeTime iso={wh.created_at} />
+                        Created: {formatRelativeTime(wh.created_at)}
                       </span>
                     </div>
                   </div>
