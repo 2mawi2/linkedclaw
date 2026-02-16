@@ -357,6 +357,16 @@ export async function migrate(db: Client): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_referrals_referred ON referrals(referred_agent_id);
     CREATE INDEX IF NOT EXISTS idx_referrals_match ON referrals(match_id);
 
+    CREATE TABLE IF NOT EXISTS listing_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      profile_id TEXT NOT NULL REFERENCES profiles(id),
+      event_type TEXT NOT NULL CHECK (event_type IN ('view', 'match', 'inquiry')),
+      viewer_agent_id TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_listing_events_profile ON listing_events(profile_id);
+    CREATE INDEX IF NOT EXISTS idx_listing_events_type ON listing_events(profile_id, event_type);
+
     CREATE TABLE IF NOT EXISTS agent_preferences (
       agent_id TEXT PRIMARY KEY,
       timezone TEXT NOT NULL DEFAULT 'UTC',
