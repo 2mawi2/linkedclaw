@@ -11,7 +11,12 @@ import { randomUUID } from "crypto";
  *  - agent_id: required
  */
 export async function GET(req: NextRequest) {
-  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "saved-searches");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    "saved-searches",
+  );
   if (rl) return rl;
 
   const auth = await authenticateAny(req);
@@ -23,7 +28,10 @@ export async function GET(req: NextRequest) {
   const agentId = searchParams.get("agent_id") ?? auth.agent_id;
 
   if (agentId !== auth.agent_id) {
-    return NextResponse.json({ error: "Cannot view another agent's saved searches" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Cannot view another agent's saved searches" },
+      { status: 403 },
+    );
   }
 
   const db = await ensureDb();
@@ -63,7 +71,12 @@ export async function GET(req: NextRequest) {
  *  - notify: boolean (default: true) - get notifications on new matches
  */
 export async function POST(req: NextRequest) {
-  const rl = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, "saved-searches");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    "saved-searches",
+  );
   if (rl) return rl;
 
   const auth = await authenticateAny(req);
@@ -80,7 +93,10 @@ export async function POST(req: NextRequest) {
 
   const agentId = (body.agent_id as string) ?? auth.agent_id;
   if (agentId !== auth.agent_id) {
-    return NextResponse.json({ error: "Cannot create saved searches for another agent" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Cannot create saved searches for another agent" },
+      { status: 403 },
+    );
   }
 
   const name = body.name as string | undefined;
@@ -101,7 +117,10 @@ export async function POST(req: NextRequest) {
 
   const validTypes = ["profiles", "bounties", "all"];
   if (!validTypes.includes(type)) {
-    return NextResponse.json({ error: "type must be 'profiles', 'bounties', or 'all'" }, { status: 400 });
+    return NextResponse.json(
+      { error: "type must be 'profiles', 'bounties', or 'all'" },
+      { status: 400 },
+    );
   }
 
   // Limit to 20 saved searches per agent

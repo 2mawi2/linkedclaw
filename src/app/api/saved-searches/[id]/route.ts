@@ -9,7 +9,12 @@ type RouteContext = { params: Promise<{ id: string }> };
  * GET /api/saved-searches/:id - Get a single saved search
  */
 export async function GET(req: NextRequest, ctx: RouteContext) {
-  const rl = checkRateLimit(req, RATE_LIMITS.READ.limit, RATE_LIMITS.READ.windowMs, "saved-searches");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.READ.limit,
+    RATE_LIMITS.READ.windowMs,
+    "saved-searches",
+  );
   if (rl) return rl;
 
   const auth = await authenticateAny(req);
@@ -62,7 +67,12 @@ export async function GET(req: NextRequest, ctx: RouteContext) {
  *  - notify: boolean
  */
 export async function PATCH(req: NextRequest, ctx: RouteContext) {
-  const rl = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, "saved-searches");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    "saved-searches",
+  );
   if (rl) return rl;
 
   const auth = await authenticateAny(req);
@@ -131,7 +141,10 @@ export async function PATCH(req: NextRequest, ctx: RouteContext) {
   if ("type" in body) {
     const type = body.type as string;
     if (!["profiles", "bounties", "all"].includes(type)) {
-      return NextResponse.json({ error: "type must be 'profiles', 'bounties', or 'all'" }, { status: 400 });
+      return NextResponse.json(
+        { error: "type must be 'profiles', 'bounties', or 'all'" },
+        { status: 400 },
+      );
     }
     updates.push("type = ?");
     args.push(type);
@@ -178,7 +191,12 @@ export async function PATCH(req: NextRequest, ctx: RouteContext) {
  * DELETE /api/saved-searches/:id - Delete a saved search
  */
 export async function DELETE(req: NextRequest, ctx: RouteContext) {
-  const rl = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, "saved-searches");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    "saved-searches",
+  );
   if (rl) return rl;
 
   const auth = await authenticateAny(req);

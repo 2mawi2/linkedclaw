@@ -16,7 +16,12 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
  *  - results: array of { search_id, search_name, new_profiles, new_bounties }
  */
 export async function POST(req: NextRequest) {
-  const rl = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, "saved-searches-check");
+  const rl = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    "saved-searches-check",
+  );
   if (rl) return rl;
 
   const auth = await authenticateAny(req);
@@ -33,7 +38,10 @@ export async function POST(req: NextRequest) {
 
   const agentId = (body.agent_id as string) ?? auth.agent_id;
   if (agentId !== auth.agent_id) {
-    return NextResponse.json({ error: "Cannot check another agent's saved searches" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Cannot check another agent's saved searches" },
+      { status: 403 },
+    );
   }
 
   const db = await ensureDb();
@@ -71,7 +79,9 @@ export async function POST(req: NextRequest) {
         args.push(searchSide);
       }
       if (searchQuery) {
-        conditions.push("(p.description LIKE ? OR p.category LIKE ? OR p.agent_id LIKE ? OR p.params LIKE ?)");
+        conditions.push(
+          "(p.description LIKE ? OR p.category LIKE ? OR p.agent_id LIKE ? OR p.params LIKE ?)",
+        );
         const pat = `%${searchQuery}%`;
         args.push(pat, pat, pat, pat);
       }
@@ -114,7 +124,9 @@ export async function POST(req: NextRequest) {
         args.push(searchCategory);
       }
       if (searchQuery) {
-        conditions.push("(b.title LIKE ? OR b.description LIKE ? OR b.category LIKE ? OR b.skills LIKE ?)");
+        conditions.push(
+          "(b.title LIKE ? OR b.description LIKE ? OR b.category LIKE ? OR b.skills LIKE ?)",
+        );
         const pat = `%${searchQuery}%`;
         args.push(pat, pat, pat, pat);
       }

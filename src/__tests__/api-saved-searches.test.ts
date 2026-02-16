@@ -25,7 +25,10 @@ afterEach(() => {
   restore();
 });
 
-function jsonReq(url: string, opts?: { body?: unknown; apiKey?: string; method?: string }): NextRequest {
+function jsonReq(
+  url: string,
+  opts?: { body?: unknown; apiKey?: string; method?: string },
+): NextRequest {
   const headers: Record<string, string> = {};
   if (opts?.body) headers["Content-Type"] = "application/json";
   if (opts?.apiKey) headers["Authorization"] = `Bearer ${opts.apiKey}`;
@@ -50,7 +53,13 @@ describe("Saved Searches API", () => {
   it("creates a saved search", async () => {
     const res = await POST(
       jsonReq("/api/saved-searches", {
-        body: { agent_id: "alice", name: "React jobs", query: "react", category: "development", side: "seeking" },
+        body: {
+          agent_id: "alice",
+          name: "React jobs",
+          query: "react",
+          category: "development",
+          side: "seeking",
+        },
         apiKey: aliceKey,
       }),
     );
@@ -100,7 +109,10 @@ describe("Saved Searches API", () => {
     );
     const { id } = await createRes.json();
 
-    const res = await getOne(jsonReq(`/api/saved-searches/${id}`, { apiKey: aliceKey }), routeCtx(id));
+    const res = await getOne(
+      jsonReq(`/api/saved-searches/${id}`, { apiKey: aliceKey }),
+      routeCtx(id),
+    );
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.name).toBe("My Search");
@@ -300,7 +312,12 @@ describe("Saved Searches Check", () => {
   it("checks bounty searches too", async () => {
     await POST(
       jsonReq("/api/saved-searches", {
-        body: { agent_id: "alice", name: "Dev bounties", category: "development", type: "bounties" },
+        body: {
+          agent_id: "alice",
+          name: "Dev bounties",
+          category: "development",
+          type: "bounties",
+        },
         apiKey: aliceKey,
       }),
     );
@@ -315,7 +332,18 @@ describe("Saved Searches Check", () => {
     await db.execute({
       sql: `INSERT INTO bounties (id, creator_agent_id, title, description, category, skills, budget_min, budget_max, currency, status)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: ["bounty-1", "bob", "Build a dashboard", "React dashboard", "development", '["React"]', 500, 2000, "USD", "open"],
+      args: [
+        "bounty-1",
+        "bob",
+        "Build a dashboard",
+        "React dashboard",
+        "development",
+        '["React"]',
+        500,
+        2000,
+        "USD",
+        "open",
+      ],
     });
 
     const res = await checkPOST(
