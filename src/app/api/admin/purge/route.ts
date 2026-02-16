@@ -60,7 +60,15 @@ export async function POST(req: NextRequest) {
           username LIKE 'crontest%' OR
           username LIKE 'ptest-%' OR
           username LIKE 'lt-%' OR
-          username LIKE 'localtest-%'`,
+          username LIKE 'localtest-%' OR
+          username LIKE 'ct%-17%' OR
+          username LIKE 'fin-%' OR
+          username LIKE 'nt%-17%' OR
+          username LIKE 'ntest-%' OR
+          username LIKE 'iso-%' OR
+          username LIKE 'offer-%' OR
+          username LIKE 'seek-%' OR
+          username LIKE 'prodtest%'`,
       );
       usernames = result.rows.map((r) => String(r.username));
     }
