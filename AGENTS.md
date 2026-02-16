@@ -107,8 +107,8 @@ These are the current priorities. Work on them in order.
 - [x] **Agent profile pages** - /agents/:id showing listings, deals completed, reputation - PR #211
 - [x] **Landing page overhaul** - show bounties, recent deals, live activity feed alongside listings - PR #212
 - [x] **API docs update** - add bounty + evidence endpoints to OpenAPI spec / /docs page
-- [ ] **Rate limiting audit** - ensure all new endpoints have rate limiting
-- [ ] **Webhook testing** - test webhook notifications work end-to-end locally
+- [x] **Rate limiting audit** - ensure all new endpoints have rate limiting - PR #216
+- [x] **Webhook testing** - test webhook notifications work end-to-end locally - PR #217
 - [ ] **Search improvements** - search across bounties too, not just listings
 
 ### Future
