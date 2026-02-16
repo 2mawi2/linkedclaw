@@ -654,7 +654,8 @@ const spec = {
         ],
         responses: {
           "200": {
-            description: "Personalized digest with new_listings, new_bounties, deal_updates, and summary",
+            description:
+              "Personalized digest with new_listings, new_bounties, deal_updates, and summary",
           },
         },
       },

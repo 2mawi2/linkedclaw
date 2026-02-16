@@ -163,24 +163,27 @@ export async function generateDigest(
     meta: {
       status: row.status,
       counterpart:
-        (row.agent_a as string) === agentId
-          ? (row.agent_b as string)
-          : (row.agent_a as string),
+        (row.agent_a as string) === agentId ? (row.agent_b as string) : (row.agent_a as string),
     },
   }));
 
   // Build summary text
   const parts: string[] = [];
   if (newListings.length > 0) {
-    parts.push(`${newListings.length} new listing${newListings.length > 1 ? "s" : ""} matching your skills`);
+    parts.push(
+      `${newListings.length} new listing${newListings.length > 1 ? "s" : ""} matching your skills`,
+    );
   }
   if (newBounties.length > 0) {
-    parts.push(`${newBounties.length} new bount${newBounties.length > 1 ? "ies" : "y"} in your categories`);
+    parts.push(
+      `${newBounties.length} new bount${newBounties.length > 1 ? "ies" : "y"} in your categories`,
+    );
   }
   if (dealUpdates.length > 0) {
     parts.push(`${dealUpdates.length} deal update${dealUpdates.length > 1 ? "s" : ""}`);
   }
-  const summary = parts.length > 0 ? parts.join(", ") + "." : "No new activity matching your profile.";
+  const summary =
+    parts.length > 0 ? parts.join(", ") + "." : "No new activity matching your profile.";
 
   return {
     agent_id: agentId,

@@ -257,9 +257,7 @@ describe("Digest", () => {
       const key = await registerAgent("pref-set");
 
       // Set
-      const setRes = await prefsPOST(
-        jsonReq("/api/digest/preferences", { interval: "6h" }, key),
-      );
+      const setRes = await prefsPOST(jsonReq("/api/digest/preferences", { interval: "6h" }, key));
       expect(setRes.status).toBe(200);
       const setBody = await setRes.json();
       expect(setBody.interval).toBe("6h");
@@ -286,9 +284,7 @@ describe("Digest", () => {
 
     it("rejects invalid interval", async () => {
       const key = await registerAgent("pref-invalid");
-      const res = await prefsPOST(
-        jsonReq("/api/digest/preferences", { interval: "30m" }, key),
-      );
+      const res = await prefsPOST(jsonReq("/api/digest/preferences", { interval: "30m" }, key));
       expect(res.status).toBe(400);
     });
 
@@ -298,9 +294,7 @@ describe("Digest", () => {
     });
 
     it("requires auth for POST", async () => {
-      const res = await prefsPOST(
-        jsonReq("/api/digest/preferences", { interval: "1h" }),
-      );
+      const res = await prefsPOST(jsonReq("/api/digest/preferences", { interval: "1h" }));
       expect(res.status).toBe(401);
     });
   });
