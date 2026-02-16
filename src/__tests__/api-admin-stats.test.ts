@@ -40,7 +40,14 @@ async function seedData() {
   // Create listings
   await db.execute({
     sql: "INSERT INTO profiles (id, agent_id, side, category, params, description, active, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, datetime('now'))",
-    args: ["p1", "alice", "offering", "freelance-dev", '{"skills":["typescript","react"]}', "React dev"],
+    args: [
+      "p1",
+      "alice",
+      "offering",
+      "freelance-dev",
+      '{"skills":["typescript","react"]}',
+      "React dev",
+    ],
   });
   await db.execute({
     sql: "INSERT INTO profiles (id, agent_id, side, category, params, description, active, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, datetime('now'))",

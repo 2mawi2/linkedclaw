@@ -33,16 +33,20 @@ export async function GET(req: NextRequest) {
   const cutoff = new Date(Date.now() - days * 86400000).toISOString();
 
   // Agent stats
-  const agentResult = await db.execute(`
+  const agentResult = await db.execute(
+    `
     SELECT
       COUNT(*) as total_agents,
       SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as new_agents
     FROM users
-  `, [cutoff]);
+  `,
+    [cutoff],
+  );
   const agents = agentResult.rows[0] as unknown as Record<string, number>;
 
   // Listing stats
-  const listingResult = await db.execute(`
+  const listingResult = await db.execute(
+    `
     SELECT
       COUNT(*) as total_listings,
       SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) as active_listings,
@@ -51,11 +55,14 @@ export async function GET(req: NextRequest) {
       SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as new_listings,
       COUNT(DISTINCT agent_id) as agents_with_listings
     FROM profiles
-  `, [cutoff]);
+  `,
+    [cutoff],
+  );
   const listings = listingResult.rows[0] as unknown as Record<string, number>;
 
   // Deal stats
-  const dealResult = await db.execute(`
+  const dealResult = await db.execute(
+    `
     SELECT
       COUNT(*) as total_deals,
       SUM(CASE WHEN status = 'matched' THEN 1 ELSE 0 END) as matched,
@@ -67,44 +74,59 @@ export async function GET(req: NextRequest) {
       SUM(CASE WHEN status = 'expired' THEN 1 ELSE 0 END) as expired,
       SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as new_deals
     FROM matches
-  `, [cutoff]);
+  `,
+    [cutoff],
+  );
   const deals = dealResult.rows[0] as unknown as Record<string, number>;
 
   // Message stats
-  const msgResult = await db.execute(`
+  const msgResult = await db.execute(
+    `
     SELECT
       COUNT(*) as total_messages,
       SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as recent_messages,
       COUNT(DISTINCT match_id) as deals_with_messages
     FROM messages
-  `, [cutoff]);
+  `,
+    [cutoff],
+  );
   const messages = msgResult.rows[0] as unknown as Record<string, number>;
 
   // Bounty stats
   let bounties: Record<string, number> = { total_bounties: 0, open_bounties: 0, new_bounties: 0 };
   try {
-    const bountyResult = await db.execute(`
+    const bountyResult = await db.execute(
+      `
       SELECT
         COUNT(*) as total_bounties,
         SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as open_bounties,
         SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as new_bounties
       FROM bounties
-    `, [cutoff]);
+    `,
+      [cutoff],
+    );
     bounties = bountyResult.rows[0] as unknown as Record<string, number>;
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   // Review stats
   let reviews: Record<string, number> = { total_reviews: 0, recent_reviews: 0, avg_rating: 0 };
   try {
-    const reviewResult = await db.execute(`
+    const reviewResult = await db.execute(
+      `
       SELECT
         COUNT(*) as total_reviews,
         SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as recent_reviews,
         COALESCE(AVG(rating), 0) as avg_rating
       FROM reviews
-    `, [cutoff]);
+    `,
+      [cutoff],
+    );
     reviews = reviewResult.rows[0] as unknown as Record<string, number>;
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   // Top categories by active listings
   const catResult = await db.execute(`
@@ -117,12 +139,17 @@ export async function GET(req: NextRequest) {
   // Daily active agents (agents who recorded activity in last N days)
   let daily_active_agents = 0;
   try {
-    const dauResult = await db.execute(`
+    const dauResult = await db.execute(
+      `
       SELECT COUNT(DISTINCT agent_id) as dau
       FROM agent_activity WHERE activity_date >= date(?)
-    `, [cutoff]);
+    `,
+      [cutoff],
+    );
     daily_active_agents = Number((dauResult.rows[0] as unknown as Record<string, number>).dau) || 0;
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   // Webhook stats
   let webhookStats: Record<string, number> = { total_webhooks: 0, active_webhooks: 0 };
@@ -134,7 +161,9 @@ export async function GET(req: NextRequest) {
       FROM webhooks
     `);
     webhookStats = whResult.rows[0] as unknown as Record<string, number>;
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   return NextResponse.json({
     period_days: days,
