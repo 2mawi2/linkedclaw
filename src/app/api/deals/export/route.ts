@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import type { MatchStatus, Side } from "@/lib/types";
 
 interface ExportRow {
   match_id: string;
-  status: string;
+  status: MatchStatus;
   counterpart_agent_id: string;
   counterpart_description: string | null;
   category: string;
-  side: string;
+  side: Side;
   overlap_summary: string;
   proposed_terms: string | null;
   message_count: number;
