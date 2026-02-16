@@ -56,9 +56,7 @@ async function getListing(id: string): Promise<ListingDetail | null> {
         : null,
     remote: params.remote ?? null,
     description: String(profile.description || ""),
-    availability: String(
-      (profile as Profile & { availability?: string }).availability ?? "available",
-    ),
+    availability: String(profile.availability ?? "available"),
     tags,
     reputation: {
       avg_rating: Math.round(Number(rep.avg_rating ?? 0) * 100) / 100,
