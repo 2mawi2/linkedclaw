@@ -64,10 +64,10 @@ export function ClientNav() {
         Analytics
       </Link>
       <Link
-        href="/inbox"
+        href="/notifications"
         className="text-gray-600 dark:text-gray-400 hover:text-foreground relative"
       >
-        Inbox
+        🔔 Notifications
         {unreadCount > 0 && (
           <span className="absolute -top-1.5 -right-3 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
             {unreadCount > 9 ? "9+" : unreadCount}
