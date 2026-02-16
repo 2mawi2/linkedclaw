@@ -51,6 +51,15 @@ interface ReviewInfo {
   created_at: string;
 }
 
+interface TimelineEvent {
+  id: string;
+  type: string;
+  actor: string | null;
+  summary: string;
+  detail: string | null;
+  timestamp: string;
+}
+
 interface DealData {
   match: MatchInfo;
   messages: MessageInfo[];
@@ -105,6 +114,8 @@ export default function DealDetailPage() {
   const [disputeLoading, setDisputeLoading] = useState(false);
   const [disputeResult, setDisputeResult] = useState("");
   const [showDisputeForm, setShowDisputeForm] = useState(false);
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+  const [timelineOpen, setTimelineOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastActivityRef = useRef(Date.now());
 
@@ -142,10 +153,29 @@ export default function DealDetailPage() {
     }
   }, [matchId]);
 
+  const fetchTimeline = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/deals/${matchId}/timeline`);
+      if (res.ok) {
+        const json = await res.json();
+        setTimelineEvents(json.events || []);
+      }
+    } catch {
+      // Non-critical
+    }
+  }, [matchId]);
+
   useEffect(() => {
     fetchDeal();
     fetchReviews();
   }, [fetchDeal, fetchReviews]);
+
+  // Fetch timeline when opened or when deal data changes
+  useEffect(() => {
+    if (timelineOpen) {
+      fetchTimeline();
+    }
+  }, [timelineOpen, data?.match.status, data?.messages.length, fetchTimeline]);
 
   // Real-time updates via SSE, with polling fallback
   useEffect(() => {
@@ -1030,6 +1060,32 @@ export default function DealDetailPage() {
           </div>
         )}
 
+        {/* Deal Timeline */}
+        <div className="mb-6">
+          <button
+            onClick={() => setTimelineOpen(!timelineOpen)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-foreground transition-colors"
+          >
+            <span className={`transition-transform ${timelineOpen ? "rotate-90" : ""}`}>▶</span>
+            Deal Timeline
+            {timelineEvents.length > 0 && (
+              <span className="text-xs text-gray-400 dark:text-gray-500 font-normal">
+                ({timelineEvents.length} events)
+              </span>
+            )}
+          </button>
+          {timelineOpen && (
+            <div className="mt-3 ml-2 border-l-2 border-gray-200 dark:border-gray-800 pl-4 space-y-0">
+              {timelineEvents.length === 0 && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 py-2">Loading...</p>
+              )}
+              {timelineEvents.map((event, idx) => (
+                <TimelineItem key={event.id} event={event} isLast={idx === timelineEvents.length - 1} />
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Approvals list */}
         {approvals.length > 0 && (
           <div className="mb-6">
@@ -1053,6 +1109,77 @@ export default function DealDetailPage() {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+const TIMELINE_ICONS: Record<string, string> = {
+  deal_created: "🤝",
+  message: "💬",
+  proposal: "📋",
+  approval: "✅",
+  rejection: "❌",
+  status_change: "🔄",
+  milestone_created: "🏁",
+  milestone_updated: "📌",
+  dispute_filed: "⚠️",
+  dispute_resolved: "✔️",
+  completion_submitted: "📦",
+  review_submitted: "⭐",
+};
+
+const TIMELINE_COLORS: Record<string, string> = {
+  deal_created: "bg-blue-500",
+  message: "bg-gray-400 dark:bg-gray-600",
+  proposal: "bg-purple-500",
+  approval: "bg-green-500",
+  rejection: "bg-red-500",
+  status_change: "bg-yellow-500",
+  milestone_created: "bg-orange-500",
+  milestone_updated: "bg-orange-400",
+  dispute_filed: "bg-red-600",
+  dispute_resolved: "bg-emerald-500",
+  completion_submitted: "bg-teal-500",
+  review_submitted: "bg-yellow-400",
+};
+
+function TimelineItem({ event, isLast }: { event: TimelineEvent; isLast: boolean }) {
+  const icon = TIMELINE_ICONS[event.type] || "•";
+  const dotColor = TIMELINE_COLORS[event.type] || "bg-gray-400";
+  const isMinor = event.type === "message";
+
+  return (
+    <div className={`relative flex gap-3 ${isLast ? "pb-0" : "pb-4"}`}>
+      {/* Dot */}
+      <div className="flex flex-col items-center shrink-0">
+        <div
+          className={`w-6 h-6 rounded-full ${dotColor} flex items-center justify-center text-xs ${isMinor ? "w-5 h-5 opacity-60" : ""}`}
+          title={event.type}
+        >
+          {icon}
+        </div>
+        {!isLast && <div className="w-px flex-1 bg-gray-200 dark:bg-gray-800 mt-1" />}
+      </div>
+
+      {/* Content */}
+      <div className={`min-w-0 flex-1 ${isMinor ? "opacity-70" : ""}`}>
+        <p className={`text-sm ${isMinor ? "text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-gray-200"}`}>
+          {event.summary}
+        </p>
+        {event.detail && !isMinor && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+            {event.detail}
+          </p>
+        )}
+        <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+          {new Date(event.timestamp).toLocaleString(undefined, {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </p>
+      </div>
     </div>
   );
 }
