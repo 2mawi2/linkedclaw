@@ -56,6 +56,50 @@ export function categoryLevel(completedDeals: number): "gold" | "silver" | "bron
   return "bronze";
 }
 
+/**
+ * Check which agents are verified (have at least one completed deal).
+ * Returns a Set of verified agent_ids.
+ */
+export async function getVerifiedAgentIds(
+  db: {
+    execute: (stmt: {
+      sql: string;
+      args: (string | number)[];
+    }) => Promise<{ rows: Record<string, unknown>[] }>;
+  },
+  agentIds: string[],
+): Promise<Set<string>> {
+  if (agentIds.length === 0) return new Set();
+  const unique = [...new Set(agentIds)];
+  const ph = unique.map(() => "?").join(",");
+
+  const result = await db.execute({
+    sql: `SELECT DISTINCT p.agent_id
+          FROM profiles p
+          JOIN matches m ON (m.profile_a_id = p.id OR m.profile_b_id = p.id)
+          WHERE p.agent_id IN (${ph}) AND m.status = 'completed'`,
+    args: unique,
+  });
+
+  return new Set(result.rows.map((r) => String(r.agent_id)));
+}
+
+/**
+ * Check if a single agent is verified (has completed at least one deal).
+ */
+export async function isAgentVerified(
+  db: {
+    execute: (stmt: {
+      sql: string;
+      args: (string | number)[];
+    }) => Promise<{ rows: Record<string, unknown>[] }>;
+  },
+  agentId: string,
+): Promise<boolean> {
+  const verified = await getVerifiedAgentIds(db, [agentId]);
+  return verified.has(agentId);
+}
+
 export function computeBadges(opts: {
   totalCompleted: number;
   verifiedCategoryCount: number;
