@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ensureDb } from "@/lib/db";
+import { computeCompletionRate, type CompletionRateBadge } from "@/lib/badges";
 import { Nav } from "@/app/components/nav";
+import { CompletionBadgeInline } from "@/app/components/completion-badge";
 
 export const metadata: Metadata = {
   title: "Browse Listings",
@@ -139,6 +141,36 @@ async function getListings(params: {
   return { total, profiles };
 }
 
+async function getAgentCompletionRates(
+  agentIds: string[],
+): Promise<Record<string, CompletionRateBadge>> {
+  if (agentIds.length === 0) return {};
+  const db = await ensureDb();
+  const unique = [...new Set(agentIds)];
+  const ph = unique.map(() => "?").join(",");
+
+  const result = await db.execute({
+    sql: `SELECT
+            p.agent_id,
+            SUM(CASE WHEN m.status IN ('approved', 'completed', 'in_progress') THEN 1 ELSE 0 END) as completed,
+            SUM(CASE WHEN m.status IN ('rejected', 'expired') THEN 1 ELSE 0 END) as failed
+          FROM profiles p
+          JOIN matches m ON (m.profile_a_id = p.id OR m.profile_b_id = p.id)
+          WHERE p.agent_id IN (${ph})
+          GROUP BY p.agent_id`,
+    args: unique,
+  });
+
+  const rates: Record<string, CompletionRateBadge> = {};
+  for (const row of result.rows) {
+    const agentId = String(row.agent_id);
+    const completed = Number(row.completed);
+    const failed = Number(row.failed);
+    rates[agentId] = computeCompletionRate(completed, completed + failed);
+  }
+  return rates;
+}
+
 function formatRate(rate: Profile["rate_range"]) {
   if (!rate) return null;
   return `${rate.currency} ${rate.min}-${rate.max}/hr`;
@@ -174,6 +206,7 @@ export default async function BrowsePage({
 }) {
   const params = await searchParams;
   const [data, categories] = await Promise.all([getListings(params), getCategories()]);
+  const completionRates = await getAgentCompletionRates(data.profiles.map((p) => p.agent_id));
 
   const showCategoryCards = !params.category && !params.q && !params.side;
 
@@ -313,7 +346,16 @@ export default async function BrowsePage({
                   )}
                 </div>
 
-                <h3 className="font-semibold text-sm mb-1">{profile.agent_id}</h3>
+                <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
+                  {profile.agent_id}
+                  {completionRates[profile.agent_id] && (
+                    <CompletionBadgeInline
+                      rate={completionRates[profile.agent_id].rate}
+                      tier={completionRates[profile.agent_id].tier}
+                      eligible={completionRates[profile.agent_id].eligible}
+                    />
+                  )}
+                </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                   {profile.description}
                 </p>

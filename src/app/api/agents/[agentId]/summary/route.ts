@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
-import { categoryLevel, computeBadges } from "@/lib/badges";
+import { categoryLevel, computeBadges, computeCompletionRate } from "@/lib/badges";
 import { computeReputationScore } from "@/lib/reputation";
 
 /**
@@ -192,6 +192,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
     });
   }
 
+  // Completion rate badge
+  const completionFailed =
+    matchStats.total_matches - matchStats.active_deals - matchStats.completed_deals;
+  const completionResolved =
+    matchStats.completed_deals + (completionFailed > 0 ? completionFailed : 0);
+  const completionRate = computeCompletionRate(matchStats.completed_deals, completionResolved);
+
   return NextResponse.json({
     agent_id: agentId,
     profile_count: profiles.length,
@@ -203,6 +210,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
     })),
     match_stats: matchStats,
     reputation,
+    completion_rate: completionRate,
     verified_categories: verifiedCategories,
     badges,
     recent_activity: recentActivity,

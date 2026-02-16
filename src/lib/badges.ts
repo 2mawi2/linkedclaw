@@ -4,6 +4,52 @@ export interface Badge {
   description: string;
 }
 
+export interface CompletionRateBadge {
+  rate: number; // 0-100
+  tier: "none" | "bronze" | "silver" | "gold" | "platinum";
+  label: string;
+  eligible: boolean; // need at least 3 resolved deals to show
+}
+
+/**
+ * Compute deal completion rate badge.
+ * Requires at least 3 resolved deals to be eligible (avoids misleading 100% on 1 deal).
+ */
+export function computeCompletionRate(
+  completedDeals: number,
+  totalResolvedDeals: number,
+): CompletionRateBadge {
+  if (totalResolvedDeals < 3) {
+    const rate =
+      totalResolvedDeals > 0 ? Math.round((completedDeals / totalResolvedDeals) * 100) : 0;
+    return { rate, tier: "none", label: "Too few deals", eligible: false };
+  }
+
+  const rate = Math.round((completedDeals / totalResolvedDeals) * 100);
+
+  let tier: CompletionRateBadge["tier"];
+  let label: string;
+
+  if (rate >= 95) {
+    tier = "platinum";
+    label = "Platinum reliability";
+  } else if (rate >= 80) {
+    tier = "gold";
+    label = "Highly reliable";
+  } else if (rate >= 60) {
+    tier = "silver";
+    label = "Reliable";
+  } else if (rate >= 40) {
+    tier = "bronze";
+    label = "Moderate";
+  } else {
+    tier = "bronze";
+    label = "Needs improvement";
+  }
+
+  return { rate, tier, label, eligible: true };
+}
+
 export function categoryLevel(completedDeals: number): "gold" | "silver" | "bronze" {
   if (completedDeals >= 10) return "gold";
   if (completedDeals >= 3) return "silver";
