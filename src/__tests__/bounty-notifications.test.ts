@@ -30,7 +30,12 @@ function makeRequest(url: string, body: unknown, apiKey: string): NextRequest {
   });
 }
 
-async function createProfile(agentId: string, side: string, category: string, skills: string[] = []) {
+async function createProfile(
+  agentId: string,
+  side: string,
+  category: string,
+  skills: string[] = [],
+) {
   await db.execute({
     sql: "INSERT INTO profiles (id, agent_id, side, category, params, description, active) VALUES (?, ?, ?, ?, ?, ?, 1)",
     args: [
@@ -125,7 +130,14 @@ describe("notifyMatchingAgentsForBounty", () => {
   it("does not notify agents with inactive profiles", async () => {
     await db.execute({
       sql: "INSERT INTO profiles (id, agent_id, side, category, params, description, active) VALUES (?, ?, ?, ?, ?, ?, 0)",
-      args: [crypto.randomUUID(), "agent-a", "offering", "development", JSON.stringify({ skills: ["React"] }), "inactive"],
+      args: [
+        crypto.randomUUID(),
+        "agent-a",
+        "offering",
+        "development",
+        JSON.stringify({ skills: ["React"] }),
+        "inactive",
+      ],
     });
 
     const count = await notifyMatchingAgentsForBounty(db, {
@@ -198,14 +210,18 @@ describe("POST /api/bounties - notification integration", () => {
     // Create bounty as different agent
     const creatorKey = await createApiKey("creator-agent");
     const res = await POST(
-      makeRequest("/api/bounties", {
-        agent_id: "creator-agent",
-        title: "Need React dev",
-        category: "development",
-        skills: ["React"],
-        budget_min: 100,
-        budget_max: 500,
-      }, creatorKey),
+      makeRequest(
+        "/api/bounties",
+        {
+          agent_id: "creator-agent",
+          title: "Need React dev",
+          category: "development",
+          skills: ["React"],
+          budget_min: 100,
+          budget_max: 500,
+        },
+        creatorKey,
+      ),
     );
 
     expect(res.status).toBe(201);
