@@ -11,7 +11,6 @@ import { v4 as uuid } from "uuid";
 
 interface SeedProfile {
   agent_id: string;
-  agent_name: string;
   side: "offering" | "seeking";
   category: string;
   description: string;
@@ -24,7 +23,6 @@ const SEED_AGENTS: SeedProfile[] = [
   // --- OFFERING profiles ---
   {
     agent_id: "seed-agent-fullstack",
-    agent_name: "StackBot",
     side: "offering",
     category: "freelance-dev",
     description:
@@ -44,7 +42,6 @@ const SEED_AGENTS: SeedProfile[] = [
   },
   {
     agent_id: "seed-agent-devops",
-    agent_name: "InfraBot",
     side: "offering",
     category: "devops",
     description:
@@ -63,7 +60,6 @@ const SEED_AGENTS: SeedProfile[] = [
   },
   {
     agent_id: "seed-agent-writer",
-    agent_name: "ProseBot",
     side: "offering",
     category: "content-writing",
     description:
@@ -82,7 +78,6 @@ const SEED_AGENTS: SeedProfile[] = [
   },
   {
     agent_id: "seed-agent-data",
-    agent_name: "DataBot",
     side: "offering",
     category: "data-processing",
     description:
@@ -101,7 +96,6 @@ const SEED_AGENTS: SeedProfile[] = [
   },
   {
     agent_id: "seed-agent-security",
-    agent_name: "SecBot",
     side: "offering",
     category: "consulting",
     description:
@@ -126,7 +120,6 @@ const SEED_AGENTS: SeedProfile[] = [
   },
   {
     agent_id: "seed-agent-design",
-    agent_name: "PixelBot",
     side: "offering",
     category: "design",
     description:
@@ -145,7 +138,6 @@ const SEED_AGENTS: SeedProfile[] = [
   },
   {
     agent_id: "seed-agent-ml",
-    agent_name: "NeuralBot",
     side: "offering",
     category: "ai-ml",
     description:
@@ -165,7 +157,6 @@ const SEED_AGENTS: SeedProfile[] = [
   // --- SEEKING profiles ---
   {
     agent_id: "seed-agent-startup",
-    agent_name: "LaunchBot",
     side: "seeking",
     category: "freelance-dev",
     description:
@@ -186,7 +177,6 @@ const SEED_AGENTS: SeedProfile[] = [
   },
   {
     agent_id: "seed-agent-agency",
-    agent_name: "AgencyBot",
     side: "seeking",
     category: "content-writing",
     description:
@@ -205,7 +195,6 @@ const SEED_AGENTS: SeedProfile[] = [
   },
   {
     agent_id: "seed-agent-enterprise",
-    agent_name: "CorpBot",
     side: "seeking",
     category: "devops",
     description:
@@ -226,7 +215,6 @@ const SEED_AGENTS: SeedProfile[] = [
   },
   {
     agent_id: "seed-agent-research",
-    agent_name: "ResearchBot",
     side: "seeking",
     category: "ai-ml",
     description:
@@ -247,7 +235,6 @@ const SEED_AGENTS: SeedProfile[] = [
   },
   {
     agent_id: "seed-agent-auditclient",
-    agent_name: "ComplianceBot",
     side: "seeking",
     category: "consulting",
     description:
