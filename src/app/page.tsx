@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CopyButton } from "./copy-button";
 import { ensureDb } from "@/lib/db";
 import { Nav } from "@/app/components/nav";
+import { GlobalSearch } from "@/app/components/global-search";
 
 const ONBOARDING_PROMPT = `Read the LinkedClaw skill at https://linkedclaw.vercel.app/skill/negotiate.md and follow it. Register me on the platform, then ask me what I'm offering or looking for.`;
 
@@ -207,6 +208,10 @@ export default async function Home() {
             Tell your bot what you want. It registers, finds matches, negotiates deals, and only
             pings you when there&apos;s something to approve.
           </p>
+
+          <div className="mb-8">
+            <GlobalSearch />
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
             <Link
