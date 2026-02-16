@@ -2,12 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createTestDb, _setDb, migrate } from "@/lib/db";
 import type { Client } from "@libsql/client";
 import { createApiKey } from "@/__tests__/test-helpers";
-import {
-  signPayload,
-  verifySignature,
-  deliverSingleWebhook,
-  fireWebhooks,
-} from "@/lib/webhooks";
+import { signPayload, verifySignature, deliverSingleWebhook, fireWebhooks } from "@/lib/webhooks";
 import { createNotification } from "@/lib/notifications";
 import { POST as webhookTestPOST } from "@/app/api/webhooks/[id]/test/route";
 import { POST as webhooksPOST } from "@/app/api/webhooks/route";
@@ -94,9 +89,7 @@ describe("Webhook delivery", () => {
     });
 
     // Mock successful fetch
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response("OK", { status: 200 }),
-    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response("OK", { status: 200 }));
 
     const result = await deliverSingleWebhook(
       db,
@@ -292,9 +285,9 @@ describe("fireWebhooks event filtering", () => {
       args: ["wh-1", "agent-1", "https://example.com/hook", "secret1", "*", 1, 0],
     });
 
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response("OK", { status: 200 }),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("OK", { status: 200 }));
 
     await fireWebhooks(db, "agent-1", "new_match", "match-1", "agent-2", "New match");
     // Give fire-and-forget time to execute
@@ -313,9 +306,9 @@ describe("fireWebhooks event filtering", () => {
       args: ["wh-deal", "agent-1", "https://example.com/deals", "s2", "deal_approved", 1, 0],
     });
 
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response("OK", { status: 200 }),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("OK", { status: 200 }));
 
     await fireWebhooks(db, "agent-1", "new_match", "match-1", undefined, "New match");
     await new Promise((r) => setTimeout(r, 50));
@@ -332,9 +325,9 @@ describe("fireWebhooks event filtering", () => {
       args: ["wh-1", "agent-1", "https://example.com/hook", "s1", "*", 0, 5],
     });
 
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response("OK", { status: 200 }),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("OK", { status: 200 }));
 
     await fireWebhooks(db, "agent-1", "new_match", "match-1", undefined, "New match");
     await new Promise((r) => setTimeout(r, 50));
@@ -348,9 +341,9 @@ describe("fireWebhooks event filtering", () => {
       args: ["wh-1", "agent-2", "https://example.com/hook", "s1", "*", 1, 0],
     });
 
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response("OK", { status: 200 }),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("OK", { status: 200 }));
 
     await fireWebhooks(db, "agent-1", "new_match", "match-1", undefined, "New match");
     await new Promise((r) => setTimeout(r, 50));
@@ -367,9 +360,9 @@ describe("Notification -> Webhook integration", () => {
       args: ["wh-1", "agent-1", "https://example.com/hook", "secret1", "*", 1, 0],
     });
 
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response("OK", { status: 200 }),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("OK", { status: 200 }));
 
     await createNotification(db, {
       agent_id: "agent-1",
@@ -405,9 +398,7 @@ describe("POST /api/webhooks/:id/test", () => {
     const { webhook_id } = await createRes.json();
 
     // Mock successful delivery
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response("OK", { status: 200 }),
-    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response("OK", { status: 200 }));
 
     const res = await webhookTestPOST(
       req(`/api/webhooks/${webhook_id}/test`, {
@@ -436,9 +427,7 @@ describe("POST /api/webhooks/:id/test", () => {
     );
     const { webhook_id } = await createRes.json();
 
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response("Not Found", { status: 404 }),
-    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response("Not Found", { status: 404 }));
 
     const res = await webhookTestPOST(
       req(`/api/webhooks/${webhook_id}/test`, {
