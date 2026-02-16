@@ -46,10 +46,7 @@ export async function GET(req: NextRequest) {
   if (thresholdParam) {
     const parsed = parseInt(thresholdParam, 10);
     if (isNaN(parsed) || parsed < 1 || parsed > 100) {
-      return NextResponse.json(
-        { error: "threshold must be between 1 and 100" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "threshold must be between 1 and 100" }, { status: 400 });
     }
     threshold = parsed;
   }
@@ -75,10 +72,7 @@ export async function GET(req: NextRequest) {
   // If profile_id specified, only check that one against others
   const toCheck = profileId ? listings.filter((l) => l.id === profileId) : listings;
   if (profileId && toCheck.length === 0) {
-    return NextResponse.json(
-      { error: "Profile not found or not active" },
-      { status: 404 },
-    );
+    return NextResponse.json({ error: "Profile not found or not active" }, { status: 404 });
   }
 
   const duplicates: DedupPair[] = [];
@@ -146,12 +140,10 @@ export async function POST(req: NextRequest) {
   const thresholdParam = body.threshold;
   let threshold = DEDUP_THRESHOLD;
   if (thresholdParam !== undefined) {
-    const parsed = typeof thresholdParam === "number" ? thresholdParam : parseInt(String(thresholdParam), 10);
+    const parsed =
+      typeof thresholdParam === "number" ? thresholdParam : parseInt(String(thresholdParam), 10);
     if (isNaN(parsed) || parsed < 1 || parsed > 100) {
-      return NextResponse.json(
-        { error: "threshold must be between 1 and 100" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "threshold must be between 1 and 100" }, { status: 400 });
     }
     threshold = parsed;
   }

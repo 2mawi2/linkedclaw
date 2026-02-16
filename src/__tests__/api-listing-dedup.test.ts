@@ -163,12 +163,26 @@ describe("Listing Deduplication", () => {
 
     it("detects near-duplicate listings", async () => {
       const key = await seedAgent("alice");
-      await seedListing("p1", "alice", "offering", "freelance-dev", "React TypeScript developer available for contract work", {
-        skills: ["react", "typescript"],
-      });
-      await seedListing("p2", "alice", "offering", "freelance-dev", "React TypeScript developer available for contract work now", {
-        skills: ["react", "typescript"],
-      });
+      await seedListing(
+        "p1",
+        "alice",
+        "offering",
+        "freelance-dev",
+        "React TypeScript developer available for contract work",
+        {
+          skills: ["react", "typescript"],
+        },
+      );
+      await seedListing(
+        "p2",
+        "alice",
+        "offering",
+        "freelance-dev",
+        "React TypeScript developer available for contract work now",
+        {
+          skills: ["react", "typescript"],
+        },
+      );
 
       const res = await GET(authReq("GET", "/api/listings/duplicates", key));
       expect(res.status).toBe(200);
@@ -208,9 +222,7 @@ describe("Listing Deduplication", () => {
         skills: ["figma"],
       });
 
-      const res = await GET(
-        authReq("GET", "/api/listings/duplicates?profile_id=p1", key),
-      );
+      const res = await GET(authReq("GET", "/api/listings/duplicates?profile_id=p1", key));
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(data.duplicates).toBeDefined();
@@ -218,9 +230,7 @@ describe("Listing Deduplication", () => {
 
     it("returns 404 for non-existent profile_id", async () => {
       const key = await seedAgent("alice");
-      const res = await GET(
-        authReq("GET", "/api/listings/duplicates?profile_id=nonexistent", key),
-      );
+      const res = await GET(authReq("GET", "/api/listings/duplicates?profile_id=nonexistent", key));
       expect(res.status).toBe(404);
     });
   });
@@ -238,9 +248,16 @@ describe("Listing Deduplication", () => {
 
     it("detects duplicate before creating", async () => {
       const key = await seedAgent("alice");
-      await seedListing("p1", "alice", "offering", "freelance-dev", "React TypeScript developer for contract work", {
-        skills: ["react", "typescript"],
-      });
+      await seedListing(
+        "p1",
+        "alice",
+        "offering",
+        "freelance-dev",
+        "React TypeScript developer for contract work",
+        {
+          skills: ["react", "typescript"],
+        },
+      );
 
       const res = await POST(
         authReq("POST", "/api/listings/duplicates", key, {
@@ -278,9 +295,7 @@ describe("Listing Deduplication", () => {
 
     it("validates required fields", async () => {
       const key = await seedAgent("alice");
-      const res = await POST(
-        authReq("POST", "/api/listings/duplicates", key, { side: "invalid" }),
-      );
+      const res = await POST(authReq("POST", "/api/listings/duplicates", key, { side: "invalid" }));
       expect(res.status).toBe(400);
     });
 
