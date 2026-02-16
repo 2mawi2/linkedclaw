@@ -3,6 +3,7 @@ import { ensureDb, validateTags, saveTags } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { findMatches } from "@/lib/matching";
+import { LISTING_LIFETIME_DAYS } from "@/lib/listing-expiry";
 import type { ConnectRequest, Side } from "@/lib/types";
 
 const VALID_SIDES: Side[] = ["offering", "seeking"];
@@ -130,9 +131,12 @@ export async function POST(req: NextRequest) {
   }
 
   const id = crypto.randomUUID();
+  const expiresAt = new Date(
+    Date.now() + LISTING_LIFETIME_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
 
   await db.execute({
-    sql: "INSERT INTO profiles (id, agent_id, side, category, params, description) VALUES (?, ?, ?, ?, ?, ?)",
+    sql: "INSERT INTO profiles (id, agent_id, side, category, params, description, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
     args: [
       id,
       data.agent_id,
@@ -140,6 +144,7 @@ export async function POST(req: NextRequest) {
       data.category,
       JSON.stringify(data.params),
       data.description ?? null,
+      expiresAt,
     ],
   });
 
@@ -159,6 +164,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     profile_id: id,
     matches_found: matchCount,
+    expires_at: expiresAt,
     ...(existing ? { replaced_profile_id: existing.id } : {}),
   });
 }

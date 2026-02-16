@@ -58,6 +58,7 @@ export async function GET(
     },
     tags,
     created_at: profile.created_at,
+    expires_at: (profile as unknown as Record<string, unknown>).expires_at ?? null,
   });
 }
 

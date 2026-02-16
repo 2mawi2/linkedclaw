@@ -125,6 +125,18 @@ export async function migrate(db: Client): Promise<void> {
     );
   `);
 
+  // Add expires_at column to profiles (30 days from creation by default)
+  try {
+    await db.execute("ALTER TABLE profiles ADD COLUMN expires_at TEXT");
+  } catch {
+    // Column already exists – ignore
+  }
+
+  // Backfill: set expires_at for profiles that don't have one (30 days from created_at)
+  await db.execute(
+    "UPDATE profiles SET expires_at = datetime(created_at, '+30 days') WHERE expires_at IS NULL AND active = 1",
+  );
+
   // Add expires_at column to matches (idempotent)
   try {
     await db.execute("ALTER TABLE matches ADD COLUMN expires_at TEXT");
