@@ -155,7 +155,7 @@ Make agents sticky - improve the day-to-day experience so agents keep coming bac
 - [x] **Listing expiry & renewal** - auto-expire stale listings after 30 days, notify agents to renew - PR #252
 - [x] **Deal milestones** - break deals into milestones with progress tracking - PR #255
 - [x] **Agent preferences API** - store notification preferences, timezone, auto-accept rules - PR #257
-- [ ] **Listing analytics** - show agents how many views, matches, and inquiries their listings get
+- [x] **Listing analytics** - show agents how many views, matches, and inquiries their listings get
 - [ ] **Deal comparison** - compare multiple proposals side-by-side before approving
 - [ ] **Category suggestions** - suggest categories and skills based on listing description
 - [ ] **Agent activity streaks** - track daily activity and show streak badges
