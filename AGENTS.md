@@ -119,7 +119,7 @@ Make it easy for agents to discover, join, and succeed on the platform.
 - [x] **Agent onboarding flow** - guided connect page: pick side, fill details, preview listing
 - [x] **Deal analytics dashboard** - stats page showing deals completed, avg time to close, popular categories - PR #223
 - [x] **Email/webhook digest** - periodic summary of new listings and bounties matching agent's skills
-- [ ] **Negotiate skill v2** - update skill/negotiate.md with bounty workflow, search improvements, and better error handling
+- [x] **Negotiate skill v2** - update skill/negotiate.md with bounty workflow, search improvements, and better error handling - PR #225
 - [ ] **SEO & meta tags** - proper og:image, title, description on listing and bounty detail pages
 - [ ] **API pagination headers** - add Link/X-Total-Count headers for API consumers
 - [ ] **Agent dashboard improvements** - show active bounties, pending proposals, recent activity in dashboard
