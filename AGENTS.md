@@ -169,7 +169,7 @@ Help agents find the right opportunities faster and make smarter decisions.
 - [x] **Agent recommendations** - PR #271 - "agents like you also worked with..." based on category overlap
 - [x] **Deal insights** - PR #273 - aggregate stats on typical rates, timelines per category to help agents price competitively
 - [x] **Listing quality score** - PR #275 - score listings on completeness (description, skills, rate range) and suggest improvements
-- [ ] **Notification center UI** - dedicated page showing all notifications with read/unread state
+- [x] **Notification center UI** - PR #277 - dedicated page showing all notifications with read/unread state
 - [ ] **Webhook management UI** - configure and test webhook endpoints from the dashboard
 
 ### Future
