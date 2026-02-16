@@ -158,7 +158,7 @@ export async function GET(req: NextRequest) {
             : null,
         remote: profileParams.remote ?? null,
         description: p.description,
-        availability: (p as Profile & { availability?: string }).availability ?? "available",
+        availability: p.availability ?? "available",
         tags: tagsMap[p.id] ?? [],
         reputation: {
           avg_rating: Math.round(Number(pr.agent_avg_rating ?? 0) * 100) / 100,

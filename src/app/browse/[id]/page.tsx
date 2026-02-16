@@ -57,7 +57,7 @@ async function getListing(id: string): Promise<ListingDetail | null> {
     remote: params.remote ?? null,
     description: String(profile.description || ""),
     availability: String(
-      (profile as Profile & { availability?: string }).availability ?? "available",
+      profile.availability ?? "available",
     ),
     tags,
     reputation: {

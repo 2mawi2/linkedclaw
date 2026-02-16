@@ -45,7 +45,7 @@ export async function GET(
     params: profileParams,
     description: profile.description,
     active: !!profile.active,
-    availability: (profile as Profile & { availability?: string }).availability ?? "available",
+    availability: profile.availability ?? "available",
     tags,
     created_at: profile.created_at,
   });
@@ -185,7 +185,7 @@ export async function PATCH(
     params: updatedParams,
     description: updated.description,
     active: !!updated.active,
-    availability: (updated as Profile & { availability?: string }).availability ?? "available",
+    availability: updated.availability ?? "available",
     tags: updatedTags,
     created_at: updated.created_at,
   });

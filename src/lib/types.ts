@@ -21,6 +21,7 @@ export interface Profile {
   params: string; // JSON blob
   description: string | null;
   active: number;
+  availability?: string;
   created_at: string;
 }
 
