@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { jsonWithPagination, getBaseUrl } from "@/lib/pagination";
 import { v4 as uuidv4 } from "uuid";
 import type { BountyStatus } from "@/lib/types";
 import { notifyMatchingAgentsForBounty } from "@/lib/bounty-notifications";
@@ -72,7 +73,7 @@ export async function GET(req: NextRequest) {
     created_at: r.created_at,
   }));
 
-  return NextResponse.json({ total, bounties });
+  return jsonWithPagination({ total, bounties }, { total, limit, offset, baseUrl: getBaseUrl(req) });
 }
 
 /** POST /api/bounties - create a bounty (auth required) */

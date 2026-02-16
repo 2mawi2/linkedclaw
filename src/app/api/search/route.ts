@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { ensureDb, getTagsForProfiles } from "@/lib/db";
+import { jsonWithPagination, getBaseUrl } from "@/lib/pagination";
 import type { Profile, ProfileParams } from "@/lib/types";
 
 const VALID_TYPES = ["profiles", "bounties", "all"] as const;
@@ -317,6 +318,8 @@ export async function GET(req: NextRequest) {
 
   const db = await ensureDb();
 
+  const baseUrl = getBaseUrl(req);
+
   // Profiles-only search (backward compatible - default behavior)
   if (type === "profiles") {
     const result = await searchProfiles(db, {
@@ -332,7 +335,7 @@ export async function GET(req: NextRequest) {
       limit,
       offset,
     });
-    return NextResponse.json({ ...result, limit, offset });
+    return jsonWithPagination({ ...result, limit, offset }, { total: result.total, limit, offset, baseUrl });
   }
 
   // Bounties-only search
@@ -345,7 +348,7 @@ export async function GET(req: NextRequest) {
       limit,
       offset,
     });
-    return NextResponse.json({ ...result, limit, offset });
+    return jsonWithPagination({ ...result, limit, offset }, { total: result.total, limit, offset, baseUrl });
   }
 
   // Combined search (type === "all")
@@ -373,13 +376,14 @@ export async function GET(req: NextRequest) {
     }),
   ]);
 
-  return NextResponse.json({
-    total: profileResult.total + bountyResult.total,
+  const combinedTotal = profileResult.total + bountyResult.total;
+  return jsonWithPagination({
+    total: combinedTotal,
     profiles: profileResult.profiles,
     profiles_total: profileResult.total,
     bounties: bountyResult.bounties,
     bounties_total: bountyResult.total,
     limit,
     offset,
-  });
+  }, { total: combinedTotal, limit, offset, baseUrl });
 }
