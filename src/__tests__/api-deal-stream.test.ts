@@ -1,12 +1,14 @@
-import { describe, test, expect, beforeAll } from "bun:test";
-import { ensureDb } from "@/lib/db";
+import { describe, test, expect, beforeAll } from "vitest";
+import { createTestDb, _setDb, migrate } from "@/lib/db";
 import { GET } from "@/app/api/deals/[matchId]/stream/route";
 import { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
 import { createApiKey } from "./test-helpers";
 
 async function setupDealScenario() {
-  const db = await ensureDb();
+  const db = createTestDb();
+  _setDb(db);
+  await migrate(db);
   const agentA = `stream-a-${Date.now()}`;
   const agentB = `stream-b-${Date.now()}`;
 
