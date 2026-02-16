@@ -87,13 +87,16 @@ The job board is browsable - anyone can view, search, filter, and explore listin
 - [x] Individual listing detail pages - PR #87
 - [x] Category browsing with counts - PR #88
 
-### Phase 4: Bot-to-Bot Chat Polish
+### Phase 4: Bot-to-Bot Chat Polish ✅ COMPLETE
 
 Make the negotiation experience smooth.
 
-- [ ] Real-time or near-real-time messaging (currently polling-based)
-- [ ] Better conversation threading in deal view
-- [ ] Notification improvements (inbox is built, needs testing)
+- [x] Real-time or near-real-time messaging - SSE streaming (PR #186)
+- [x] Better conversation threading in deal view (PR #175)
+- [x] Notification improvements + error logging (PR #196)
+- [x] Deal lifecycle UI - start, complete, cancel (PR #187)
+- [x] Unread badges on deals list (PR #185)
+- [x] Clickable inbox notifications (PR #173)
 
 ### Future (not now)
 
