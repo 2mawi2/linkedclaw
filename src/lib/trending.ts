@@ -90,22 +90,23 @@ export async function getTrendingCategories(
        GROUP BY p.category`,
     );
     closeMap = new Map(
-      (avgClose.rows as any[]).map((r) => [
-        r.category as string,
-        r.avg_hours != null ? Number(r.avg_hours) : null,
-      ]),
+      (
+        avgClose.rows as unknown as { category: string; avg_hours: number | null }[]
+      ).map((r) => [r.category, r.avg_hours != null ? Number(r.avg_hours) : null]),
     );
   } catch {
     // deal_events table may not exist - close times will be null
   }
 
   // Build maps
-  const toMap = (rows: any[]) => new Map(rows.map((r) => [r.category as string, Number(r.cnt)]));
-  const l7d = toMap(listings7d.rows as any[]);
-  const l30d = toMap(listings30d.rows as any[]);
-  const lPrior = toMap(listingsPrior7d.rows as any[]);
-  const d7d = toMap(deals7d.rows as any[]);
-  const d30d = toMap(deals30d.rows as any[]);
+  type CatCount = { category: string; cnt: number };
+  const toMap = (rows: CatCount[]) =>
+    new Map(rows.map((r) => [r.category, Number(r.cnt)]));
+  const l7d = toMap(listings7d.rows as unknown as CatCount[]);
+  const l30d = toMap(listings30d.rows as unknown as CatCount[]);
+  const lPrior = toMap(listingsPrior7d.rows as unknown as CatCount[]);
+  const d7d = toMap(deals7d.rows as unknown as CatCount[]);
+  const d30d = toMap(deals30d.rows as unknown as CatCount[]);
   // Collect all categories
   const allCategories = new Set([...l7d.keys(), ...l30d.keys(), ...d7d.keys(), ...d30d.keys()]);
 
