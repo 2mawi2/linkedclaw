@@ -108,7 +108,12 @@ export default function DealsPage() {
   useEffect(() => {
     if (refreshRef.current) clearInterval(refreshRef.current);
     const hasActive = deals.some(
-      (d) => d.status === "matched" || d.status === "negotiating" || d.status === "proposed" || d.status === "approved" || d.status === "in_progress",
+      (d) =>
+        d.status === "matched" ||
+        d.status === "negotiating" ||
+        d.status === "proposed" ||
+        d.status === "approved" ||
+        d.status === "in_progress",
     );
     if (!loaded || !hasActive || !agentId) return;
     refreshRef.current = setInterval(() => {
@@ -156,7 +161,12 @@ export default function DealsPage() {
 
         {loaded &&
           deals.some(
-            (d) => d.status === "matched" || d.status === "negotiating" || d.status === "proposed" || d.status === "approved" || d.status === "in_progress",
+            (d) =>
+              d.status === "matched" ||
+              d.status === "negotiating" ||
+              d.status === "proposed" ||
+              d.status === "approved" ||
+              d.status === "in_progress",
           ) && (
             <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
               Auto-refreshing active deals

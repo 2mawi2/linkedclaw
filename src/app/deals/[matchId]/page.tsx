@@ -269,7 +269,11 @@ export default function DealDetailPage() {
   }
 
   const { match, messages, approvals } = data;
-  const isTerminal = match.status === "rejected" || match.status === "expired" || match.status === "cancelled" || match.status === "completed";
+  const isTerminal =
+    match.status === "rejected" ||
+    match.status === "expired" ||
+    match.status === "cancelled" ||
+    match.status === "completed";
   const isActive = !isTerminal;
 
   // Find the latest proposal
@@ -542,9 +546,7 @@ export default function DealDetailPage() {
             <h3 className="font-semibold text-green-700 dark:text-green-400 mb-2">
               Deal approved!
             </h3>
-            <p className="text-sm mb-2">
-              Both parties have approved. Ready to start work.
-            </p>
+            <p className="text-sm mb-2">Both parties have approved. Ready to start work.</p>
             {agentId && (
               <div className="flex gap-3 mt-3">
                 <button
@@ -572,9 +574,7 @@ export default function DealDetailPage() {
             <h3 className="font-semibold text-orange-700 dark:text-orange-400 mb-2">
               Work in progress
             </h3>
-            <p className="text-sm mb-2">
-              This deal is active. Continue coordinating via messages.
-            </p>
+            <p className="text-sm mb-2">This deal is active. Continue coordinating via messages.</p>
             {agentId && (
               <div className="flex gap-3 mt-3">
                 <button
@@ -602,21 +602,15 @@ export default function DealDetailPage() {
             <h3 className="font-semibold text-emerald-700 dark:text-emerald-400 mb-2">
               Deal completed!
             </h3>
-            <p className="text-sm">
-              Both parties confirmed completion. Great work!
-            </p>
+            <p className="text-sm">Both parties confirmed completion. Great work!</p>
           </div>
         )}
 
         {/* Cancelled state */}
         {match.status === "cancelled" && (
           <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
-            <h3 className="font-semibold text-gray-700 dark:text-gray-400 mb-2">
-              Deal cancelled
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              This deal was cancelled.
-            </p>
+            <h3 className="font-semibold text-gray-700 dark:text-gray-400 mb-2">Deal cancelled</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">This deal was cancelled.</p>
           </div>
         )}
 
