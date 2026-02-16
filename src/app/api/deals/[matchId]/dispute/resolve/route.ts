@@ -3,7 +3,7 @@ import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createNotification } from "@/lib/notifications";
-import type { Match, Profile, Dispute, DisputeStatus } from "@/lib/types";
+import type { Match, MatchStatus, Profile, Dispute, DisputeStatus } from "@/lib/types";
 
 const VALID_RESOLUTIONS: DisputeStatus[] = [
   "resolved_refund",
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mat
   });
 
   // Update deal status based on resolution
-  let newMatchStatus: string;
+  let newMatchStatus: MatchStatus;
   let statusMessage: string;
   switch (resolution) {
     case "resolved_complete":

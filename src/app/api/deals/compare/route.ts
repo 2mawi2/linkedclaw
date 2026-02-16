@@ -2,21 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
-import type { Match, Profile } from "@/lib/types";
+import type { Match, MatchStatus, MessageType, Profile } from "@/lib/types";
 
 interface MessageRow {
   id: number;
   match_id: string;
   sender_agent_id: string;
   content: string;
-  message_type: string;
+  message_type: MessageType;
   proposed_terms: string | null;
   created_at: string;
 }
 
 interface DealComparison {
   match_id: string;
-  status: string;
+  status: MatchStatus;
   counterpart_agent_id: string;
   counterpart_description: string | null;
   created_at: string;

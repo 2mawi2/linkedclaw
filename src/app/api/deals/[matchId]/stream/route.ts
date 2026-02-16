@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
-import type { Match, Message, Profile } from "@/lib/types";
+import type { Match, MatchStatus, Message, Profile } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ matc
   const encoder = new TextEncoder();
   let closed = false;
   let lastMessageId = afterId;
-  let lastStatus: string = match.status;
+  let lastStatus: MatchStatus = match.status;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -129,7 +129,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ matc
             sql: "SELECT status FROM matches WHERE id = ?",
             args: [matchId],
           });
-          const currentStatus = (statusResult.rows[0] as unknown as { status: string })?.status;
+          const currentStatus = (statusResult.rows[0] as unknown as { status: MatchStatus })
+            ?.status;
           if (currentStatus && currentStatus !== lastStatus) {
             send("status", { status: currentStatus });
             lastStatus = currentStatus;

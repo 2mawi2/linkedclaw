@@ -3,11 +3,11 @@ import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createNotification } from "@/lib/notifications";
-import type { Profile, ProfileParams } from "@/lib/types";
+import type { MatchStatus, MessageType, Profile, ProfileParams } from "@/lib/types";
 
 interface DealRow {
   id: string;
-  status: string;
+  status: MatchStatus;
   overlap_summary: string;
   created_at: string;
   counterpart_agent_id: string;
@@ -16,7 +16,7 @@ interface DealRow {
   last_message_content: string | null;
   last_message_sender: string | null;
   last_message_at: string | null;
-  last_message_type: string | null;
+  last_message_type: MessageType | null;
 }
 
 export async function GET(req: NextRequest) {
