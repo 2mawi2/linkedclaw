@@ -113,12 +113,14 @@ export default function DealDetailPage() {
   useEffect(() => {
     if (!data) return;
     const status = data.match.status;
-    if (status === "approved" || status === "rejected" || status === "expired") return;
+    if (status === "rejected" || status === "expired") return;
 
     let timer: ReturnType<typeof setTimeout>;
+    const isApproved = status === "approved";
     function schedulePoll() {
       const idleMs = Date.now() - lastActivityRef.current;
-      const interval = idleMs < 30_000 ? 1500 : 5000;
+      // Approved deals poll slower (post-deal coordination)
+      const interval = isApproved ? 10_000 : idleMs < 30_000 ? 1500 : 5000;
       timer = setTimeout(() => {
         fetchDeal().then(schedulePoll);
       }, interval);
@@ -238,8 +240,8 @@ export default function DealDetailPage() {
   }
 
   const { match, messages, approvals } = data;
-  const isActive =
-    match.status === "negotiating" || match.status === "matched" || match.status === "proposed";
+  const isTerminal = match.status === "rejected" || match.status === "expired";
+  const isActive = !isTerminal;
 
   // Find the latest proposal
   const latestProposal = [...messages].reverse().find((m) => m.message_type === "proposal");
@@ -505,7 +507,7 @@ export default function DealDetailPage() {
               Deal approved!
             </h3>
             <p className="text-sm mb-2">
-              Both parties have approved. Here are the agent IDs for direct contact:
+              Both parties have approved. You can continue messaging below to coordinate.
             </p>
             <div className="text-sm space-y-1">
               <p>
