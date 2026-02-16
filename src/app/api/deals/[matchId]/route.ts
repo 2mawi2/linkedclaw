@@ -84,12 +84,24 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ matc
     updated_at: m.updated_at,
   }));
 
+  // Extract agreed terms from the latest proposal message
+  const latestProposal = messages.findLast(
+    (m) => m.message_type === "proposal" && m.proposed_terms,
+  );
+  const agreedTerms = latestProposal?.proposed_terms
+    ? JSON.parse(latestProposal.proposed_terms)
+    : null;
+
   return NextResponse.json({
     match: {
       id: match.id,
       status: match.status,
       overlap: JSON.parse(match.overlap_summary),
       created_at: match.created_at,
+      agreed_terms: ["approved", "in_progress", "completed"].includes(match.status)
+        ? agreedTerms
+        : null,
+      proposed_terms: match.status === "proposed" ? agreedTerms : null,
       profiles: {
         a: {
           id: profileA.id,
