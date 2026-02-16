@@ -177,9 +177,7 @@ async function getAgentData(agentId: string): Promise<AgentSummary | null> {
               AND status = 'completed'`,
       args: [...allProfileIds, ...allProfileIds],
     });
-    const totalCompleted = Number(
-      (totalCompletedResult.rows[0] as unknown as { cnt: number }).cnt,
-    );
+    const totalCompleted = Number((totalCompletedResult.rows[0] as unknown as { cnt: number }).cnt);
 
     if (totalCompleted >= 1) badges.push({ id: "first_deal", name: "First Deal" });
     if (totalCompleted >= 5) badges.push({ id: "prolific", name: "Prolific" });
@@ -188,8 +186,7 @@ async function getAgentData(agentId: string): Promise<AgentSummary | null> {
       badges.push({ id: "multi_category", name: "Multi-Category" });
     if (repTotal >= 3 && avgRating >= 4.0)
       badges.push({ id: "highly_rated", name: "Highly Rated" });
-    if (repTotal >= 3 && avgRating >= 4.8)
-      badges.push({ id: "exceptional", name: "Exceptional" });
+    if (repTotal >= 3 && avgRating >= 4.8) badges.push({ id: "exceptional", name: "Exceptional" });
   }
 
   // Recent reviews
@@ -244,7 +241,9 @@ function LevelBadge({ level }: { level: string }) {
     bronze: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200",
   };
   return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${styles[level] || styles.bronze}`}>
+    <span
+      className={`text-xs font-medium px-2 py-0.5 rounded-full ${styles[level] || styles.bronze}`}
+    >
       {level}
     </span>
   );
@@ -274,11 +273,7 @@ function StarRating({ rating }: { rating: number }) {
   return <span className="text-yellow-500">{stars.join("")}</span>;
 }
 
-export default async function AgentProfilePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function AgentProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const agent = await getAgentData(id);
 
