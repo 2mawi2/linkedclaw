@@ -118,7 +118,10 @@ describe("Dispute resolution flow", () => {
       sql: "UPDATE disputes SET status = 'resolved_refund' WHERE id = ?",
       args: [id],
     });
-    const result = await db.execute({ sql: "SELECT status FROM disputes WHERE id = ?", args: [id] });
+    const result = await db.execute({
+      sql: "SELECT status FROM disputes WHERE id = ?",
+      args: [id],
+    });
     expect(result.rows[0].status).toBe("resolved_refund");
   });
 
@@ -133,7 +136,10 @@ describe("Dispute resolution flow", () => {
       sql: "UPDATE disputes SET status = 'resolved_split' WHERE id = ?",
       args: [id],
     });
-    const result = await db.execute({ sql: "SELECT status FROM disputes WHERE id = ?", args: [id] });
+    const result = await db.execute({
+      sql: "SELECT status FROM disputes WHERE id = ?",
+      args: [id],
+    });
     expect(result.rows[0].status).toBe("resolved_split");
   });
 
@@ -148,7 +154,10 @@ describe("Dispute resolution flow", () => {
       sql: "UPDATE disputes SET status = 'dismissed' WHERE id = ?",
       args: [id],
     });
-    const result = await db.execute({ sql: "SELECT status FROM disputes WHERE id = ?", args: [id] });
+    const result = await db.execute({
+      sql: "SELECT status FROM disputes WHERE id = ?",
+      args: [id],
+    });
     expect(result.rows[0].status).toBe("dismissed");
   });
 });
@@ -172,30 +181,57 @@ describe("Match disputed status", () => {
   it("should allow transitioning back from disputed to in_progress (dismiss)", async () => {
     const { matchId } = await createMatchInProgress(db, "agent-a", "agent-b");
 
-    await db.execute({ sql: "UPDATE matches SET status = 'disputed' WHERE id = ?", args: [matchId] });
-    await db.execute({ sql: "UPDATE matches SET status = 'in_progress' WHERE id = ?", args: [matchId] });
+    await db.execute({
+      sql: "UPDATE matches SET status = 'disputed' WHERE id = ?",
+      args: [matchId],
+    });
+    await db.execute({
+      sql: "UPDATE matches SET status = 'in_progress' WHERE id = ?",
+      args: [matchId],
+    });
 
-    const result = await db.execute({ sql: "SELECT status FROM matches WHERE id = ?", args: [matchId] });
+    const result = await db.execute({
+      sql: "SELECT status FROM matches WHERE id = ?",
+      args: [matchId],
+    });
     expect(result.rows[0].status).toBe("in_progress");
   });
 
   it("should allow transitioning from disputed to completed (resolved_complete)", async () => {
     const { matchId } = await createMatchInProgress(db, "agent-a", "agent-b");
 
-    await db.execute({ sql: "UPDATE matches SET status = 'disputed' WHERE id = ?", args: [matchId] });
-    await db.execute({ sql: "UPDATE matches SET status = 'completed' WHERE id = ?", args: [matchId] });
+    await db.execute({
+      sql: "UPDATE matches SET status = 'disputed' WHERE id = ?",
+      args: [matchId],
+    });
+    await db.execute({
+      sql: "UPDATE matches SET status = 'completed' WHERE id = ?",
+      args: [matchId],
+    });
 
-    const result = await db.execute({ sql: "SELECT status FROM matches WHERE id = ?", args: [matchId] });
+    const result = await db.execute({
+      sql: "SELECT status FROM matches WHERE id = ?",
+      args: [matchId],
+    });
     expect(result.rows[0].status).toBe("completed");
   });
 
   it("should allow transitioning from disputed to cancelled (resolved_refund)", async () => {
     const { matchId } = await createMatchInProgress(db, "agent-a", "agent-b");
 
-    await db.execute({ sql: "UPDATE matches SET status = 'disputed' WHERE id = ?", args: [matchId] });
-    await db.execute({ sql: "UPDATE matches SET status = 'cancelled' WHERE id = ?", args: [matchId] });
+    await db.execute({
+      sql: "UPDATE matches SET status = 'disputed' WHERE id = ?",
+      args: [matchId],
+    });
+    await db.execute({
+      sql: "UPDATE matches SET status = 'cancelled' WHERE id = ?",
+      args: [matchId],
+    });
 
-    const result = await db.execute({ sql: "SELECT status FROM matches WHERE id = ?", args: [matchId] });
+    const result = await db.execute({
+      sql: "SELECT status FROM matches WHERE id = ?",
+      args: [matchId],
+    });
     expect(result.rows[0].status).toBe("cancelled");
   });
 });

@@ -13,7 +13,12 @@ export type MatchStatus =
   | "cancelled"
   | "disputed";
 
-export type DisputeStatus = "open" | "resolved_refund" | "resolved_complete" | "resolved_split" | "dismissed";
+export type DisputeStatus =
+  | "open"
+  | "resolved_refund"
+  | "resolved_complete"
+  | "resolved_split"
+  | "dismissed";
 
 export interface Dispute {
   id: string;

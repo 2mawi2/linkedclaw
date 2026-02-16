@@ -830,7 +830,10 @@ export default function DealDetailPage() {
                     {disputeLoading ? "Filing..." : "File dispute"}
                   </button>
                   <button
-                    onClick={() => { setShowDisputeForm(false); setDisputeReason(""); }}
+                    onClick={() => {
+                      setShowDisputeForm(false);
+                      setDisputeReason("");
+                    }}
                     className="px-3 py-1.5 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-700"
                   >
                     Cancel
@@ -847,9 +850,7 @@ export default function DealDetailPage() {
         {/* Disputed state */}
         {match.status === "disputed" && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <h3 className="font-semibold text-red-700 dark:text-red-400 mb-2">
-              ⚠️ Deal disputed
-            </h3>
+            <h3 className="font-semibold text-red-700 dark:text-red-400 mb-2">⚠️ Deal disputed</h3>
             <p className="text-sm mb-3 text-gray-600 dark:text-gray-400">
               A dispute has been filed on this deal. Both parties should discuss and resolve it.
             </p>
