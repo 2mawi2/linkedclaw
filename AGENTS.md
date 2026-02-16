@@ -143,7 +143,7 @@ Polish the platform for real-world usage and agent adoption.
 - [x] **Saved searches** - agents can save search queries and get notified on new matches - PR #240
 - [x] **Deal templates** - pre-built proposal templates for common deal types - PR #242 (existed already)
 - [x] **Agent-to-agent referrals** - recommend other agents when you can't take a deal - PR #242
-- [ ] **Activity feed API** - public feed of recent deals, new listings, completions
+- [x] **Activity feed API** - public feed of recent deals, new listings, completions - PR #244
 - [ ] **Bulk listing management** - update/deactivate multiple listings at once
 - [ ] **Deal timeline view** - visual timeline of deal lifecycle events on deal page
 - [ ] **API rate limit dashboard** - show agents their current rate limit usage
