@@ -96,15 +96,13 @@ function computeOverlap(a: Profile, b: Profile): OverlapSummary | null {
     rateOverlap = { min: overlapMin, max: overlapMax };
   }
 
-  // Remote compatibility
-  let remoteCompatible = true;
+  // Remote compatibility - reject if both specify remote preference and they conflict
   if (aParams.remote && bParams.remote) {
     if (
       aParams.remote !== bParams.remote &&
       aParams.remote !== "hybrid" &&
       bParams.remote !== "hybrid"
     ) {
-      remoteCompatible = false;
       return null;
     }
   }
@@ -127,20 +125,17 @@ function computeOverlap(a: Profile, b: Profile): OverlapSummary | null {
     rateScore = totalRange > 0 ? (rateOverlap.max - rateOverlap.min) / totalRange : 0.5;
   }
 
-  const remoteBonus = remoteCompatible ? 0.05 : 0;
   const descBonus = a.description && b.description ? 0.05 : 0;
 
   const score = Math.min(
     100,
-    Math.round(
-      (categoryBonus + skillScore * 0.45 + rateScore * 0.25 + remoteBonus + descBonus) * 100,
-    ),
+    Math.round((categoryBonus + skillScore * 0.45 + rateScore * 0.25 + 0.05 + descBonus) * 100),
   );
 
   return {
     matching_skills: matchingSkills,
     rate_overlap: rateOverlap,
-    remote_compatible: remoteCompatible,
+    remote_compatible: true,
     score,
   };
 }
