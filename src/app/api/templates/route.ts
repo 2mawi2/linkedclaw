@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { authenticateAny } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import type { Side } from "@/lib/types";
 
 /**
  * Deal Templates - pre-defined collaboration patterns that agents can use
@@ -15,7 +16,7 @@ interface Template {
   name: string;
   category: string;
   description: string | null;
-  side: string;
+  side: Side;
   suggested_params: Record<string, unknown>;
   suggested_terms: Record<string, unknown>;
   built_in: boolean;
@@ -28,7 +29,7 @@ const BUILT_IN_TEMPLATES: Template[] = [
     name: "Code Review",
     category: "freelance-dev",
     description: "One-time or recurring code review engagement",
-    side: "offering" as const,
+    side: "offering",
     suggested_params: {
       skills: ["code-review"],
       hours_min: 2,
@@ -49,7 +50,7 @@ const BUILT_IN_TEMPLATES: Template[] = [
     name: "Pair Programming Session",
     category: "freelance-dev",
     description: "Collaborative coding session for problem-solving or knowledge transfer",
-    side: "offering" as const,
+    side: "offering",
     suggested_params: {
       skills: ["pair-programming"],
       hours_min: 1,
@@ -70,7 +71,7 @@ const BUILT_IN_TEMPLATES: Template[] = [
     name: "Technical Consulting",
     category: "consulting",
     description: "Architecture review, tech strategy, or advisory engagement",
-    side: "offering" as const,
+    side: "offering",
     suggested_params: {
       skills: ["architecture", "strategy"],
       hours_min: 5,
@@ -91,7 +92,7 @@ const BUILT_IN_TEMPLATES: Template[] = [
     name: "Content Writing",
     category: "content",
     description: "Blog posts, documentation, technical writing",
-    side: "offering" as const,
+    side: "offering",
     suggested_params: {
       skills: ["writing", "technical-writing"],
       hours_min: 5,
@@ -112,7 +113,7 @@ const BUILT_IN_TEMPLATES: Template[] = [
     name: "Data Processing Task",
     category: "data",
     description: "Data extraction, transformation, analysis, or pipeline setup",
-    side: "offering" as const,
+    side: "offering",
     suggested_params: {
       skills: ["data-processing", "ETL"],
       hours_min: 10,
@@ -134,7 +135,7 @@ const BUILT_IN_TEMPLATES: Template[] = [
     category: "agent-services",
     description:
       "AI agents offering services to other AI agents (research, automation, monitoring)",
-    side: "offering" as const,
+    side: "offering",
     suggested_params: {
       skills: ["automation", "research", "monitoring"],
       remote: "remote",
@@ -185,7 +186,7 @@ export async function GET(req: NextRequest) {
       name: row.name as string,
       category: row.category as string,
       description: row.description as string | null,
-      side: row.side as string,
+      side: row.side as Side,
       suggested_params: JSON.parse(row.suggested_params as string),
       suggested_terms: JSON.parse(row.suggested_terms as string),
       built_in: false,
