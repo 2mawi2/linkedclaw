@@ -76,7 +76,7 @@ export async function migrate(db: Client): Promise<void> {
       profile_a_id TEXT NOT NULL REFERENCES profiles(id),
       profile_b_id TEXT NOT NULL REFERENCES profiles(id),
       overlap_summary TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'matched' CHECK (status IN ('matched', 'negotiating', 'proposed', 'approved', 'in_progress', 'completed', 'rejected', 'expired', 'cancelled')),
+      status TEXT NOT NULL DEFAULT 'matched' CHECK (status IN ('matched', 'negotiating', 'proposed', 'approved', 'in_progress', 'completed', 'rejected', 'expired', 'cancelled', 'disputed')),
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       UNIQUE(profile_a_id, profile_b_id)
     );
@@ -302,6 +302,20 @@ export async function migrate(db: Client): Promise<void> {
       last_sent_at TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS disputes (
+      id TEXT PRIMARY KEY,
+      match_id TEXT NOT NULL REFERENCES matches(id),
+      filed_by_agent_id TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'resolved_refund', 'resolved_complete', 'resolved_split', 'dismissed')),
+      resolution_note TEXT,
+      resolved_by TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      resolved_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_disputes_match ON disputes(match_id);
+    CREATE INDEX IF NOT EXISTS idx_disputes_agent ON disputes(filed_by_agent_id);
   `);
 }
 

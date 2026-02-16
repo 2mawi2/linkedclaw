@@ -76,6 +76,7 @@ const STATUS_COLORS: Record<string, string> = {
   rejected: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   expired: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
   cancelled: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
+  disputed: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
 export default function DealDetailPage() {
@@ -100,6 +101,10 @@ export default function DealDetailPage() {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState("");
+  const [disputeReason, setDisputeReason] = useState("");
+  const [disputeLoading, setDisputeLoading] = useState(false);
+  const [disputeResult, setDisputeResult] = useState("");
+  const [showDisputeForm, setShowDisputeForm] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastActivityRef = useRef(Date.now());
 
@@ -338,6 +343,56 @@ export default function DealDetailPage() {
       setActionResult(`Failed to ${action} deal`);
     } finally {
       setActionLoading(false);
+    }
+  }
+
+  async function handleFileDispute() {
+    if (!agentId || !disputeReason.trim()) return;
+    setDisputeLoading(true);
+    setDisputeResult("");
+    try {
+      const res = await fetch(`/api/deals/${matchId}/dispute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agent_id: agentId, reason: disputeReason.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setDisputeResult(json.error || "Failed to file dispute");
+      } else {
+        setDisputeResult(json.message || "Dispute filed");
+        setShowDisputeForm(false);
+        setDisputeReason("");
+        fetchDeal();
+      }
+    } catch {
+      setDisputeResult("Failed to file dispute");
+    } finally {
+      setDisputeLoading(false);
+    }
+  }
+
+  async function handleResolveDispute(resolution: string) {
+    if (!agentId) return;
+    setDisputeLoading(true);
+    setDisputeResult("");
+    try {
+      const res = await fetch(`/api/deals/${matchId}/dispute/resolve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agent_id: agentId, resolution }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setDisputeResult(json.error || "Failed to resolve dispute");
+      } else {
+        setDisputeResult(json.message || "Dispute resolved");
+        fetchDeal();
+      }
+    } catch {
+      setDisputeResult("Failed to resolve dispute");
+    } finally {
+      setDisputeLoading(false);
     }
   }
 
@@ -744,6 +799,97 @@ export default function DealDetailPage() {
                 >
                   Cancel deal
                 </button>
+                <button
+                  onClick={() => setShowDisputeForm(true)}
+                  disabled={actionLoading || showDisputeForm}
+                  className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg text-sm font-medium hover:bg-red-200 dark:hover:bg-red-900/50 disabled:opacity-50"
+                >
+                  Flag dispute
+                </button>
+              </div>
+            )}
+            {agentId && showDisputeForm && (
+              <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg">
+                <label className="block text-sm font-medium text-red-700 dark:text-red-400 mb-1">
+                  Describe the issue
+                </label>
+                <textarea
+                  value={disputeReason}
+                  onChange={(e) => setDisputeReason(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-red-300 dark:border-red-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 mb-2"
+                  rows={3}
+                  maxLength={2000}
+                  placeholder="What went wrong with this deal?"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleFileDispute}
+                    disabled={disputeLoading || !disputeReason.trim()}
+                    className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {disputeLoading ? "Filing..." : "File dispute"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDisputeForm(false);
+                      setDisputeReason("");
+                    }}
+                    className="px-3 py-1.5 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+            {disputeResult && (
+              <p className="text-sm mt-2 text-red-600 dark:text-red-400">{disputeResult}</p>
+            )}
+          </div>
+        )}
+
+        {/* Disputed state */}
+        {match.status === "disputed" && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <h3 className="font-semibold text-red-700 dark:text-red-400 mb-2">⚠️ Deal disputed</h3>
+            <p className="text-sm mb-3 text-gray-600 dark:text-gray-400">
+              A dispute has been filed on this deal. Both parties should discuss and resolve it.
+            </p>
+            {agentId && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Resolve as:</p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => handleResolveDispute("resolved_complete")}
+                    disabled={disputeLoading}
+                    className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    Mark completed
+                  </button>
+                  <button
+                    onClick={() => handleResolveDispute("resolved_refund")}
+                    disabled={disputeLoading}
+                    className="px-3 py-1.5 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+                  >
+                    Cancel (refund)
+                  </button>
+                  <button
+                    onClick={() => handleResolveDispute("resolved_split")}
+                    disabled={disputeLoading}
+                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Split resolution
+                  </button>
+                  <button
+                    onClick={() => handleResolveDispute("dismissed")}
+                    disabled={disputeLoading}
+                    className="px-3 py-1.5 bg-gray-500 text-white rounded-lg text-sm font-medium hover:bg-gray-600 disabled:opacity-50"
+                  >
+                    Dismiss dispute
+                  </button>
+                </div>
+                {disputeResult && (
+                  <p className="text-sm mt-2 text-red-600 dark:text-red-400">{disputeResult}</p>
+                )}
               </div>
             )}
           </div>

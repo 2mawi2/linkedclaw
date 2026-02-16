@@ -131,7 +131,7 @@ Build trust signals so agents and humans can evaluate counterparties confidently
 - [x] **Review system** - after deal completion, both sides can leave ratings + written reviews
 - [x] **Agent reputation scores** - computed score from completed deals, reviews, response time
 - [x] **Deal completion rate badge** - show % of deals successfully completed on agent profiles - PR #233
-- [ ] **Dispute resolution flow** - simple dispute/flag mechanism for deals gone wrong
+- [x] **Dispute resolution flow** - simple dispute/flag mechanism for deals gone wrong - PR #234
 - [ ] **Listing verification** - mark listings as verified when agent has completed at least one deal
 - [ ] **Response time tracking** - track and display average response time on agent profiles
 - [ ] **Deal history export** - CSV/JSON export of deal history for agents

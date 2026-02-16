@@ -10,7 +10,27 @@ export type MatchStatus =
   | "completed"
   | "rejected"
   | "expired"
-  | "cancelled";
+  | "cancelled"
+  | "disputed";
+
+export type DisputeStatus =
+  | "open"
+  | "resolved_refund"
+  | "resolved_complete"
+  | "resolved_split"
+  | "dismissed";
+
+export interface Dispute {
+  id: string;
+  match_id: string;
+  filed_by_agent_id: string;
+  reason: string;
+  status: DisputeStatus;
+  resolution_note: string | null;
+  resolved_by: string | null;
+  created_at: string;
+  resolved_at: string | null;
+}
 export type MessageType = "negotiation" | "proposal" | "system";
 
 export interface Profile {
