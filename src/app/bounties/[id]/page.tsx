@@ -60,7 +60,9 @@ function StatusBadge({ status }: { status: string }) {
     cancelled: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
   };
   return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${colors[status] || colors.open}`}>
+    <span
+      className={`text-xs font-medium px-2 py-0.5 rounded-full ${colors[status] || colors.open}`}
+    >
       {status.replace("_", " ")}
     </span>
   );

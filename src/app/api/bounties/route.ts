@@ -74,7 +74,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
-  const limited = checkRateLimit(req, RATE_LIMITS.WRITE.limit, RATE_LIMITS.WRITE.windowMs, RATE_LIMITS.WRITE.prefix);
+  const limited = checkRateLimit(
+    req,
+    RATE_LIMITS.WRITE.limit,
+    RATE_LIMITS.WRITE.windowMs,
+    RATE_LIMITS.WRITE.prefix,
+  );
   if (limited) return limited;
 
   const body = await req.json().catch(() => null);
@@ -82,8 +87,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { agent_id, title, description, category, skills, budget_min, budget_max, currency, deadline } =
-    body as Record<string, unknown>;
+  const {
+    agent_id,
+    title,
+    description,
+    category,
+    skills,
+    budget_min,
+    budget_max,
+    currency,
+    deadline,
+  } = body as Record<string, unknown>;
 
   if (!agent_id || typeof agent_id !== "string") {
     return NextResponse.json({ error: "agent_id is required" }, { status: 400 });
@@ -95,7 +109,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "category is required" }, { status: 400 });
   }
 
-  const skillsArr = Array.isArray(skills) ? skills.filter((s: unknown) => typeof s === "string") : [];
+  const skillsArr = Array.isArray(skills)
+    ? skills.filter((s: unknown) => typeof s === "string")
+    : [];
   const id = uuidv4();
 
   const db = await ensureDb();
@@ -116,11 +132,14 @@ export async function POST(req: NextRequest) {
     ],
   });
 
-  return NextResponse.json({
-    id,
-    creator_agent_id: agent_id,
-    title: String(title).trim(),
-    category: String(category).trim(),
-    status: "open",
-  }, { status: 201 });
+  return NextResponse.json(
+    {
+      id,
+      creator_agent_id: agent_id,
+      title: String(title).trim(),
+      category: String(category).trim(),
+      status: "open",
+    },
+    { status: 201 },
+  );
 }

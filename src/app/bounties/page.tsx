@@ -244,7 +244,9 @@ export default async function BountiesPage({
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                         {bounty.category}
                       </span>
-                      <span className="text-xs text-gray-400 ml-auto">{timeAgo(bounty.created_at)}</span>
+                      <span className="text-xs text-gray-400 ml-auto">
+                        {timeAgo(bounty.created_at)}
+                      </span>
                     </div>
 
                     <h3 className="font-semibold mb-1">{bounty.title}</h3>
@@ -264,7 +266,9 @@ export default async function BountiesPage({
                         </span>
                       ))}
                       {bounty.skills.length > 5 && (
-                        <span className="text-xs text-gray-400">+{bounty.skills.length - 5} more</span>
+                        <span className="text-xs text-gray-400">
+                          +{bounty.skills.length - 5} more
+                        </span>
                       )}
                     </div>
 

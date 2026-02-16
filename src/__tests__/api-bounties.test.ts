@@ -94,12 +94,7 @@ describe("GET /api/bounties", () => {
     const key = await createApiKey("test-agent");
     await POST(makeRequest("POST", "/api/bounties", validBounty, key));
     await POST(
-      makeRequest(
-        "POST",
-        "/api/bounties",
-        { ...validBounty, title: "Second bounty" },
-        key,
-      ),
+      makeRequest("POST", "/api/bounties", { ...validBounty, title: "Second bounty" }, key),
     );
 
     const res = await GET(makeRequest("GET", "/api/bounties"));
@@ -133,7 +128,12 @@ describe("GET /api/bounties", () => {
       makeRequest(
         "POST",
         "/api/bounties",
-        { ...validBounty, title: "Python ML pipeline", description: "Build a data pipeline", skills: ["Python", "TensorFlow"] },
+        {
+          ...validBounty,
+          title: "Python ML pipeline",
+          description: "Build a data pipeline",
+          skills: ["Python", "TensorFlow"],
+        },
         key,
       ),
     );
@@ -160,10 +160,9 @@ describe("GET /api/bounties/:id", () => {
     const createRes = await POST(makeRequest("POST", "/api/bounties", validBounty, key));
     const created = await createRes.json();
 
-    const res = await GET_ONE(
-      makeRequest("GET", `/api/bounties/${created.id}`),
-      { params: Promise.resolve({ id: created.id }) },
-    );
+    const res = await GET_ONE(makeRequest("GET", `/api/bounties/${created.id}`), {
+      params: Promise.resolve({ id: created.id }),
+    });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.title).toBe("Build a React dashboard");
@@ -173,10 +172,9 @@ describe("GET /api/bounties/:id", () => {
   });
 
   it("returns 404 for non-existent bounty", async () => {
-    const res = await GET_ONE(
-      makeRequest("GET", "/api/bounties/nonexistent"),
-      { params: Promise.resolve({ id: "nonexistent" }) },
-    );
+    const res = await GET_ONE(makeRequest("GET", "/api/bounties/nonexistent"), {
+      params: Promise.resolve({ id: "nonexistent" }),
+    });
     expect(res.status).toBe(404);
   });
 });
@@ -188,16 +186,20 @@ describe("PATCH /api/bounties/:id", () => {
     const created = await createRes.json();
 
     const res = await PATCH(
-      makeRequest("PATCH", `/api/bounties/${created.id}`, { agent_id: "test-agent", status: "cancelled" }, key),
+      makeRequest(
+        "PATCH",
+        `/api/bounties/${created.id}`,
+        { agent_id: "test-agent", status: "cancelled" },
+        key,
+      ),
       { params: Promise.resolve({ id: created.id }) },
     );
     expect(res.status).toBe(200);
 
     // Verify status changed
-    const getRes = await GET_ONE(
-      makeRequest("GET", `/api/bounties/${created.id}`),
-      { params: Promise.resolve({ id: created.id }) },
-    );
+    const getRes = await GET_ONE(makeRequest("GET", `/api/bounties/${created.id}`), {
+      params: Promise.resolve({ id: created.id }),
+    });
     const data = await getRes.json();
     expect(data.status).toBe("cancelled");
   });
@@ -209,7 +211,12 @@ describe("PATCH /api/bounties/:id", () => {
     const created = await createRes.json();
 
     const res = await PATCH(
-      makeRequest("PATCH", `/api/bounties/${created.id}`, { agent_id: "other-agent", status: "cancelled" }, otherKey),
+      makeRequest(
+        "PATCH",
+        `/api/bounties/${created.id}`,
+        { agent_id: "other-agent", status: "cancelled" },
+        otherKey,
+      ),
       { params: Promise.resolve({ id: created.id }) },
     );
     expect(res.status).toBe(403);
