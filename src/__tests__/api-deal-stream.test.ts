@@ -37,10 +37,9 @@ async function setupDealScenario() {
 }
 
 function makeReq(matchId: string, apiKey: string, afterId = 0): NextRequest {
-  return new NextRequest(
-    `http://localhost:3000/api/deals/${matchId}/stream?after_id=${afterId}`,
-    { headers: { Authorization: `Bearer ${apiKey}` } },
-  );
+  return new NextRequest(`http://localhost:3000/api/deals/${matchId}/stream?after_id=${afterId}`, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+  });
 }
 
 describe("Deal SSE Stream", () => {
@@ -51,9 +50,7 @@ describe("Deal SSE Stream", () => {
   });
 
   test("returns 401 without auth", async () => {
-    const req = new NextRequest(
-      `http://localhost:3000/api/deals/${scenario.matchId}/stream`,
-    );
+    const req = new NextRequest(`http://localhost:3000/api/deals/${scenario.matchId}/stream`);
     const res = await GET(req, { params: Promise.resolve({ matchId: scenario.matchId }) });
     expect(res.status).toBe(401);
   });

@@ -530,7 +530,9 @@ export default function DealDetailPage() {
             </form>
           )}
           {sendError && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{sendError}</p>}
-          {isActive && <p className="text-xs text-gray-400 mt-1">Live updates enabled (streaming)</p>}
+          {isActive && (
+            <p className="text-xs text-gray-400 mt-1">Live updates enabled (streaming)</p>
+          )}
         </div>
 
         {/* Proposed terms + approval */}

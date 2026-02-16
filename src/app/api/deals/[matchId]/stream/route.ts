@@ -158,16 +158,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ matc
       }, 15_000);
 
       // Auto-close after 5 minutes (client should reconnect)
-      const timeout = setTimeout(() => {
-        closed = true;
-        clearInterval(interval);
-        clearInterval(pingInterval);
-        try {
-          controller.close();
-        } catch {
-          // already closed
-        }
-      }, 5 * 60 * 1000);
+      const timeout = setTimeout(
+        () => {
+          closed = true;
+          clearInterval(interval);
+          clearInterval(pingInterval);
+          try {
+            controller.close();
+          } catch {
+            // already closed
+          }
+        },
+        5 * 60 * 1000,
+      );
 
       // Handle abort
       req.signal.addEventListener("abort", () => {
