@@ -4,6 +4,7 @@ import { ensureDb } from "@/lib/db";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import type { Profile, ProfileParams } from "@/lib/types";
 import { computeReputationScore } from "@/lib/reputation";
+import { fetchAgentSignals, computeSmartScore } from "@/lib/smart-matching";
 
 export async function GET(
   _req: NextRequest,
@@ -86,25 +87,55 @@ export async function GET(
     };
   }
 
-  return NextResponse.json({
-    matches: matches.map((m) => {
-      const p: ProfileParams = JSON.parse(m.counterpart.params);
-      const overlap = typeof m.overlap === "string" ? JSON.parse(m.overlap) : m.overlap;
-      return {
-        match_id: m.matchId,
-        score: overlap?.score ?? null,
-        overlap,
-        counterpart_agent_id: m.counterpart.agent_id,
-        counterpart_description: m.counterpart.description,
-        counterpart_category: m.counterpart.category,
-        counterpart_skills: p.skills ?? [],
-        counterpart_reputation: reputationMap[m.counterpart.agent_id] ?? {
-          avg_rating: 0,
-          total_reviews: 0,
-          reputation_score: 0,
-          reputation_level: "unrated",
-        },
-      };
-    }),
+  const useSmartMatching = _req.nextUrl.searchParams.get("smart") === "true";
+
+  // Fetch smart signals for all counterpart agents when smart matching is enabled
+  const smartScoreMap: Record<string, ReturnType<typeof computeSmartScore>> = {};
+  if (useSmartMatching) {
+    for (const aid of counterpartAgentIds) {
+      const signals = await fetchAgentSignals(db, aid);
+      // Find the base score for this agent's best match
+      const agentMatches = matches.filter((m) => m.counterpart.agent_id === aid);
+      for (const am of agentMatches) {
+        const overlap = typeof am.overlap === "string" ? JSON.parse(am.overlap) : am.overlap;
+        const baseScore = overlap?.score ?? 0;
+        smartScoreMap[am.matchId] = computeSmartScore(baseScore, signals);
+      }
+    }
+  }
+
+  const matchResults = matches.map((m) => {
+    const p: ProfileParams = JSON.parse(m.counterpart.params);
+    const overlap = typeof m.overlap === "string" ? JSON.parse(m.overlap) : m.overlap;
+    const base = {
+      match_id: m.matchId,
+      score: overlap?.score ?? null,
+      overlap,
+      counterpart_agent_id: m.counterpart.agent_id,
+      counterpart_description: m.counterpart.description,
+      counterpart_category: m.counterpart.category,
+      counterpart_skills: p.skills ?? [],
+      counterpart_reputation: reputationMap[m.counterpart.agent_id] ?? {
+        avg_rating: 0,
+        total_reviews: 0,
+        reputation_score: 0,
+        reputation_level: "unrated",
+      },
+    };
+    if (useSmartMatching && smartScoreMap[m.matchId]) {
+      return { ...base, smart_score: smartScoreMap[m.matchId] };
+    }
+    return base;
   });
+
+  // Re-sort by smart score when smart matching is enabled
+  if (useSmartMatching) {
+    matchResults.sort((a, b) => {
+      const aScore = (a as { smart_score?: { final_score: number } }).smart_score?.final_score ?? a.score ?? 0;
+      const bScore = (b as { smart_score?: { final_score: number } }).smart_score?.final_score ?? b.score ?? 0;
+      return bScore - aScore;
+    });
+  }
+
+  return NextResponse.json({ matches: matchResults });
 }
