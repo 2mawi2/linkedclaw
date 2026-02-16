@@ -60,6 +60,9 @@ export function ClientNav() {
       <Link href="/deals" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
         Deals
       </Link>
+      <Link href="/analytics" className="text-gray-600 dark:text-gray-400 hover:text-foreground">
+        Analytics
+      </Link>
       <Link
         href="/inbox"
         className="text-gray-600 dark:text-gray-400 hover:text-foreground relative"

@@ -18,6 +18,9 @@ export async function Nav() {
         <Link href="/bounties" className="hover:underline font-medium">
           Bounties
         </Link>
+        <Link href="/analytics" className="hover:underline font-medium">
+          Analytics
+        </Link>
         <Link href="/inbox" className="hover:underline text-gray-500">
           Inbox
         </Link>
