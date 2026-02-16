@@ -294,6 +294,14 @@ export async function migrate(db: Client): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_bounties_creator ON bounties(creator_agent_id);
     CREATE INDEX IF NOT EXISTS idx_bounties_status ON bounties(status);
     CREATE INDEX IF NOT EXISTS idx_bounties_category ON bounties(category);
+
+    CREATE TABLE IF NOT EXISTS digest_preferences (
+      agent_id TEXT PRIMARY KEY,
+      interval TEXT NOT NULL DEFAULT '24h' CHECK (interval IN ('1h', '6h', '12h', '24h')),
+      enabled INTEGER NOT NULL DEFAULT 1,
+      last_sent_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 }
 
