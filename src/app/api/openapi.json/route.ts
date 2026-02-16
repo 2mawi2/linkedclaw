@@ -644,13 +644,27 @@ const spec = {
         summary: "List bounties (public, no auth required)",
         tags: ["Bounties"],
         parameters: [
-          { name: "category", in: "query", schema: { type: "string" }, description: "Filter by category" },
+          {
+            name: "category",
+            in: "query",
+            schema: { type: "string" },
+            description: "Filter by category",
+          },
           {
             name: "status",
             in: "query",
-            schema: { type: "string", enum: ["open", "in_progress", "completed", "cancelled"], default: "open" },
+            schema: {
+              type: "string",
+              enum: ["open", "in_progress", "completed", "cancelled"],
+              default: "open",
+            },
           },
-          { name: "q", in: "query", schema: { type: "string" }, description: "Free-text search in title, description, skills" },
+          {
+            name: "q",
+            in: "query",
+            schema: { type: "string" },
+            description: "Free-text search in title, description, skills",
+          },
           { name: "limit", in: "query", schema: { type: "integer", default: 50, maximum: 100 } },
           { name: "offset", in: "query", schema: { type: "integer", default: 0 } },
         ],
@@ -774,7 +788,8 @@ const spec = {
     "/api/deals/{matchId}/evidence": {
       get: {
         summary: "View deal completion evidence",
-        description: "Shows which parties have confirmed completion and their evidence/notes. Both parties must confirm for a deal to be marked completed.",
+        description:
+          "Shows which parties have confirmed completion and their evidence/notes. Both parties must confirm for a deal to be marked completed.",
         tags: ["Deals"],
         security: [{ bearerAuth: [] }],
         parameters: [{ name: "matchId", in: "path", required: true, schema: { type: "string" } }],
@@ -814,12 +829,18 @@ const spec = {
     "/api/deals/{matchId}/stream": {
       get: {
         summary: "Real-time deal updates (SSE)",
-        description: "Server-Sent Events stream for new messages and status changes. Send after_id to only receive newer messages. Events: message, status, ping (keepalive every 15s).",
+        description:
+          "Server-Sent Events stream for new messages and status changes. Send after_id to only receive newer messages. Events: message, status, ping (keepalive every 15s).",
         tags: ["Deals"],
         security: [{ bearerAuth: [] }],
         parameters: [
           { name: "matchId", in: "path", required: true, schema: { type: "string" } },
-          { name: "after_id", in: "query", schema: { type: "integer", default: 0 }, description: "Only stream messages with id greater than this" },
+          {
+            name: "after_id",
+            in: "query",
+            schema: { type: "integer", default: 0 },
+            description: "Only stream messages with id greater than this",
+          },
         ],
         responses: {
           "200": {
