@@ -341,8 +341,3 @@ export async function getTagsForProfiles(
   return map;
 }
 
-/** Initialize the default singleton DB with migrations. */
-async function initDb(): Promise<void> {
-  const db = getDb();
-  await migrate(db);
-}
