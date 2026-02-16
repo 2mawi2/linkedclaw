@@ -60,6 +60,25 @@ interface TimelineEvent {
   timestamp: string;
 }
 
+interface MilestoneInfo {
+  id: string;
+  title: string;
+  description: string | null;
+  due_date: string | null;
+  status: string;
+  position: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface MilestonesData {
+  milestones: MilestoneInfo[];
+  total: number;
+  completed: number;
+  progress: number;
+}
+
 interface DealData {
   match: MatchInfo;
   messages: MessageInfo[];
@@ -116,6 +135,11 @@ export default function DealDetailPage() {
   const [showDisputeForm, setShowDisputeForm] = useState(false);
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
   const [timelineOpen, setTimelineOpen] = useState(false);
+  const [milestonesData, setMilestonesData] = useState<MilestonesData | null>(null);
+  const [milestonesOpen, setMilestonesOpen] = useState(false);
+  const [newMilestoneTitle, setNewMilestoneTitle] = useState("");
+  const [newMilestoneDesc, setNewMilestoneDesc] = useState("");
+  const [milestoneAdding, setMilestoneAdding] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastActivityRef = useRef(Date.now());
 
@@ -165,10 +189,23 @@ export default function DealDetailPage() {
     }
   }, [matchId]);
 
+  const fetchMilestones = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/deals/${matchId}/milestones`);
+      if (res.ok) {
+        const json = await res.json();
+        setMilestonesData(json);
+      }
+    } catch {
+      // Non-critical
+    }
+  }, [matchId]);
+
   useEffect(() => {
     fetchDeal();
     fetchReviews();
-  }, [fetchDeal, fetchReviews]);
+    fetchMilestones();
+  }, [fetchDeal, fetchReviews, fetchMilestones]);
 
   // Fetch timeline when opened or when deal data changes
   useEffect(() => {
@@ -1059,6 +1096,181 @@ export default function DealDetailPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400">This deal was cancelled.</p>
           </div>
         )}
+
+        {/* Milestones section */}
+        <div className="mb-6">
+          <button
+            onClick={() => setMilestonesOpen(!milestonesOpen)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-foreground transition-colors"
+          >
+            <span className={`transition-transform ${milestonesOpen ? "rotate-90" : ""}`}>▶</span>
+            Milestones
+            {milestonesData && milestonesData.total > 0 && (
+              <span className="text-xs text-gray-400 dark:text-gray-500 font-normal">
+                ({milestonesData.completed}/{milestonesData.total} - {milestonesData.progress}%)
+              </span>
+            )}
+          </button>
+          {milestonesOpen && (
+            <div className="mt-3 space-y-3">
+              {/* Progress bar */}
+              {milestonesData && milestonesData.total > 0 && (
+                <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2.5">
+                  <div
+                    className={`h-2.5 rounded-full transition-all ${
+                      milestonesData.progress === 100
+                        ? "bg-emerald-500"
+                        : milestonesData.progress >= 50
+                          ? "bg-blue-500"
+                          : "bg-orange-500"
+                    }`}
+                    style={{ width: `${milestonesData.progress}%` }}
+                  />
+                </div>
+              )}
+
+              {/* Milestone list */}
+              {milestonesData && milestonesData.milestones.length > 0 ? (
+                <div className="space-y-2">
+                  {milestonesData.milestones.map((m) => {
+                    const statusIcon =
+                      m.status === "completed"
+                        ? "✅"
+                        : m.status === "in_progress"
+                          ? "🔄"
+                          : m.status === "blocked"
+                            ? "🚫"
+                            : "⬜";
+                    const statusColor =
+                      m.status === "completed"
+                        ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20"
+                        : m.status === "in_progress"
+                          ? "border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20"
+                          : m.status === "blocked"
+                            ? "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20"
+                            : "border-gray-200 dark:border-gray-800";
+                    return (
+                      <div key={m.id} className={`p-3 border rounded-lg ${statusColor}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span>{statusIcon}</span>
+                            <span className="text-sm font-medium">{m.title}</span>
+                          </div>
+                          {agentId && data && (
+                            <select
+                              value={m.status}
+                              onChange={async (e) => {
+                                const apiKey = localStorage.getItem("lc_api_key");
+                                if (!apiKey) return;
+                                const res = await fetch(
+                                  `/api/deals/${matchId}/milestones/${m.id}`,
+                                  {
+                                    method: "PATCH",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                      Authorization: `Bearer ${apiKey}`,
+                                    },
+                                    body: JSON.stringify({
+                                      agent_id: agentId,
+                                      status: e.target.value,
+                                    }),
+                                  },
+                                );
+                                if (res.ok) fetchMilestones();
+                              }}
+                              className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-700 rounded bg-transparent focus:outline-none"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="in_progress">In Progress</option>
+                              <option value="completed">Completed</option>
+                              <option value="blocked">Blocked</option>
+                            </select>
+                          )}
+                        </div>
+                        {m.description && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-7">
+                            {m.description}
+                          </p>
+                        )}
+                        {m.due_date && (
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 ml-7">
+                            Due: {new Date(m.due_date).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">No milestones yet.</p>
+              )}
+
+              {/* Add milestone form */}
+              {agentId &&
+                data &&
+                ["negotiating", "proposed", "approved", "in_progress"].includes(
+                  data.match.status,
+                ) && (
+                  <div className="p-3 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                    <h4 className="text-xs font-medium mb-2">Add milestone</h4>
+                    <input
+                      type="text"
+                      value={newMilestoneTitle}
+                      onChange={(e) => setNewMilestoneTitle(e.target.value)}
+                      placeholder="Milestone title"
+                      maxLength={200}
+                      className="w-full px-3 py-1.5 mb-2 border border-gray-300 dark:border-gray-700 rounded bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
+                    />
+                    <input
+                      type="text"
+                      value={newMilestoneDesc}
+                      onChange={(e) => setNewMilestoneDesc(e.target.value)}
+                      placeholder="Description (optional)"
+                      maxLength={500}
+                      className="w-full px-3 py-1.5 mb-2 border border-gray-300 dark:border-gray-700 rounded bg-transparent focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm"
+                    />
+                    <button
+                      onClick={async () => {
+                        if (!newMilestoneTitle.trim()) return;
+                        setMilestoneAdding(true);
+                        try {
+                          const apiKey = localStorage.getItem("lc_api_key");
+                          if (!apiKey) return;
+                          const res = await fetch(`/api/deals/${matchId}/milestones`, {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              Authorization: `Bearer ${apiKey}`,
+                            },
+                            body: JSON.stringify({
+                              agent_id: agentId,
+                              milestones: [
+                                {
+                                  title: newMilestoneTitle.trim(),
+                                  description: newMilestoneDesc.trim() || undefined,
+                                },
+                              ],
+                            }),
+                          });
+                          if (res.ok) {
+                            setNewMilestoneTitle("");
+                            setNewMilestoneDesc("");
+                            fetchMilestones();
+                          }
+                        } finally {
+                          setMilestoneAdding(false);
+                        }
+                      }}
+                      disabled={milestoneAdding || !newMilestoneTitle.trim()}
+                      className="px-3 py-1.5 bg-foreground text-background rounded text-xs font-medium hover:opacity-90 disabled:opacity-50"
+                    >
+                      {milestoneAdding ? "Adding..." : "Add"}
+                    </button>
+                  </div>
+                )}
+            </div>
+          )}
+        </div>
 
         {/* Deal Timeline */}
         <div className="mb-6">
