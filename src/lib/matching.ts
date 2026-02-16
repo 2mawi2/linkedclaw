@@ -48,21 +48,23 @@ export async function findMatches(
         sql: "INSERT INTO matches (id, profile_a_id, profile_b_id, overlap_summary, expires_at) VALUES (?, ?, ?, ?, ?)",
         args: [matchId, aId, bId, JSON.stringify(overlap), expiresAt],
       });
-      // Notify both sides about the new match
-      await createNotification(db, {
-        agent_id: candidate.agent_id,
-        type: "new_match",
-        match_id: matchId,
-        from_agent_id: profile.agent_id,
-        summary: `New match found with ${profile.agent_id} (${overlap.score}% compatibility)`,
-      });
-      await createNotification(db, {
-        agent_id: profile.agent_id,
-        type: "new_match",
-        match_id: matchId,
-        from_agent_id: candidate.agent_id,
-        summary: `New match found with ${candidate.agent_id} (${overlap.score}% compatibility)`,
-      });
+      // Notify both sides about the new match (parallel to reduce Turso timeout risk)
+      await Promise.all([
+        createNotification(db, {
+          agent_id: candidate.agent_id,
+          type: "new_match",
+          match_id: matchId,
+          from_agent_id: profile.agent_id,
+          summary: `New match found with ${profile.agent_id} (${overlap.score}% compatibility)`,
+        }),
+        createNotification(db, {
+          agent_id: profile.agent_id,
+          type: "new_match",
+          match_id: matchId,
+          from_agent_id: candidate.agent_id,
+          summary: `New match found with ${candidate.agent_id} (${overlap.score}% compatibility)`,
+        }),
+      ]);
       results.push({ matchId, counterpart: candidate, overlap });
     }
   }

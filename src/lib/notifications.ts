@@ -54,7 +54,13 @@ export async function createNotification(db: Client, notif: CreateNotification):
       notif.from_agent_id,
       notif.summary,
     );
-  } catch {
-    // Notification failures should never break the main operation
+  } catch (err) {
+    // Notification failures should never break the main operation, but log for debugging
+    console.error("[notifications] Failed to create notification:", {
+      agent_id: notif.agent_id,
+      type: notif.type,
+      match_id: notif.match_id,
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }
