@@ -109,25 +109,98 @@ export default function DealDetailPage() {
     fetchDeal();
   }, [fetchDeal]);
 
-  // Adaptive polling: 1.5s when recently active, 5s when idle (>30s no interaction)
+  // Real-time updates via SSE, with polling fallback
   useEffect(() => {
     if (!data) return;
     const status = data.match.status;
-    if (status === "rejected" || status === "expired") return;
+    if (status === "rejected" || status === "expired" || status === "cancelled") return;
 
-    let timer: ReturnType<typeof setTimeout>;
-    const isApproved = status === "approved";
-    function schedulePoll() {
-      const idleMs = Date.now() - lastActivityRef.current;
-      // Approved deals poll slower (post-deal coordination)
-      const interval = isApproved ? 10_000 : idleMs < 30_000 ? 1500 : 5000;
-      timer = setTimeout(() => {
-        fetchDeal().then(schedulePoll);
-      }, interval);
+    // Try SSE first
+    let es: EventSource | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let usingSSE = false;
+
+    function startSSE() {
+      const lastId = data!.messages.length > 0 ? Math.max(...data!.messages.map((m) => m.id)) : 0;
+      es = new EventSource(`/api/deals/${matchId}/stream?after_id=${lastId}`);
+
+      es.addEventListener("open", () => {
+        usingSSE = true;
+      });
+
+      es.addEventListener("message", (event) => {
+        try {
+          const msg = JSON.parse(event.data) as MessageInfo;
+          setData((prev) => {
+            if (!prev) return prev;
+            // Avoid duplicates
+            if (prev.messages.some((m) => m.id === msg.id)) return prev;
+            return { ...prev, messages: [...prev.messages, msg] };
+          });
+        } catch {
+          // ignore parse errors
+        }
+      });
+
+      es.addEventListener("status", (event) => {
+        try {
+          const { status: newStatus } = JSON.parse(event.data);
+          // Full refresh on status change to get updated approvals etc.
+          fetchDeal();
+          if (newStatus === "rejected" || newStatus === "expired" || newStatus === "cancelled") {
+            es?.close();
+          }
+        } catch {
+          // ignore
+        }
+      });
+
+      es.addEventListener("error", () => {
+        // SSE failed - fall back to polling or reconnect
+        es?.close();
+        es = null;
+        usingSSE = false;
+        // Reconnect after a short delay
+        timer = setTimeout(() => {
+          fetchDeal().then(() => startSSE());
+        }, 3000);
+      });
     }
-    schedulePoll();
-    return () => clearTimeout(timer);
-  }, [data, fetchDeal]);
+
+    // Polling fallback for environments where SSE doesn't work
+    function startPolling() {
+      const isApproved = data!.match.status === "approved";
+      function schedulePoll() {
+        const idleMs = Date.now() - lastActivityRef.current;
+        const interval = isApproved ? 10_000 : idleMs < 30_000 ? 1500 : 5000;
+        timer = setTimeout(() => {
+          fetchDeal().then(() => {
+            if (!usingSSE) schedulePoll();
+          });
+        }, interval);
+      }
+      schedulePoll();
+    }
+
+    if (typeof EventSource !== "undefined") {
+      startSSE();
+      // Also start polling as immediate fallback until SSE connects
+      // Stop polling once SSE is confirmed working
+      const fallbackTimer = setTimeout(() => {
+        if (!usingSSE) startPolling();
+      }, 5000);
+      return () => {
+        es?.close();
+        if (timer) clearTimeout(timer);
+        clearTimeout(fallbackTimer);
+      };
+    } else {
+      startPolling();
+      return () => {
+        if (timer) clearTimeout(timer);
+      };
+    }
+  }, [data?.match.status, matchId, fetchDeal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Scroll to bottom on new messages and update seen count for deals list badge
   useEffect(() => {
@@ -467,7 +540,9 @@ export default function DealDetailPage() {
             </form>
           )}
           {sendError && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{sendError}</p>}
-          {isActive && <p className="text-xs text-gray-400 mt-1">Live updates enabled</p>}
+          {isActive && (
+            <p className="text-xs text-gray-400 mt-1">Live updates enabled (streaming)</p>
+          )}
         </div>
 
         {/* Proposed terms + approval */}
