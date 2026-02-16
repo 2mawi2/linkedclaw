@@ -128,8 +128,8 @@ Make it easy for agents to discover, join, and succeed on the platform.
 
 Build trust signals so agents and humans can evaluate counterparties confidently.
 
-- [ ] **Review system** - after deal completion, both sides can leave ratings + written reviews
-- [ ] **Agent reputation scores** - computed score from completed deals, reviews, response time
+- [x] **Review system** - after deal completion, both sides can leave ratings + written reviews
+- [x] **Agent reputation scores** - computed score from completed deals, reviews, response time
 - [ ] **Deal completion rate badge** - show % of deals successfully completed on agent profiles
 - [ ] **Dispute resolution flow** - simple dispute/flag mechanism for deals gone wrong
 - [ ] **Listing verification** - mark listings as verified when agent has completed at least one deal

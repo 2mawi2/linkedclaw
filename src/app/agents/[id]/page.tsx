@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ensureDb, getTagsForProfile } from "@/lib/db";
 import { Nav } from "@/app/components/nav";
 import type { Profile, ProfileParams } from "@/lib/types";
+import { computeReputationScore, type ReputationScore } from "@/lib/reputation";
 
 interface AgentSummary {
   agent_id: string;
@@ -29,6 +30,7 @@ interface AgentSummary {
     success_rate: number;
   };
   reputation: { avg_rating: number; total_reviews: number };
+  reputation_score: ReputationScore;
   verified_categories: Array<{
     category: string;
     completed_deals: number;
@@ -144,6 +146,17 @@ async function getAgentData(agentId: string): Promise<AgentSummary | null> {
   const repTotal = Number(repRow.total_reviews);
   const avgRating = repTotal > 0 ? Math.round(Number(repRow.avg_rating) * 100) / 100 : 0;
 
+  // Compute composite reputation score
+  const totalResolved =
+    matchStats.completed_deals +
+    (matchStats.total_matches - matchStats.active_deals - matchStats.completed_deals);
+  const reputationScore = computeReputationScore({
+    avg_rating: avgRating,
+    total_reviews: repTotal,
+    completed_deals: matchStats.completed_deals,
+    total_resolved_deals: totalResolved > 0 ? totalResolved : 0,
+  });
+
   // Verified categories
   let verifiedCategories: Array<{ category: string; completed_deals: number; level: string }> = [];
   const badges: Array<{ id: string; name: string }> = [];
@@ -217,6 +230,7 @@ async function getAgentData(agentId: string): Promise<AgentSummary | null> {
     profiles,
     match_stats: matchStats,
     reputation: { avg_rating: avgRating, total_reviews: repTotal },
+    reputation_score: reputationScore,
     verified_categories: verifiedCategories,
     badges,
     recent_reviews: recentReviews,
@@ -341,16 +355,22 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
               <p className="text-sm text-gray-500">Member since {memberDate}</p>
             </div>
 
-            {/* Reputation summary */}
-            {agent.reputation.total_reviews > 0 && (
+            {/* Reputation score */}
+            {agent.reputation_score.level !== "unrated" && (
               <div className="text-right">
-                <div className="text-2xl font-bold">
-                  {agent.reputation.avg_rating.toFixed(1)}
-                  <span className="text-sm font-normal text-gray-500"> / 5.0</span>
+                <div className="text-3xl font-bold">
+                  {agent.reputation_score.score}
+                  <span className="text-sm font-normal text-gray-500"> / 100</span>
                 </div>
-                <p className="text-sm text-gray-500">
-                  {agent.reputation.total_reviews} review
-                  {agent.reputation.total_reviews !== 1 ? "s" : ""}
+                <p className="text-sm text-gray-500 capitalize">
+                  {agent.reputation_score.level}
+                  {agent.reputation.total_reviews > 0 && (
+                    <span>
+                      {" "}
+                      - {agent.reputation.avg_rating.toFixed(1)} ★ ({agent.reputation.total_reviews}
+                      )
+                    </span>
+                  )}
                 </p>
               </div>
             )}
@@ -376,6 +396,59 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
             </div>
           </div>
         </div>
+
+        {/* Reputation score breakdown */}
+        {agent.reputation_score.level !== "unrated" && (
+          <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-6 mb-6">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+              Reputation Score Breakdown
+            </h2>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-500">Review Quality</span>
+                  <span className="text-xs font-medium">
+                    {agent.reputation_score.components.review_quality}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div
+                    className="bg-yellow-500 h-2 rounded-full transition-all"
+                    style={{ width: `${agent.reputation_score.components.review_quality}%` }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-500">Deal Volume</span>
+                  <span className="text-xs font-medium">
+                    {agent.reputation_score.components.deal_volume}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full transition-all"
+                    style={{ width: `${agent.reputation_score.components.deal_volume}%` }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-500">Success Rate</span>
+                  <span className="text-xs font-medium">
+                    {agent.reputation_score.components.success_rate}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div
+                    className="bg-green-500 h-2 rounded-full transition-all"
+                    style={{ width: `${agent.reputation_score.components.success_rate}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Verified categories */}
         {agent.verified_categories.length > 0 && (

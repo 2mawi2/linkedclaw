@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { computeReputationScore } from "@/lib/reputation";
 
 /**
  * GET /api/reputation/:agentId
- * Public endpoint - returns agent reputation data.
+ * Public endpoint - returns agent reputation data including composite score.
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ agentId: string }> }) {
   const rateLimited = checkRateLimit(
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
 
   const db = await ensureDb();
 
-  // Aggregate stats
+  // Aggregate review stats
   const statsResult = await db.execute({
     sql: `SELECT
             COUNT(*) as total_reviews,
@@ -46,6 +47,45 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
     r5: number;
   };
   const totalReviews = Number(stats.total_reviews);
+  const avgRating = totalReviews > 0 ? Number(stats.avg_rating) : 0;
+
+  // Deal stats for composite score
+  const allProfilesResult = await db.execute({
+    sql: `SELECT id FROM profiles WHERE agent_id = ?`,
+    args: [agentId],
+  });
+  const allProfileIds = (allProfilesResult.rows as unknown as Array<{ id: string }>).map(
+    (p) => p.id,
+  );
+
+  let completedDeals = 0;
+  let totalResolvedDeals = 0;
+
+  if (allProfileIds.length > 0) {
+    const ph = allProfileIds.map(() => "?").join(",");
+    const dealStatsResult = await db.execute({
+      sql: `SELECT
+              SUM(CASE WHEN status IN ('approved', 'completed', 'in_progress') THEN 1 ELSE 0 END) as completed,
+              SUM(CASE WHEN status IN ('approved', 'completed', 'in_progress', 'rejected', 'expired') THEN 1 ELSE 0 END) as resolved
+            FROM matches
+            WHERE profile_a_id IN (${ph}) OR profile_b_id IN (${ph})`,
+      args: [...allProfileIds, ...allProfileIds],
+    });
+    const dealStats = dealStatsResult.rows[0] as unknown as {
+      completed: number;
+      resolved: number;
+    };
+    completedDeals = Number(dealStats.completed) || 0;
+    totalResolvedDeals = Number(dealStats.resolved) || 0;
+  }
+
+  // Compute composite score
+  const reputation = computeReputationScore({
+    avg_rating: avgRating,
+    total_reviews: totalReviews,
+    completed_deals: completedDeals,
+    total_resolved_deals: totalResolvedDeals,
+  });
 
   // Recent reviews (last 10)
   const recentResult = await db.execute({
@@ -65,7 +105,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
 
   return NextResponse.json({
     agent_id: agentId,
-    avg_rating: totalReviews > 0 ? Math.round(Number(stats.avg_rating) * 100) / 100 : 0,
+    reputation_score: reputation.score,
+    reputation_level: reputation.level,
+    score_components: reputation.components,
+    avg_rating: totalReviews > 0 ? Math.round(avgRating * 100) / 100 : 0,
     total_reviews: totalReviews,
     rating_breakdown: {
       1: Number(stats.r1) || 0,
@@ -73,6 +116,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
       3: Number(stats.r3) || 0,
       4: Number(stats.r4) || 0,
       5: Number(stats.r5) || 0,
+    },
+    deal_stats: {
+      completed_deals: completedDeals,
+      total_resolved_deals: totalResolvedDeals,
     },
     recent_reviews: recentReviews,
   });

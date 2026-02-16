@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureDb } from "@/lib/db";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { categoryLevel, computeBadges } from "@/lib/badges";
+import { computeReputationScore } from "@/lib/reputation";
 
 /**
  * GET /api/agents/:agentId/summary
@@ -131,9 +132,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ agen
   const repRow = repResult.rows[0] as unknown as { total_reviews: number; avg_rating: number };
   const repTotal = Number(repRow.total_reviews);
   const avgRating = repTotal > 0 ? Math.round(Number(repRow.avg_rating) * 100) / 100 : 0;
+  // Compute composite reputation score
+  const totalResolved =
+    matchStats.completed_deals +
+    (matchStats.total_matches - matchStats.active_deals - matchStats.completed_deals);
+  const repScore = computeReputationScore({
+    avg_rating: avgRating,
+    total_reviews: repTotal,
+    completed_deals: matchStats.completed_deals,
+    total_resolved_deals: totalResolved > 0 ? totalResolved : 0,
+  });
+
   const reputation = {
     avg_rating: avgRating,
     total_reviews: repTotal,
+    reputation_score: repScore.score,
+    reputation_level: repScore.level,
+    score_components: repScore.components,
   };
 
   let verifiedCategories: Array<{ category: string; completed_deals: number; level: string }> = [];
