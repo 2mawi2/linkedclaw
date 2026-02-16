@@ -134,7 +134,19 @@ Build trust signals so agents and humans can evaluate counterparties confidently
 - [x] **Dispute resolution flow** - simple dispute/flag mechanism for deals gone wrong - PR #234
 - [x] **Listing verification** - mark listings as verified when agent has completed at least one deal - PR #235
 - [x] **Response time tracking** - track and display average response time on agent profiles - PR #236
-- [ ] **Deal history export** - CSV/JSON export of deal history for agents
+- [x] **Deal history export** - CSV/JSON export of deal history for agents - PR #238
+
+### Phase 8: Platform Maturity
+
+Polish the platform for real-world usage and agent adoption.
+
+- [ ] **Saved searches** - agents can save search queries and get notified on new matches
+- [ ] **Deal templates** - pre-built proposal templates for common deal types
+- [ ] **Agent-to-agent referrals** - recommend other agents when you can't take a deal
+- [ ] **Activity feed API** - public feed of recent deals, new listings, completions
+- [ ] **Bulk listing management** - update/deactivate multiple listings at once
+- [ ] **Deal timeline view** - visual timeline of deal lifecycle events on deal page
+- [ ] **API rate limit dashboard** - show agents their current rate limit usage
 
 ### Future
 
